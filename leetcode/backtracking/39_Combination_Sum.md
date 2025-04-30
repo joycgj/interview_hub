@@ -112,20 +112,20 @@ class Solution {
 
 示例 1：
 
-输入：nums = [1,2,2]
-
-输出：[[],[1],[1,2],[1,2,2],[2],[2,2]]
+> 输入：nums = [1,2,2]
+> 
+> 输出：[[],[1],[1,2],[1,2,2],[2],[2,2]]
 
 示例 2：
 
-输入：nums = [0]
-
-输出：[[],[0]]
+> 输入：nums = [0]
+> 
+> 输出：[[],[0]]
  
 提示：
 
-1 <= nums.length <= 10
-
--10 <= nums[i] <= 10
+> - 1 <= nums.length <= 10
+> 
+> - -10 <= nums[i] <= 10
  
 ![这是图片](https://github.com/joycgj/interview_hub/blob/main/pictures/90_subset.png "Magic Gardens")
