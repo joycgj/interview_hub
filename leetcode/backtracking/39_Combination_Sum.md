@@ -133,8 +133,39 @@ class Solution {
 > 
 > - nums 中的所有元素 互不相同
 
+```
+// labuladong p272
+// 使用 start 参数控制树枝的生长避免产生重复的子集，用 track 记录根节点到每个节点的路径的值，
+// 同时在前序位置把每个节点的路径值收集起来。
+class Solution {
+    List<List<Integer>> res = new LinkedList<>();
+    // 记录回溯算法的递归路径
+    List<Integer> track = new LinkedList<>(); 
 
-## 90. Subsets II
+    public List<List<Integer>> subsets(int[] nums) {
+        backtrack(nums, 0);
+        return res;
+    }
+
+    // 回溯算法核心函数，遍历子集问题的回溯树
+    void backtrack(int[] nums, int start) {
+        // 前序位置，每个节点的值都是一个子集
+        res.add(new LinkedList<>(track));
+
+        for (int i = start; i < nums.length; i++) {
+            // 做选择
+            track.addLast(nums[i]);
+            // 通过start参数控制树枝的遍历，避免产生重复的子集
+            backtrack(nums, i + 1);
+            // 撤销选择
+            track.removeLast();
+        }
+    }
+}
+```
+
+## 90. Subsets II 90. 子集 II 中等
+
 给你一个整数数组 nums ，其中可能包含重复元素，请你返回该数组所有可能的 子集（幂集）。
 
 解集 不能 包含重复的子集。返回的解集中，子集可以按 任意顺序 排列。
