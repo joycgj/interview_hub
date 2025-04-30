@@ -130,9 +130,9 @@ class Solution {
 
 注意：
 > 做本题之前一定要先做 78.子集。
-
+> 
 > 这道题目和 78.子集 区别就是集合里有重复元素了，而且求取的子集要去重。
-
+> 
 > 关于回溯算法中的去重问题，40.组合总和II 和本题是一个套路。
 
 ```
@@ -167,5 +167,5 @@ class Solution {
     }
 }
 ```
- 
+90. Subsets II 的 mermaid 回溯图。
 ![这是图片](https://github.com/joycgj/interview_hub/blob/main/pictures/90_subset.png "Magic Gardens")
