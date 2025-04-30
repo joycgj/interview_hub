@@ -192,18 +192,18 @@ class Solution {
 
 ```
 // labuladong p274
-// 78. Subsets 78. 子集 一样
+// 和 78. Subsets 78. 子集 一样
 class Solution {
     List<List<Integer>> res = new LinkedList<>();
     // 记录回溯算法的递归路径
     List<Integer> track = new LinkedList<>(); 
 
     public List<List<Integer>> combine(int n, int k) {
-        backtrack(1, n, k);
+        backtrack(n, k, 1);
         return res;
     }
 
-    void backtrack(int start, int n, int k) {
+    void backtrack(int n, int k, int start) {
         // base case
         if (track.size() == k) {
             // 遍历到了第k层，收集当前节点的值
@@ -216,7 +216,7 @@ class Solution {
             // 选择
             track.addLast(i);
             // 通过start参数控制树枝的遍历，避免产生重复的子集
-            backtrack(i + 1, n, k);
+            backtrack(n, k, i + 1);
             // 撤销选择
             track.removeLast();
         }
