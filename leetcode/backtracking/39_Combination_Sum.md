@@ -1,9 +1,20 @@
+<ol>
+<li>39. Combination Sum</li>
+<li>39. Combination Sum</li>
+<li>39. Combination Sum</li>
+<li>39. Combination Sum</li>
+<li>39. Combination Sum</li>
+<li>39. Combination Sum</li>
+<li>39. Combination Sum</li>
+<li>39. Combination Sum</li>
+</ol>
+
 
 ```
 // 39. 组合总和 39. Combination Sum
 // labuladong p287
-// ​​时间复杂度​​：最坏情况为 O(2^N)，其中 N 是候选数组长度（例如候选全为1时需遍历所有组合）。
-​// ​空间复杂度​​：O(T)，取决于递归栈深度（T 为目标值，例如候选含1时递归深度为 T）。
+// 时间复杂度：最坏情况为 O(2^N)，其中 N 是候选数组长度（例如候选全为1时需遍历所有组合）。
+// 空间复杂度：O(T)，取决于递归栈深度（T 为目标值，例如候选含1时递归深度为 T）。
 class Solution {
     List<List<Integer>> res = new LinkedList<>();
     // 记录回溯算法的递归路径
@@ -39,7 +50,7 @@ class Solution {
             trackSum += nums[i];
             track.add(nums[i]);
             // 递归遍历下一层回溯树
-            // 同一元素可重复使用，注意参数
+            // 同一元素可重复使用，注意参数 start 始终为 i
             backtrack(nums, i, target);
             // 撤销选择 nums[i]
             trackSum -= nums[i];
