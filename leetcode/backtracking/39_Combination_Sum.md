@@ -49,14 +49,12 @@ candidates 中的 同一个 数字可以 无限制重复被选取 。如果至�
 > 输出: []
  
 提示：
-
-> - 1 <= candidates.length <= 30
-> 
-> - 2 <= candidates[i] <= 40
-> 
-> - candidates 的所有元素 互不相同
-> 
-> - 1 <= target <= 40
+<ul>
+<li>1 <= candidates.length <= 30</li>
+<li>2 <= candidates[i] <= 40</li>
+<li>candidates 的所有元素 互不相同</li>
+<li>1 <= target <= 40</li>
+</ul>
 
 ```
 // 39. 组合总和 39. Combination Sum
