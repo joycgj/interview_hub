@@ -127,5 +127,38 @@ class Solution {
 > - 1 <= nums.length <= 10
 > 
 > - -10 <= nums[i] <= 10
+
+```
+// labuladong p278
+// 时间复杂度：近似为 O(2^n)，其中 n 为候选数组长度。排序为 O(nlogn)，回溯树的遍历最多 2^n 但由于剪枝，实际会小于 2^n。
+// 空间复杂度：O(n)（递归栈 + 临时路径）
+class Solution {
+    List<List<Integer>> res = new LinkedList<>();
+    // 记录回溯算法的递归路径
+    List<Integer> track = new LinkedList<>();
+
+    public List<List<Integer>> subsetsWithDup(int[] nums) {
+        // 先排序，让相同的元素靠在一起
+        Arrays.sort(nums);
+        backtrack(nums, 0);
+        return res;
+    }
+
+    void backtrack(int[] nums, int start) {
+        // 前序位置，每个节点的值都是一个子集
+        res.add(new LinkedList<>(track));
+
+        for (int i = start; i < nums.length; i++) {
+            // 剪枝逻辑，值相同的相邻树枝，只遍历第一条
+            if (i > start && nums[i] == nums[i - 1]) {
+                continue;
+            }
+            track.addLast(nums[i]);
+            backtrack(nums, i + 1);
+            track.removeLast();
+        }
+    }
+}
+```
  
 ![这是图片](https://github.com/joycgj/interview_hub/blob/main/pictures/90_subset.png "Magic Gardens")
