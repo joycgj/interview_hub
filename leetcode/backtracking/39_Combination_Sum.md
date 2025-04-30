@@ -106,38 +106,26 @@ class Solution {
 }
 ```
 # 90. Subsets II
-给定一个候选人编号的集合 candidates 和一个目标数 target ，找出 candidates 中所有可以使数字和为 target 的组合。
+给你一个整数数组 nums ，其中可能包含重复元素，请你返回该数组所有可能的 子集（幂集）。
 
-candidates 中的每个数字在每个组合中只能使用 一次 。
+解集 不能 包含重复的子集。返回的解集中，子集可以按 任意顺序 排列。
 
-注意：解集不能包含重复的组合。 
+示例 1：
 
-示例 1:
+输入：nums = [1,2,2]
 
-> 输入: candidates = [10,1,2,7,6,1,5], target = 8,
-> 
-> 输出:
-> [
-> [1,1,6],
-> [1,2,5],
-> [1,7],
-> [2,6]
-> ]
+输出：[[],[1],[1,2],[1,2,2],[2],[2,2]]
 
-示例 2:
+示例 2：
 
-> 输入: candidates = [2,5,2,1,2], target = 5,
-> 
-> 输出:
-> [
-> [1,2,2],
-> [5]
-> ]
+输入：nums = [0]
+
+输出：[[],[0]]
  
-提示:
+提示：
 
-1 <= candidates.length <= 100
-1 <= candidates[i] <= 50
-1 <= target <= 30
+1 <= nums.length <= 10
+
+-10 <= nums[i] <= 10
  
 ![这是图片](https://github.com/joycgj/interview_hub/blob/main/pictures/90_subset.png "Magic Gardens")
