@@ -7,8 +7,8 @@
 <li>46. Permutations 全排列 中等 元素无重不可复选</li>
 <li>90. Subsets II 子集 II 中等 元素可重不可复选</li>
 <li>40. 组合总和 II Combination Sum II 中等 元素可重不可复选</li>
-<li>39. Combination Sum</li>
-<li>39. Combination Sum</li>
+<li>47. Permutations II 全排列 II 中等 元素可重不可复选</li>
+<li>39. Combination Sum 组合总和</li>
 <li>39. Combination Sum</li>
 </ol>
 
@@ -414,6 +414,73 @@ class Solution {
             // 取消选择
             track.removeLast();
             trackSum -= nums[i];
+        }
+    }
+}
+```
+## 47. Permutations II 全排列 II 中等 元素可重不可复选
+
+给定一个可包含重复数字的序列 nums ，按任意顺序 返回所有不重复的全排列。
+
+示例 1：
+
+> 输入：nums = [1,1,2]
+> 
+> 输出：[[1,1,2], [1,2,1], [2,1,1]]
+
+示例 2：
+
+>
+> 输入：nums = [1,2,3]
+>
+> 输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+ 
+提示：
+
+> - 1 <= nums.length <= 8
+> 
+> - -10 <= nums[i] <= 10
+
+```
+// labuladong p281 
+// 关键：保证相同元素在排列中的相对位置保持不变 labuladong p282
+class Solution {
+    List<List<Integer>> res = new LinkedList<>();
+    // 记录回溯算法的递归路径
+    List<Integer> track = new LinkedList<>();
+    // track中的元素会被标记为true
+    boolean[] used;
+
+    public List<List<Integer>> permuteUnique(int[] nums) {
+        // 先排序，让相同的元素靠在一起
+        Arrays.sort(nums);
+        used = new boolean[nums.length];
+        backtrack(nums);
+        return res;
+    }
+
+    void backtrack(int[] nums) {
+        if (track.size() == nums.length) {
+            res.add(new LinkedList<>(track));
+            return;
+        }
+
+        for (int i = 0; i < nums.length; i++) {
+            if (used[i]) {
+                continue;
+            }
+
+            // 新添加的剪枝逻辑，固定相同的元素在排列中的相对位置
+            if (i > 0 && nums[i] == nums[i - 1] && !used[i - 1]) {
+                // 如果前面的相邻相等元素没有用过，则跳过
+                continue;
+            }
+
+            track.addLast(nums[i]);
+            used[i] = true;
+            backtrack(nums);
+            track.removeLast();
+            used[i] = false;
         }
     }
 }
