@@ -12,6 +12,63 @@
 <li>39. Combination Sum</li>
 </ol>
 
+## 78. Subsets 78. 子集 中等 元素无重不可复选
+
+给你一个整数数组 nums ，数组中的元素 互不相同 。返回该数组所有可能的子集（幂集）。
+
+解集 不能 包含重复的子集。你可以按 任意顺序 返回解集。
+
+示例 1：
+
+> 输入：nums = [1,2,3]
+> 
+> 输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]
+> 
+
+示例 2：
+
+> 输入：nums = [0]
+> 
+> 输出：[[],[0]]
+ 
+提示：
+
+> - 1 <= nums.length <= 10
+> 
+> - -10 <= nums[i] <= 10
+> 
+> - nums 中的所有元素 互不相同
+
+```
+// labuladong p272
+// 使用 start 参数控制树枝的生长避免产生重复的子集，用 track 记录根节点到每个节点的路径的值，
+// 同时在前序位置把每个节点的路径值收集起来。
+class Solution {
+    List<List<Integer>> res = new LinkedList<>();
+    // 记录回溯算法的递归路径
+    List<Integer> track = new LinkedList<>(); 
+
+    public List<List<Integer>> subsets(int[] nums) {
+        backtrack(nums, 0);
+        return res;
+    }
+
+    // 回溯算法核心函数，遍历子集问题的回溯树
+    void backtrack(int[] nums, int start) {
+        // 前序位置，每个节点的值都是一个子集
+        res.add(new LinkedList<>(track));
+
+        for (int i = start; i < nums.length; i++) {
+            // 做选择
+            track.addLast(nums[i]);
+            // 通过start参数控制树枝的遍历，避免产生重复的子集
+            backtrack(nums, i + 1);
+            // 撤销选择
+            track.removeLast();
+        }
+    }
+}
+```
 
 ## 39. Combination Sum
 
@@ -106,63 +163,6 @@ class Solution {
 }
 ```
 
-## 78. Subsets 78. 子集 中等
-
-给你一个整数数组 nums ，数组中的元素 互不相同 。返回该数组所有可能的子集（幂集）。
-
-解集 不能 包含重复的子集。你可以按 任意顺序 返回解集。
-
-示例 1：
-
-> 输入：nums = [1,2,3]
-> 
-> 输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]
-> 
-
-示例 2：
-
-> 输入：nums = [0]
-> 
-> 输出：[[],[0]]
- 
-提示：
-
-> - 1 <= nums.length <= 10
-> 
-> - -10 <= nums[i] <= 10
-> 
-> - nums 中的所有元素 互不相同
-
-```
-// labuladong p272
-// 使用 start 参数控制树枝的生长避免产生重复的子集，用 track 记录根节点到每个节点的路径的值，
-// 同时在前序位置把每个节点的路径值收集起来。
-class Solution {
-    List<List<Integer>> res = new LinkedList<>();
-    // 记录回溯算法的递归路径
-    List<Integer> track = new LinkedList<>(); 
-
-    public List<List<Integer>> subsets(int[] nums) {
-        backtrack(nums, 0);
-        return res;
-    }
-
-    // 回溯算法核心函数，遍历子集问题的回溯树
-    void backtrack(int[] nums, int start) {
-        // 前序位置，每个节点的值都是一个子集
-        res.add(new LinkedList<>(track));
-
-        for (int i = start; i < nums.length; i++) {
-            // 做选择
-            track.addLast(nums[i]);
-            // 通过start参数控制树枝的遍历，避免产生重复的子集
-            backtrack(nums, i + 1);
-            // 撤销选择
-            track.removeLast();
-        }
-    }
-}
-```
 ## 77. Combinations 77. 组合 中等
 
 给定两个整数 n 和 k，返回范围 [1, n] 中所有可能的 k 个数的组合。
