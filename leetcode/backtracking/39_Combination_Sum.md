@@ -419,15 +419,14 @@ class Solution {
 }
 ```
 
-## 39. Combination Sum
+## 39. Combination Sum 组合总和 中等 元素可重不可复选
 
-给你一个 无重复元素 的整数数组 candidates 和一个目标整数 target ，找出 candidates 中可以使数字和为目标数 target 的 所有 不同组合 ，并以列表形式返回。你可以按 任意顺序 返回这些组合。
+给你一个 **无重复元素** 的整数数组 candidates 和一个目标整数 target ，找出 candidates 中可以使数字和为目标数 target 的 所有 不同组合 ，并以列表形式返回。你可以按 任意顺序 返回这些组合。
 
-candidates 中的 同一个 数字可以 无限制重复被选取 。如果至少一个数字的被选数量不同，则两种组合是不同的。 
+candidates 中的 **同一个** 数字可以 **无限制重复被选取** 。如果至少一个数字的被选数量不同，则两种组合是不同的。 
 
 对于给定的输入，保证和为 target 的不同组合数少于 150 个。
 
- 
 示例 1：
 
 > 输入：candidates = [2,3,6,7], target = 7
@@ -455,15 +454,16 @@ candidates 中的 同一个 数字可以 无限制重复被选取 。如果至�
 > 输出: []
  
 提示：
-<ul>
-<li>1 <= candidates.length <= 30</li>
-<li>2 <= candidates[i] <= 40</li>
-<li>candidates 的所有元素 互不相同</li>
-<li>1 <= target <= 40</li>
-</ul>
+
+> - 1 <= candidates.length <= 30
+> 
+> - 2 <= candidates[i] <= 40
+> 
+> - candidates 的所有元素 互不相同
+> 
+> - 1 <= target <= 40
 
 ```
-// 39. 组合总和 39. Combination Sum
 // labuladong p287
 // 时间复杂度：最坏情况为 O(2^N)，其中 N 是候选数组长度（例如候选全为1时需遍历所有组合）。
 // 空间复杂度：O(T)，取决于递归栈深度（T 为目标值，例如候选含1时递归深度为 T）。
@@ -479,12 +479,12 @@ class Solution {
             return res;
         }
 
-        backtrack(candidates, 0, target);
+        backtrack(candidates, target, 0);
         return res;
     }
 
     // 回溯算法主函数
-    void backtrack(int[] nums, int start, int target) {
+    void backtrack(int[] nums, int target, int start) {
         // base case 找到目标和，记录结果
         if (trackSum == target) {
             res.add(new LinkedList<>(track));
@@ -497,13 +497,13 @@ class Solution {
         }
 
         // 回溯算法标准框架
-        for (int i = start; i < candidates.length; i++) {
+        for (int i = start; i < nums.length; i++) {
             // 选择 nums[i]
             trackSum += nums[i];
             track.add(nums[i]);
             // 递归遍历下一层回溯树
             // 同一元素可重复使用，注意参数 start 始终为 i
-            backtrack(nums, i, target);
+            backtrack(nums, target, i);
             // 撤销选择 nums[i]
             trackSum -= nums[i];
             track.removeLast();
