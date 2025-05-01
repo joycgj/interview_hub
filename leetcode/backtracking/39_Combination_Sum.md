@@ -330,7 +330,7 @@ class Solution {
 90. Subsets II 的 mermaid 回溯图。
 ![这是图片](https://github.com/joycgj/interview_hub/blob/main/pictures/90_subset.png "Magic Gardens")
 
-40. 组合总和 II Combination Sum II 中等 元素可重不可复选
+## 40. 组合总和 II Combination Sum II 中等 元素可重不可复选
 
 给定一个候选人编号的集合 candidates 和一个目标数 target ，找出 candidates 中所有可以使数字和为 target 的组合。
 
