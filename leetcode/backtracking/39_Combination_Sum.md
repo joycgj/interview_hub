@@ -12,7 +12,7 @@
 <li>39. Combination Sum</li>
 </ol>
 
-## 78. Subsets 78. 子集 中等 元素无重不可复选
+## 78. Subsets 子集 中等 元素无重不可复选
 
 给你一个整数数组 nums ，数组中的元素 互不相同 。返回该数组所有可能的子集（幂集）。
 
@@ -63,6 +63,73 @@ class Solution {
             track.addLast(nums[i]);
             // 通过start参数控制树枝的遍历，避免产生重复的子集
             backtrack(nums, i + 1);
+            // 撤销选择
+            track.removeLast();
+        }
+    }
+}
+```
+
+## 77. Combinations 组合 中等 元素无重不可复选
+
+给定两个整数 n 和 k，返回范围 [1, n] 中所有可能的 k 个数的组合。
+
+你可以按 任何顺序 返回答案。
+
+示例 1：
+
+> 输入：n = 4, k = 2
+> 
+> 输出：
+> 
+> [[2,4], [3,4], [2,3], [1,2], [1,3], [1,4]]
+
+示例 2：
+
+> 输入：n = 1, k = 1
+> 
+> 输出：[[1]]
+ 
+
+提示：
+
+> - 1 <= n <= 20
+> 
+> - 1 <= k <= n
+
+注：这是标准的组合问题，但是翻译一下就变成了 **78. Subsets 子集** 的子集问题了：
+
+> 给你输入一个数组 nums = [1, 2,..., n]和一个正整数 k，请你生成所有大小为 k 的子集。
+>
+> 以 nums = [1, 2, 3] 为例，**78. Subsets 子集** 是求所有子集，就是把所有节点的值都收集起来，现在你只需要把第2层（根节点视为第0层）的节点收集起来，就是大小为2的所有组合。因此只需要修改 base case，控制算法仅仅收集第 k 层节点的值即可。
+
+```
+// labuladong p274
+// 和 78. Subsets 78. 子集 一样
+class Solution {
+    List<List<Integer>> res = new LinkedList<>();
+    // 记录回溯算法的递归路径
+    List<Integer> track = new LinkedList<>(); 
+
+    public List<List<Integer>> combine(int n, int k) {
+        backtrack(n, k, 1);
+        return res;
+    }
+
+    void backtrack(int n, int k, int start) {
+        // base case
+        if (track.size() == k) {
+            // 遍历到了第k层，收集当前节点的值
+            res.add(new LinkedList<>(track));
+            return;
+        }
+
+        // 回溯算法标准框架
+        for (int i = start; i <= n; i++) {
+            // 选择
+            track.addLast(i);
+            // 通过start参数控制树枝的遍历，避免产生重复的子集
+            backtrack(n, k, i + 1);
             // 撤销选择
             track.removeLast();
         }
@@ -157,67 +224,6 @@ class Solution {
             backtrack(nums, i, target);
             // 撤销选择 nums[i]
             trackSum -= nums[i];
-            track.removeLast();
-        }
-    }
-}
-```
-
-## 77. Combinations 77. 组合 中等
-
-给定两个整数 n 和 k，返回范围 [1, n] 中所有可能的 k 个数的组合。
-
-你可以按 任何顺序 返回答案。
-
-示例 1：
-
-> 输入：n = 4, k = 2
-> 
-> 输出：
-> 
-> [[2,4], [3,4], [2,3], [1,2], [1,3], [1,4]]
-
-示例 2：
-
-> 输入：n = 1, k = 1
-> 
-> 输出：[[1]]
- 
-
-提示：
-
-> - 1 <= n <= 20
-> 
-> - 1 <= k <= n
-
-```
-// labuladong p274
-// 和 78. Subsets 78. 子集 一样
-class Solution {
-    List<List<Integer>> res = new LinkedList<>();
-    // 记录回溯算法的递归路径
-    List<Integer> track = new LinkedList<>(); 
-
-    public List<List<Integer>> combine(int n, int k) {
-        backtrack(n, k, 1);
-        return res;
-    }
-
-    void backtrack(int n, int k, int start) {
-        // base case
-        if (track.size() == k) {
-            // 遍历到了第k层，收集当前节点的值
-            res.add(new LinkedList<>(track));
-            return;
-        }
-
-        // 回溯算法标准框架
-        for (int i = start; i <= n; i++) {
-            // 选择
-            track.addLast(i);
-            // 通过start参数控制树枝的遍历，避免产生重复的子集
-            backtrack(n, k, i + 1);
-            // 撤销选择
             track.removeLast();
         }
     }
