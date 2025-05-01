@@ -6,7 +6,7 @@
 <li>77. Combinations 组合 中等 元素无重不可复选</li>
 <li>46. Permutations 全排列 中等 元素无重不可复选</li>
 <li>90. Subsets II 子集 II 中等 元素可重不可复选</li>
-<li>40. 组合总和 II Combination Sum II 中等 元素可重不可复选</li>
+<li>40. Combination Sum II 组合总和 II 中等 元素可重不可复选</li>
 <li>47. Permutations II 全排列 II 中等 元素可重不可复选</li>
 <li>39. Combination Sum 组合总和 中等 元素可重不可复选</li>
 </ol>
