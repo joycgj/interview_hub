@@ -217,6 +217,53 @@ class Solution {
 }
 ```
 
+延伸：
+> 如果题目不让你算全排列，而是让你算元素个数为 k 的排列，怎么算？
+>
+> 很简单，改下 backtrack 函数的 base case，仅收集第 k 层的节点值即可。
+
+```
+class Solution {
+    List<List<Integer>> res = new LinkedList<>();
+    // 记录回溯算法的递归路径
+    List<Integer> track = new LinkedList<>();
+    // track中的元素会被标记为true
+    boolean[] used;
+
+    public List<List<Integer>> permute(int[] nums, int k) {
+        used = new boolean[nums.length];
+        backtrack(nums, k);
+        return res;
+    }
+
+    // 回溯算法核心函数
+    void backtrack(int[] nums, int k) {
+        // base case，到达第 k 层，收集节点的值
+        if (track.size() == k) {
+            // 收集叶子节点上的值
+            res.add(new LinkedList<>(track));
+            return;
+        }
+
+        // 回溯算法标准框架
+        for (int i = 0; i < nums.length; i++) {
+            if (used[i]) {
+                continue;
+            }
+
+            // 做选择
+            track.add(nums[i]);
+            used[i] = true;
+            // 进入下一层回溯树
+            backtrack(nums, k);
+            // 取消选择
+            track.removeLast();
+            used[i] = false;
+        }
+    }
+}
+```
+
 ## 39. Combination Sum
 
 给你一个 无重复元素 的整数数组 candidates 和一个目标整数 target ，找出 candidates 中可以使数字和为目标数 target 的 所有 不同组合 ，并以列表形式返回。你可以按 任意顺序 返回这些组合。
