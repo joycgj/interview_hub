@@ -137,6 +137,86 @@ class Solution {
 }
 ```
 
+## 46. Permutations 全排列
+
+给定一个不含重复数字的数组 nums ，返回其 所有可能的全排列 。你可以 按任意顺序 返回答案。
+
+示例 1：
+
+> 输入：nums = [1,2,3]
+> 
+> 输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+>
+
+示例 2：
+
+> 输入：nums = [0,1]
+> 
+> 输出：[[0,1],[1,0]]
+> 
+
+示例 3：
+
+> 输入：nums = [1]
+> 
+> 输出：[[1]]
+ 
+提示：
+
+> - 1 <= nums.length <= 6
+> 
+> - -10 <= nums[i] <= 10
+> 
+> - nums 中的所有整数 **互不相同**
+
+注：
+> ** 78. Subsets 子集 中等 元素无重不可复选 77. Combinations 组合 中等 元素无重不可复选 ** 的组合、子集问题使用 start 变量保持元素 nums[start] 之后只会出现 nums[start + 1..]中的元素，通过固定元素的相对位置保证不出现重复的子集。
+
+> 但是排列问题本身就是让你穷举元素的位置，nums[i]之后也可以出现nums[i]左边的元素，所以之前的那一套玩不转了，需要额外使用used数组来标记哪些元素还可以被选择。
+
+```
+// labuladong p276
+class Solution {
+    List<List<Integer>> res = new LinkedList<>();
+    // 记录回溯算法的递归路径
+    List<Integer> track = new LinkedList<>();
+    // track中的元素会被标记为true
+    boolean[] used;
+
+    public List<List<Integer>> permute(int[] nums) {
+        used = new boolean[nums.length];
+        backtrack(nums);
+        return res;
+    }
+
+    // 回溯算法核心函数
+    void backtrack(int[] nums) {
+        // base case，到达叶子结点
+        if (track.size() == nums.length) {
+            // 收集叶子节点上的值
+            res.add(new LinkedList<>(track));
+            return;
+        }
+
+        // 回溯算法标准框架
+        for (int i = 0; i < nums.length; i++) {
+            if (used[i]) {
+                continue;
+            }
+
+            // 做选择
+            track.add(nums[i]);
+            used[i] = true;
+            // 进入下一层回溯树
+            backtrack(nums);
+            // 取消选择
+            track.removeLast();
+            used[i] = false;
+        }
+    }
+}
+```
+
 ## 39. Combination Sum
 
 给你一个 无重复元素 的整数数组 candidates 和一个目标整数 target ，找出 candidates 中可以使数字和为目标数 target 的 所有 不同组合 ，并以列表形式返回。你可以按 任意顺序 返回这些组合。
