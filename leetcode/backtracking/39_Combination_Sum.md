@@ -8,8 +8,7 @@
 <li>90. Subsets II 子集 II 中等 元素可重不可复选</li>
 <li>40. 组合总和 II Combination Sum II 中等 元素可重不可复选</li>
 <li>47. Permutations II 全排列 II 中等 元素可重不可复选</li>
-<li>39. Combination Sum 组合总和</li>
-<li>39. Combination Sum</li>
+<li>39. Combination Sum 组合总和 中等 元素可重不可复选</li>
 </ol>
 
 ## 78. Subsets 子集 中等 元素无重不可复选
@@ -420,7 +419,7 @@ class Solution {
 ```
 ## 47. Permutations II 全排列 II 中等 元素可重不可复选
 
-给定一个可包含重复数字的序列 nums ，按任意顺序 返回所有不重复的全排列。
+给定一个可包含重复数字的序列 nums ，**按任意顺序** 返回所有不重复的全排列。
 
 示例 1：
 
