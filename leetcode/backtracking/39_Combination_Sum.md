@@ -4,7 +4,7 @@
 <ol>
 <li>78. Subsets 子集 中等 元素无重不可复选</li>
 <li>77. Combinations 组合 中等 元素无重不可复选</li>
-<li>39. Combination Sum</li>
+<li>46. Permutations 全排列 中等 元素无重不可复选</li>
 <li>39. Combination Sum</li>
 <li>39. Combination Sum</li>
 <li>39. Combination Sum</li>
@@ -137,7 +137,7 @@ class Solution {
 }
 ```
 
-## 46. Permutations 全排列
+## 46. Permutations 全排列 中等 元素无重不可复选
 
 给定一个不含重复数字的数组 nums ，返回其 所有可能的全排列 。你可以 按任意顺序 返回答案。
 
@@ -170,8 +170,8 @@ class Solution {
 > - nums 中的所有整数 **互不相同**
 
 注：
-> ** 78. Subsets 子集 中等 元素无重不可复选 77. Combinations 组合 中等 元素无重不可复选 ** 的组合、子集问题使用 start 变量保持元素 nums[start] 之后只会出现 nums[start + 1..]中的元素，通过固定元素的相对位置保证不出现重复的子集。
-
+> **78. Subsets 子集 中等 元素无重不可复选 77. Combinations 组合 中等 元素无重不可复选** 的组合、子集问题使用 start 变量保持元素 nums[start] 之后只会出现 nums[start + 1..]中的元素，通过固定元素的相对位置保证不出现重复的子集。
+>
 > 但是排列问题本身就是让你穷举元素的位置，nums[i]之后也可以出现nums[i]左边的元素，所以之前的那一套玩不转了，需要额外使用used数组来标记哪些元素还可以被选择。
 
 ```
