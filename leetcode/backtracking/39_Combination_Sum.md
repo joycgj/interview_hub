@@ -240,7 +240,7 @@ class Solution {
     void backtrack(int[] nums, int k) {
         // base case，到达第 k 层，收集节点的值
         if (track.size() == k) {
-            // 收集叶子节点上的值
+            // 第 k 层节点的值就是大小为 k 的排列
             res.add(new LinkedList<>(track));
             return;
         }
