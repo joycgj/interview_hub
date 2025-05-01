@@ -525,7 +525,7 @@ candidates 中的 **同一个** 数字可以 **无限制重复被选取** 。如
 > 
 > - 2 <= candidates[i] <= 40
 > 
-> - candidates 的所有元素 互不相同
+> - candidates 的所有元素 **互不相同**
 > 
 > - 1 <= target <= 40
 
