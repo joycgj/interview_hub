@@ -327,7 +327,7 @@ class Solution {
 }
 ```
 90. Subsets II 的 mermaid 回溯图。
-![这是图片](https://github.com/joycgj/interview_hub/blob/main/pictures/90_subset.png "Magic Gardens")
+![90. Subsets II](../../pictures/90_subset.png "")
 
 ## 40. Combination Sum II 组合总和 II 中等 元素可重不可复选
 
@@ -641,4 +641,4 @@ class Solution {
 ```
 
 491. Non-decreasing Subsequences 的回溯图。
-![这是图片](../../pictures/491_non_decreasing_subsequences.png "Magic Gardens")
+![491. Non-decreasing Subsequences](../../pictures/491_non_decreasing_subsequences.png "")
