@@ -9,6 +9,7 @@
 <li>40. Combination Sum II 组合总和 II 中等 元素可重不可复选</li>
 <li>47. Permutations II 全排列 II 中等 元素可重不可复选</li>
 <li>39. Combination Sum 组合总和 中等 元素可重不可复选</li>
+<li>491. Non-decreasing Subsequences 非递减子序列 中等 元素可重不可排序</li>
 </ol>
 
 ## 78. Subsets 子集 中等 元素无重不可复选
@@ -639,6 +640,15 @@ class Solution {
     }
 }
 ```
+注：
+
+> 90. Subsets II 需要排序，491. Non-decreasing Subsequences 不能排序
+>
+> 输入：nums = [4,7,6,7,8]
+>
+> 输出：[[4,7],[4,7,7],[4,7,7,8],[4,7,8],[4,6],[4,6,7],[4,6,7,8],[4,6,8],[4,8],[7,7],[7,7,8],[7,8],[6,7],[6,7,8],[6,8]]
+>
+> 如果不去重7，则会出现两次[7,8]
 
 491. Non-decreasing Subsequences 的回溯图。
 ![491. Non-decreasing Subsequences](../../pictures/491_non_decreasing_subsequences.png "")
