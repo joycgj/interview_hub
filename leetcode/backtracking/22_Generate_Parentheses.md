@@ -30,13 +30,15 @@
 
 ```
 class Solution {
+    List<String> res = new ArrayList<>();
+    StringBuilder track = new StringBuilder();
+
     public List<String> generateParenthesis(int n) {
-        List<String> res = new ArrayList<>();
-        backtrack(res, new StringBuilder(), 0, 0, n);
-        return res;
+        backtrack(n, 0, 0);
+        return res;      
     }
 
-    void backtrack(List<String> res, StringBuilder track, int open, int close, int n) {
+    void backtrack(int n, int open, int close) {
         // 触发结束条件：当前字符串长度达到 2n
         if (track.length() == n * 2) {
             res.add(track.toString());
@@ -45,16 +47,17 @@ class Solution {
 
         // open < n 排除不合法的选择
         if (open < n) {
-            track.append("("); // 做选择
-            backtrack(res, track, open + 1, close, n);  // 进入下一层决策树
-            track.deleteCharAt(track.length() - 1); // 取消选择
+            track.append("(");  // 做选择
+            backtrack(n, open + 1, close);  // 进入下一层决策树
+            track.deleteCharAt(track.length() - 1);     // 取消选择
         }
+
         // close < open 排除不合法的选择
         if (close < open) {
-            track.append(")"); // 做选择
-            backtrack(res, track, open, close + 1, n);  // 进入下一层决策树
-            track.deleteCharAt(track.length() - 1); // 取消选择
-        } 
+            track.append(")");  // 做选择
+            backtrack(n, open, close + 1);  // 进入下一层决策树
+            track.deleteCharAt(track.length() - 1);     // 取消选择
+        }
     }
 }
 ```
