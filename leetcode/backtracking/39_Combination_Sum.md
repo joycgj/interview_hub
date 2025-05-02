@@ -328,7 +328,7 @@ class Solution {
 }
 ```
 90. Subsets II 的 mermaid 回溯图。
-![90. Subsets II](../../pictures/90_subset.png "")
+![90. Subsets II](../../pictures/90_Subsets_II.png "")
 
 ## 40. Combination Sum II 组合总和 II 中等 元素可重不可复选
 
@@ -651,4 +651,4 @@ class Solution {
 > 如果不去重7，则会出现两次[7,8]
 
 491. Non-decreasing Subsequences 的回溯图。
-![491. Non-decreasing Subsequences](../../pictures/491_non_decreasing_subsequences.png "")
+![491. Non-decreasing Subsequences](../../pictures/491_Non_Decreasing_Subsequences.png "")
