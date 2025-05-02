@@ -578,4 +578,64 @@ class Solution {
 }
 ```
 
+## 491. Non-decreasing Subsequences 非递减子序列 中等
 
+给你一个整数数组 nums ，找出并返回所有该数组中不同的递增子序列，递增子序列中 **至少有两个元素** 。你可以按 **任意顺序** 返回答案。
+
+数组中可能含有重复元素，如出现两个整数相等，也可以视作递增序列的一种特殊情况。
+
+示例 1：
+
+> 输入：nums = [4,6,7,7]
+> 
+> 输出：[[4,6],[4,6,7],[4,6,7,7],[4,7],[4,7,7],[6,7],[6,7,7],[7,7]]
+
+示例 2：
+
+> 输入：nums = [4,4,3,2,1]
+> 
+> 输出：[[4,4]]
+ 
+提示：
+
+> - 1 <= nums.length <= 15
+> 
+> - -100 <= nums[i] <= 100
+
+```
+// 代码随想录p284
+class Solution {
+    List<List<Integer>> res = new ArrayList<>();
+    List<Integer> track = new LinkedList<>();
+
+    public List<List<Integer>> findSubsequences(int[] nums) {
+        backtrack(nums, 0);  
+        return res;  
+    }
+
+    void backtrack(int[] nums, int start) {
+        List<Integer> track1 = track;
+        if (track.size() >= 2) {
+            res.add(new ArrayList<>(track));
+        }
+
+        // 使用 set 对本层元素进行排序
+        Set<Integer> used = new HashSet<>();
+        for (int i = start; i < nums.length; i++) {
+            if (used.contains(nums[i])) {
+                continue;
+            }
+
+            if (!track.isEmpty() && nums[i] < track.getLast()) {
+                continue;
+            }
+
+            // 记录这个元素在本层用过了，本层后面不能再用了
+            used.add(nums[i]);
+            track.add(nums[i]);
+            backtrack(nums, i + 1);
+            track.removeLast();
+        }
+    }
+}
+```
