@@ -578,7 +578,7 @@ class Solution {
 }
 ```
 
-## 491. Non-decreasing Subsequences 非递减子序列 中等
+## 491. Non-decreasing Subsequences 非递减子序列 中等 元素可重不可排序
 
 给你一个整数数组 nums ，找出并返回所有该数组中不同的递增子序列，递增子序列中 **至少有两个元素** 。你可以按 **任意顺序** 返回答案。
 
@@ -639,3 +639,6 @@ class Solution {
     }
 }
 ```
+
+491. Non-decreasing Subsequences 的回溯图。
+![这是图片](../../pictures/491_non_decreasing_subsequences.png "Magic Gardens")
