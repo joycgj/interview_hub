@@ -84,10 +84,6 @@ class Node {
 - 空间复杂度：O(N)，哈希表存储所有节点的克隆。
 
 ```
-// DFS（深度优先搜索）
-// 思路
-// 1. 使用哈希表存储原节点和克隆节点的映射。
-// 2. 递归克隆每个节点及其邻居。
 class Solution {
     private Map<Node, Node> visited = new HashMap<>();
 
