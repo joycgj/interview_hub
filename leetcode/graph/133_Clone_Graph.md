@@ -407,8 +407,6 @@ public class Solution {
 - 空间复杂度：O(m×n)，用于存储访问记录
 
 ```
-import java.util.*;
-
 public class Solution {
     public boolean hasPath(int[][] maze, int[] start, int[] destination) {
         int m = maze.length, n = maze[0].length;
