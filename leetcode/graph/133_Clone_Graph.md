@@ -354,3 +354,92 @@ public class Solution {
     }
 }
 ```
+
+## 490. The Maze 迷宫 中等
+
+由空地（用 0 表示）和墙（用 1 表示）组成的迷宫 maze 中有一个球。球可以途经空地向 **上、下、左、右** 四个方向滚动，且在遇到墙壁前不会停止滚动。当球停下时，可以选择向下一个方向滚动。
+给你一个大小为 m x n 的迷宫 maze ，以及球的初始位置 start 和目的地 destination ，其中 start = [start<sub>row</sub>, start<sub>col</sub>] 且 destination = [destination<sub>row</sub>, destination<sub>col</sub>] 。请你判断球能否在目的地停下：如果可以，返回 true ；否则，返回 false 。
+
+你可以 **假定迷宫的边缘都是墙壁**（参考示例）。
+ 
+示例 1：
+![](../../pictures/490_maze_grid1.jpg "") 
+
+> 输入：maze = [[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]], start = [0,4], destination = [4,4]
+> 
+> 输出：true
+> 
+> 解释：一种可能的路径是 : 左 -> 下 -> 左 -> 下 -> 右 -> 下 -> 右。
+
+示例 2：
+![](../../pictures/490_maze_grid2.jpg "") 
+> 输入：maze = [[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]], start = [0,4], destination = [3,2]
+> 
+> 输出：false
+> 
+> 解释：不存在能够使球停在目的地的路径。注意，球可以经过目的地，但无法在那里停驻。
+
+示例 3：
+
+> 输入：maze = [[0,0,0,0,0],[1,1,0,0,1],[0,0,0,0,0],[0,1,0,0,1],[0,1,0,0,0]], start = [4,3], destination = [0,1]
+> 
+> 输出：false
+
+提示：
+
+- m == maze.length
+- n == maze[i].length
+- 1 <= m, n <= 100
+- maze[i][j] is 0 or 1.
+- start.length == 2
+
+**BFS（广度优先搜索）**
+
+思路:
+1. 使用BFS逐层探索可能的滚动路径
+2. 球每次滚动直到碰到墙壁才停止
+3. 记录已访问的停止点避免重复
+
+- 时间复杂度：O(m×n)，最坏情况下需要访问所有单元格
+- 空间复杂度：O(m×n)，用于存储访问记录
+
+```
+import java.util.*;
+
+public class Solution {
+    public boolean hasPath(int[][] maze, int[] start, int[] destination) {
+        int m = maze.length, n = maze[0].length;
+        boolean[][] visited = new boolean[m][n];
+        int[][] dirs = {{0,1}, {1,0}, {0,-1}, {-1,0}}; // 四个方向
+        
+        Queue<int[]> queue = new LinkedList<>();
+        queue.offer(start);
+        visited[start[0]][start[1]] = true;
+        
+        while (!queue.isEmpty()) {
+            int[] curr = queue.poll();
+            if (curr[0] == destination[0] && curr[1] == destination[1]) {
+                return true;
+            }
+            
+            for (int[] dir : dirs) {
+                int x = curr[0], y = curr[1];
+                // 沿着方向滚动直到碰到墙壁
+                while (x >= 0 && x < m && y >= 0 && y < n && maze[x][y] == 0) {
+                    x += dir[0];
+                    y += dir[1];
+                }
+                // 回退一步到停止点
+                x -= dir[0];
+                y -= dir[1];
+                
+                if (!visited[x][y]) {
+                    visited[x][y] = true;
+                    queue.offer(new int[]{x, y});
+                }
+            }
+        }
+        return false;
+    }
+}
+```
