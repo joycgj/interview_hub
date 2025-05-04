@@ -188,7 +188,73 @@ class Solution {
 > 
 > - beginWord != endWord
 > 
-> - wordList 中的所有字符串 **互不相同**    
+> - wordList 中的所有字符串 **互不相同**
+
+**广度优先搜索 + 优化建图解法**
+
+方法思路：
+1. 预处理建图：将字典中的每个单词通过通配符形式（如"hot"可以表示为"*ot"、"h*t"、"ho*"）建立映射关系，这样可以快速找到只差一个字母的相邻单词。
+2. BFS搜索：使用广度优先搜索从起始单词开始，通过预处理好的映射关系快速找到相邻单词，逐层搜索直到找到目标单词。
+
+复杂度分析
+- 时间复杂度：O(M×N)，其中M是单词长度，N是字典大小。预处理建图需要O(M×N)时间，BFS最坏情况下也需要O(M×N)时间。
+- 空间复杂度：O(M×N)，用于存储预处理后的图结构。
+```
+public class Solution {
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        // 将wordList转换为set提高查询效率
+        Set<String> dict = new HashSet<>(wordList);
+        if (!dict.contains(endWord)) {
+            return 0;
+        }
+        
+        // 预处理建图：建立通配符到实际单词的映射
+        // graph: 
+        // {"d*g":["dog"],"c*g":["cog"],"*og":["dog","log","cog"],"ho*":["hot"],
+        // "h*t":["hot"],"lo*":["lot","log"],"l*t":["lot"],"l*g":["log"],
+        // "do*":["dot","dog"],"co*":["cog"],"d*t":["dot"],"*ot":["hot","dot","lot"]}        
+        Map<String, List<String>> graph = new HashMap<>();
+        for (String word : wordList) {
+            for (int i = 0; i < word.length(); i++) {
+                String key = word.substring(0, i) + "*" + word.substring(i + 1);
+                graph.computeIfAbsent(key, k -> new ArrayList<>()).add(word);
+            }
+        }
+        
+        // BFS初始化
+        Queue<String> q = new LinkedList<>();
+        q.offer(beginWord);
+        Set<String> visited = new HashSet<>();
+        visited.add(beginWord);
+        int level = 1;
+        
+        while (!q.isEmpty()) {
+            int sz = q.size();
+            for (int i = 0; i < sz; i++) {
+                String curr = q.poll();
+                if (curr.equals(endWord)) {
+                    return level;
+                }
+                
+                // 生成所有可能的通配符形式
+                for (int j = 0; j < curr.length(); j++) {
+                    String key = curr.substring(0, j) + "*" + curr.substring(j + 1);
+                    // 获取所有相邻单词
+                    for (String neighbor : graph.getOrDefault(key, new ArrayList<>())) {
+                        if (!visited.contains(neighbor)) {
+                            visited.add(neighbor);
+                            q.offer(neighbor);
+                        }
+                    }
+                }
+            }
+            level++;
+        }
+        return 0;
+    }
+}
+```
+![](../../pictures/127_Word_Ladder_Map.png "") 
 
 BFS（广度优先搜索）
 
