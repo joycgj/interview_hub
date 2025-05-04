@@ -1,6 +1,10 @@
 
 # Recursion / Backtracking
 
+> 我的心得
+>
+> 要会画树，回溯一旦会画树，就基本上解决问题了。
+
 题目列表
 <ol>
 <li>22. Generate Parentheses 括号生成 中等</li>
