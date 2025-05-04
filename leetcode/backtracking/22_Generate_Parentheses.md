@@ -100,5 +100,40 @@ class Solution {
 >
 > - digits[i] 是范围 ['2', '9'] 的一个数字。
 
+```
+class Solution {
+    private static final String[] LETTERS = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+    public List<String> letterCombinations(String digits) {
+        List<String> res = new ArrayList<>();
+        if (digits == null || digits.isEmpty()) {
+            return res;
+        }
+        backtrack(res, digits, new StringBuilder(), 0);
+        return res;   
+    }
+
+    void backtrack(List<String> res, String digits, StringBuilder path, int index) {
+        if (index == digits.length()) {
+            res.add(path.toString());
+            return;
+        }
+
+        String letters = LETTERS[digits.charAt(index) - '0'];
+        for (char c : letters.toCharArray()) {
+            path.append(c);
+            backtrack(res, digits, path, index + 1);
+            path.deleteCharAt(path.length() - 1);
+        }
+    }
+}
+```
+
+复杂度分析
+
+时间复杂度：O(n4^n)，其中 n 为 digits 的长度。最坏情况下每次需要枚举 4 个字母，递归次数为一个满四叉树的节点个数，那么一共会递归 O(4^n)次（等比数列和），再算上加入答案时复制 path 需要 O(n) 的时间，所以时间复杂度为 O(n4^n)。
+
+空间复杂度：O(n)。返回值的空间不计。
+
 
 ![17.  Letter Combinations of a Phone Number](../../pictures/17_Letter_Combinations_of_a_Phone_Number.png "")
