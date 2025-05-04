@@ -4,6 +4,11 @@
 
 133. Clone Graph 克隆图 中等
 127. Word Ladder 单词接龙 困难
+433. Minimum Genetic Mutation 最小基因变化 中等
+
+> 注：
+> 
+> 127. Word Ladder 单词接龙 困难 和 433. Minimum Genetic Mutation 最小基因变化 中等 相似
 
 ## 133. Clone Graph 克隆图 中等
 
