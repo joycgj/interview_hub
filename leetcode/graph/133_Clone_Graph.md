@@ -256,54 +256,104 @@ public class Solution {
 ```
 ![](../../pictures/127_Word_Ladder_Map.png "") 
 
-BFS（广度优先搜索）
+## 433. Minimum Genetic Mutation 最小基因变化 中等
 
-思路：
-1. 使用BFS逐层搜索可能的转换路径。
-2. 通过修改每个字母生成新单词，检查是否在字典中。
+基因序列可以表示为一条由 8 个字符组成的字符串，其中每个字符都是 'A'、'C'、'G' 和 'T' 之一。
 
-- 时间复杂度：O(M × N)，其中 M 是单词长度，N 是字典大小。
-- 空间复杂度：O(N)，队列和哈希表的空间。
+假设我们需要调查从基因序列 start 变为 end 所发生的基因变化。一次基因变化就意味着这个基因序列中的一个字符发生了变化。
+
+- 例如，"AACCGGTT" --> "AACCGGTA" 就是一次基因变化。
+
+另有一个基因库 bank 记录了所有有效的基因变化，只有基因库中的基因才是有效的基因序列。（变化后的基因必须位于基因库 bank 中）
+
+给你两个基因序列 start 和 end ，以及一个基因库 bank ，请你找出并返回能够使 start 变化为 end 所需的最少变化次数。如果无法完成此基因变化，返回 -1 。
+
+注意：起始基因序列 start 默认是有效的，但是它并不一定会出现在基因库中。
+
+示例 1：
+
+> 输入：start = "AACCGGTT", end = "AACCGGTA", bank = ["AACCGGTA"]
+> 
+> 输出：1
+
+示例 2：
+
+> 输入：start = "AACCGGTT", end = "AAACGGTA", bank = ["AACCGGTA","AACCGCTA","AAACGGTA"]
+> 
+> 输出：2
+
+示例 3：
+
+> 输入：start = "AAAAACCC", end = "AACCCCCC", bank = ["AAAACCCC","AAACCCCC","AACCCCCC"]
+> 
+> 输出：3 
+
+提示：
+
+- start.length == 8
+- end.length == 8
+- 0 <= bank.length <= 10
+- bank[i].length == 8
+- start、end 和 bank[i] 仅由字符 ['A', 'C', 'G', 'T'] 组成
+
+广度优先搜索 + 优化建图解法（适用于最小基因变化问题）
+
+方法思路
+1. 预处理建图：将基因库中的每个基因序列通过通配符形式（如"AACCGGTA"可以表示为"\*ACCGGTA", "A\*CCGGTA"等）建立映射关系，这样可以快速找到只差一个碱基的相邻基因序列。
+2. BFS搜索：使用广度优先搜索从起始基因开始，通过预处理好的映射关系快速找到相邻基因序列，逐层搜索直到找到目标基因。
+
+复杂度分析
+- 时间复杂度：O(M×N)，其中M是基因长度（固定为8），N是基因库大小。预处理建图需要O(M×N)时间，BFS最坏情况下也需要O(M×N)时间。
+- 空间复杂度：O(M×N)，用于存储预处理后的图结构。
+
 ```
 public class Solution {
-    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
-        Set<String> dict = new HashSet<>(wordList);
-        if (!dict.contains(endWord)) {
-            return 0;
+    public int minMutation(String start, String end, String[] bank) {
+        // 将基因库转换为set提高查询效率
+        Set<String> bankSet = new HashSet<>(Arrays.asList(bank));
+        if (!bankSet.contains(end)) {
+            return -1;
         }
-
-        Queue<String> q = new LinkedList<>();
-        q.offer(beginWord);
         
-        int count = 1;
+        // 预处理建图：建立通配符到实际基因序列的映射
+        Map<String, List<String>> graph = new HashMap<>();
+        for (String gene : bank) {
+            for (int i = 0; i < gene.length(); i++) {
+                String key = gene.substring(0, i) + "*" + gene.substring(i + 1);
+                graph.computeIfAbsent(key, k -> new ArrayList<>()).add(gene);
+            }
+        }
+        
+        // BFS初始化
+        Queue<String> q = new LinkedList<>();
+        q.offer(start);
+        Set<String> visited = new HashSet<>();
+        visited.add(start);
+        int steps = 0;
+        
         while (!q.isEmpty()) {
             int size = q.size();
             for (int i = 0; i < size; i++) {
                 String curr = q.poll();
-                if (curr.equals(endWord))
-                    return count;
-
-                char[] chars = curr.toCharArray();
-                for (int j = 0; j < chars.length; j++) {
-                    char original = chars[j];
-                    for (char c = 'a'; c <= 'z'; c++) {
-                        if (c == original) {
-                            continue;
-                        }
-                        
-                        chars[j] = c;
-                        String newWord = new String(chars);
-                        if (dict.contains(newWord)) {
-                            q.offer(newWord);
-                            dict.remove(newWord); // 避免重复访问
+                if (curr.equals(end)) {
+                    return steps;
+                }
+                
+                // 生成所有可能的通配符形式
+                for (int j = 0; j < curr.length(); j++) {
+                    String key = curr.substring(0, j) + "*" + curr.substring(j + 1);
+                    // 获取所有相邻基因序列
+                    for (String neighbor : graph.getOrDefault(key, new ArrayList<>())) {
+                        if (!visited.contains(neighbor)) {
+                            visited.add(neighbor);
+                            q.offer(neighbor);
                         }
                     }
-                    chars[j] = original;
                 }
             }
-            count++;
+            steps++;
         }
-        return 0;
+        return -1;
     }
 }
 ```
