@@ -3,6 +3,7 @@
 题目列表
 
 133. Clone Graph 克隆图 中等
+127. Word Ladder 单词接龙 困难
 
 ## 133. Clone Graph 克隆图 中等
 
@@ -142,6 +143,167 @@ class Solution {
             }
         }
         return visited.get(node);
+    }
+}
+```
+
+## 127. Word Ladder 单词接龙 困难
+
+字典 wordList 中从单词 beginWord 到 endWord 的 **转换序列** 是一个按下述规格形成的序列 beginWord -> s<sub>1</sub> -> s<sub>2</sub> -> ... -> s<sub>k</sub>：
+
+- 每一对相邻的单词只差一个字母。
+- 对于 1 <= i <= k 时，每个 si 都在 wordList 中。注意， beginWord 不需要在 wordList 中。
+- s<sub>k</sub> == endWord
+
+给你两个单词 beginWord 和 endWord 和一个字典 wordList ，返回 从 beginWord 到 endWord 的 **最短转换序列** 中的 **单词数目** 。如果不存在这样的转换序列，返回 0 。
+
+ 
+示例 1：
+
+> 输入：beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log","cog"]
+> 
+> 输出：5
+> 
+> 解释：一个最短转换序列是 "hit" -> "hot" -> "dot" -> "dog" -> "cog", 返回它的长度 5。
+
+示例 2：
+
+> 输入：beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log"]
+> 
+> 输出：0
+> 
+> 解释：endWord "cog" 不在字典中，所以无法进行转换。
+ 
+提示：
+
+> - 1 <= beginWord.length <= 10
+> 
+> - endWord.length == beginWord.length
+> 
+> - 1 <= wordList.length <= 5000
+> 
+> - wordList[i].length == beginWord.length
+> 
+> - beginWord、endWord 和 wordList[i] 由小写英文字母组成
+> 
+> - beginWord != endWord
+> 
+> - wordList 中的所有字符串 **互不相同**
+
+**广度优先搜索 + 优化建图解法**
+
+方法思路：
+1. 预处理建图：将字典中的每个单词通过通配符形式（如"hot"可以表示为"*ot"、"h*t"、"ho*"）建立映射关系，这样可以快速找到只差一个字母的相邻单词。
+2. BFS搜索：使用广度优先搜索从起始单词开始，通过预处理好的映射关系快速找到相邻单词，逐层搜索直到找到目标单词。
+
+复杂度分析
+- 时间复杂度：O(M×N)，其中M是单词长度，N是字典大小。预处理建图需要O(M×N)时间，BFS最坏情况下也需要O(M×N)时间。
+- 空间复杂度：O(M×N)，用于存储预处理后的图结构。
+```
+public class Solution {
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        // 将wordList转换为set提高查询效率
+        Set<String> dict = new HashSet<>(wordList);
+        if (!dict.contains(endWord)) {
+            return 0;
+        }
+        
+        // 预处理建图：建立通配符到实际单词的映射
+        // graph: 
+        // {"d*g":["dog"],"c*g":["cog"],"*og":["dog","log","cog"],"ho*":["hot"],
+        // "h*t":["hot"],"lo*":["lot","log"],"l*t":["lot"],"l*g":["log"],
+        // "do*":["dot","dog"],"co*":["cog"],"d*t":["dot"],"*ot":["hot","dot","lot"]}        
+        Map<String, List<String>> graph = new HashMap<>();
+        for (String word : wordList) {
+            for (int i = 0; i < word.length(); i++) {
+                String key = word.substring(0, i) + "*" + word.substring(i + 1);
+                graph.computeIfAbsent(key, k -> new ArrayList<>()).add(word);
+            }
+        }
+        
+        // BFS初始化
+        Queue<String> q = new LinkedList<>();
+        q.offer(beginWord);
+        Set<String> visited = new HashSet<>();
+        visited.add(beginWord);
+        int level = 1;
+        
+        while (!q.isEmpty()) {
+            int sz = q.size();
+            for (int i = 0; i < sz; i++) {
+                String curr = q.poll();
+                if (curr.equals(endWord)) {
+                    return level;
+                }
+                
+                // 生成所有可能的通配符形式
+                for (int j = 0; j < curr.length(); j++) {
+                    String key = curr.substring(0, j) + "*" + curr.substring(j + 1);
+                    // 获取所有相邻单词
+                    for (String neighbor : graph.getOrDefault(key, new ArrayList<>())) {
+                        if (!visited.contains(neighbor)) {
+                            visited.add(neighbor);
+                            q.offer(neighbor);
+                        }
+                    }
+                }
+            }
+            level++;
+        }
+        return 0;
+    }
+}
+```
+![](../../pictures/127_Word_Ladder_Map.png "") 
+
+BFS（广度优先搜索）
+
+思路：
+1. 使用BFS逐层搜索可能的转换路径。
+2. 通过修改每个字母生成新单词，检查是否在字典中。
+
+- 时间复杂度：O(M × N)，其中 M 是单词长度，N 是字典大小。
+- 空间复杂度：O(N)，队列和哈希表的空间。
+```
+public class Solution {
+    public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+        Set<String> dict = new HashSet<>(wordList);
+        if (!dict.contains(endWord)) {
+            return 0;
+        }
+
+        Queue<String> q = new LinkedList<>();
+        q.offer(beginWord);
+        
+        int count = 1;
+        while (!q.isEmpty()) {
+            int size = q.size();
+            for (int i = 0; i < size; i++) {
+                String curr = q.poll();
+                if (curr.equals(endWord))
+                    return count;
+
+                char[] chars = curr.toCharArray();
+                for (int j = 0; j < chars.length; j++) {
+                    char original = chars[j];
+                    for (char c = 'a'; c <= 'z'; c++) {
+                        if (c == original) {
+                            continue;
+                        }
+                        
+                        chars[j] = c;
+                        String newWord = new String(chars);
+                        if (dict.contains(newWord)) {
+                            q.offer(newWord);
+                            dict.remove(newWord); // 避免重复访问
+                        }
+                    }
+                    chars[j] = original;
+                }
+            }
+            count++;
+        }
+        return 0;
     }
 }
 ```
