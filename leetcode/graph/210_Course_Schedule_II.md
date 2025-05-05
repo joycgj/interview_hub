@@ -239,7 +239,7 @@ class Solution {
     public String alienOrder(String[] words) {
 		// 入度表，26种字符
 		int[] indegree = new int[26];
-        // 入度为-1表示没有出现过
+		// 入度为-1表示没有出现过
 		Arrays.fill(indegree, -1);
 		for (String w : words) {
 			for (int i = 0; i < w.length(); i++) {
@@ -261,13 +261,13 @@ class Solution {
 			len = Math.min(cur.length(), next.length());
 			for (; j < len; j++) {
 				if (cur.charAt(j) != next.charAt(j)) {
-                    // 不同的时候构造有向边
+                    			// 不同的时候构造有向边
 					graph.get(cur.charAt(j) - 'a').add(next.charAt(j) - 'a');
 					indegree[next.charAt(j) - 'a']++;
 					break;
 				}
 			}
-            // 针对 abcd 在 abc之前
+            		// 针对 abcd 在 abc之前
 			if (j < cur.length() && j == next.length()) {
 				return "";
 			}
