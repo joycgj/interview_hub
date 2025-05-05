@@ -67,6 +67,48 @@ Topological Sorting
 - 若所有节点都被处理，则返回拓扑序列
 
 ```
+// 左程云 https://github.com/algorithmzuo/algorithm-journey/blob/main/src/class059/Code02_TopoSortDynamicLeetcode.java
+class Solution {
+    public int[] findOrder(int numCourses, int[][] prerequisites) {
+        List<List<Integer>> graph = new ArrayList<>();
+        // 0 ~ n - 1
+        for (int i = 0; i < numCourses; i++) {
+            graph.add(new ArrayList<>());
+        }         
+
+        // 入度表
+        int[] indegree = new int[numCourses];
+        for (int[] edge : prerequisites) {
+            graph.get(edge[1]).add(edge[0]);
+            indegree[edge[0]]++; 
+        }  
+
+        int[] q = new int[numCourses];
+        int l = 0, r = 0;
+
+        for (int i = 0; i < numCourses; i++) {
+            if (indegree[i] == 0) {
+                q[r++] = i;
+            }
+        } 
+
+        int cnt = 0;
+        while (l < r) {
+            int curr = q[l++];
+            cnt++;
+            for (int next : graph.get(curr)) {
+                if (--indegree[next] == 0) {
+                    q[r++] = next;
+                }
+            }
+        }
+
+        return cnt == numCourses ? q : new int[0];   
+    }
+}
+```
+
+```
 public class Solution {
     public int[] findOrder(int numCourses, int[][] prerequisites) {
         // 初始化邻接表和入度表
