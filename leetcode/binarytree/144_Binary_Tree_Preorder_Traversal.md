@@ -4,7 +4,7 @@
 | 题目      | 备注 |
 | ----------- | ----------- |
 |144. Binary Tree Preorder Traversal 二叉树的前序遍历 简单|        |
-|207. Course Schedule 课程表 中等| 和 210. Course Schedule II 相似，只是返回 true 或者 false|
+|94. Binary Tree Inorder Traversal 二叉树的中序遍历 简单| |
 |269. Alien Dictionary 火星词典 困难 |         |
 
 
