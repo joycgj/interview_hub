@@ -120,7 +120,7 @@ class Solution {
 给定一个二叉树的根节点 root ，返回 它的 **中序** 遍历 。
 
 示例 1：
-![](../../pictures/94_1.png "") 
+![](../../pictures/94_1.jpg "") 
 
 > 输入：root = [1,null,2,3]
 > 
