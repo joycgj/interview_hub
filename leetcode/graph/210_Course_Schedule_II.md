@@ -8,7 +8,6 @@ Topological Sorting
 |210. Course Schedule II 课程表 II 中等|        |
 |207. Course Schedule 课程表 中等| 和 210. Course Schedule II 相似，只是返回 true 或者 false|
 |269. Alien Dictionary 火星词典 困难 |         |
-|433. Minimum Genetic Mutation 最小基因变化 中等  |         |
 
 ## 210. Course Schedule II 课程表 II 中等
 
