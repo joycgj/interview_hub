@@ -59,7 +59,7 @@
 - [【算法讲解017【入门】二叉树及其三种序的递归实现】](https://www.bilibili.com/video/BV12p4y1V728/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
 - [【算法讲解018【入门】二叉树遍历的非递归实现和复杂度分析】 ](https://www.bilibili.com/video/BV15P411t7e2/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
 - [【算法讲解036【必备】二叉树高频题目-上-不含树型dp】](https://www.bilibili.com/video/BV1Rp4y1g7ys/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
-- [【算法讲解037【必备】二叉树高频题目-下-不含树型dp】] (https://www.bilibili.com/video/BV1194y16727/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
+- [【算法讲解037【必备】二叉树高频题目-下-不含树型dp】](https://www.bilibili.com/video/BV1194y16727/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
 
 **递归版 labuladong p72**
 ```
