@@ -6,6 +6,7 @@
 | 133. Clone Graph 克隆图 中等     |        |
 |127. Word Ladder 单词接龙 困难   |  127. Word Ladder 和 433. Minimum Genetic Mutation 相似       |
 |433. Minimum Genetic Mutation 最小基因变化 中等  |         |
+|490. The Maze 迷宫 中等  |         |
 
 ## 133. Clone Graph 克隆图 中等
 
@@ -363,6 +364,7 @@ public class Solution {
 你可以 **假定迷宫的边缘都是墙壁**（参考示例）。
  
 示例 1：
+
 ![](../../pictures/490_maze_grid1.jpg "") 
 
 > 输入：maze = [[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]], start = [0,4], destination = [4,4]
@@ -372,6 +374,7 @@ public class Solution {
 > 解释：一种可能的路径是 : 左 -> 下 -> 左 -> 下 -> 右 -> 下 -> 右。
 
 示例 2：
+
 ![](../../pictures/490_maze_grid2.jpg "") 
 > 输入：maze = [[0,0,1,0,0],[0,0,0,0,0],[0,0,0,1,0],[1,1,0,1,1],[0,0,0,0,0]], start = [0,4], destination = [3,2]
 > 
@@ -404,8 +407,6 @@ public class Solution {
 - 空间复杂度：O(m×n)，用于存储访问记录
 
 ```
-import java.util.*;
-
 public class Solution {
     public boolean hasPath(int[][] maze, int[] start, int[] destination) {
         int m = maze.length, n = maze[0].length;
