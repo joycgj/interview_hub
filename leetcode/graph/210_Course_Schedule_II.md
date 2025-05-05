@@ -58,6 +58,14 @@ Topological Sorting
 - 这个图的边必须是有方向的；
 - 图内无环。
 
+拓扑排序（Kahn算法/BFS）
+​​思路​​：
+
+- 构建入度表和邻接表
+- 将入度为0的节点加入队列
+- 依次处理队列中的节点，减少相邻节点的入度
+- 若所有节点都被处理，则返回拓扑序列
+
 ```
 public class Solution {
     public int[] findOrder(int numCourses, int[][] prerequisites) {
