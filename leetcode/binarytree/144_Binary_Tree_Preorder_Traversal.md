@@ -55,6 +55,34 @@
 
 **进阶：** 递归算法很简单，你可以通过迭代算法完成吗？
 
+**递归版 labuladongp72**
+```
+class Solution {
+    List<Integer> res = new ArrayList<>();
+
+    public List<Integer> preorderTraversal(TreeNode root) {
+        if (root == null) {
+            return res;
+        }   
+
+        traverse(root);
+        return res;
+    }
+
+    // 没有返回值的函数命名为 void traverse()
+    void traverse(TreeNode root) {
+        if (root == null) {
+            return;
+        }
+
+        // 前序位置
+        res.add(root.val);
+        traverse(root.left);
+        traverse(root.right);
+    }
+}
+```
+
 **非递归版**
 ```
 class Solution {
