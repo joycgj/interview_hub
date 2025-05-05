@@ -52,7 +52,9 @@ Topological Sorting
 
 
 这个视频把原理讲解的挺好 [LeetCode 每日一题 Daily Challenge 210 Course Schedule II](https://www.bilibili.com/video/BV1qt4y1X7oC/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
-
+[拓扑排序只是针对特定的一类图，那么是针对哪类图的呢？答：Directed acyclic graph (DAG)，有向无环图。即：](https://zhuanlan.zhihu.com/p/135094687)
+- 这个图的边必须是有方向的；
+- 图内无环。
 
 ```
 public class Solution {
