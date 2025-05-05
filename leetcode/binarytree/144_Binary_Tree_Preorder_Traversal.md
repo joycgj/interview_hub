@@ -55,7 +55,7 @@
 
 **进阶：** 递归算法很简单，你可以通过迭代算法完成吗？
 
-**递归版 labuladongp72**
+**递归版 labuladong p72**
 ```
 class Solution {
     List<Integer> res = new ArrayList<>();
