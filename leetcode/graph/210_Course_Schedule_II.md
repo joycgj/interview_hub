@@ -67,6 +67,7 @@ Topological Sorting
 - 若所有节点都被处理，则返回拓扑序列
 
 [左程云 邻接表+数组实现的队列 【算法讲解059【必备】建图、链式前向星、拓扑排序】](https://www.bilibili.com/video/BV1rj411k7tS/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
+
 [代码地址](https://github.com/algorithmzuo/algorithm-journey/blob/main/src/class059/Code02_TopoSortDynamicLeetcode.java)
 
 ```
