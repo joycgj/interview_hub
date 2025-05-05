@@ -6,6 +6,7 @@ Topological Sorting
 | 题目      | 备注 |
 | ----------- | ----------- |
 |210. Course Schedule II 课程表 II 中等|        |
+|207. Course Schedule 课程表 中等| 和 210. Course Schedule II 相似，只是返回 true 或者 false|
 |269. Alien Dictionary   |  127. Word Ladder 和 433. Minimum Genetic Mutation 相似       |
 |433. Minimum Genetic Mutation 最小基因变化 中等  |         |
 |490. The Maze 迷宫 中等  |         |
