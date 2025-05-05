@@ -1,4 +1,10 @@
-二叉树前、中、后三种递归遍历和迭代遍历
+- [二叉树前、中、后三种递归遍历和迭代遍历](#-------------------)
+  * [144. Binary Tree Preorder Traversal 二叉树的前序遍历 简单](#144-binary-tree-preorder-traversal------------)
+  * [94. Binary Tree Inorder Traversal 二叉树的中序遍历 简单](#94-binary-tree-inorder-traversal------------)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+# 二叉树前、中、后三种递归遍历和迭代遍历
 
 题目列表
 | 题目      | 备注 |
