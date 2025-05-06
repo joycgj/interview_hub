@@ -1,3 +1,5 @@
+# 二叉树前序、中序、后序的递归遍历和迭代遍历
+
   * [144. Binary Tree Preorder Traversal 二叉树的前序遍历 简单](#144-binary-tree-preorder-traversal------------)
     + [递归](#--)
     + [迭代](#--)
@@ -7,8 +9,6 @@
   * [145. Binary Tree Postorder Traversal 二叉树的后序遍历 简单](#145-binary-tree-postorder-traversal------------)
     + [递归](#---2)
     + [迭代](#---2)
-
-# 二叉树前序、中序、后序的递归遍历和迭代遍历
 
 参考了左程云的视频讲解
 - [【算法讲解017【入门】二叉树及其三种序的递归实现】](https://www.bilibili.com/video/BV12p4y1V728/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
