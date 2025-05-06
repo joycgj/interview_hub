@@ -202,3 +202,72 @@ class Solution {
     }
 }
 ```
+
+## 145. Binary Tree Postorder Traversal 二叉树的后序遍历 简单
+
+给你一棵二叉树的根节点 root ，返回其节点值的 **后序遍历** 。
+
+示例 1：
+
+> 输入：root = [1,null,2,3]
+>
+> 输出：[3,2,1]
+> 
+> 解释：
+
+![](../../pictures/145_1.png "") 
+
+示例 2：
+
+> 输入：root = [1,2,3,4,5,null,8,null,null,6,7,9]
+>
+> 输出：[4,6,7,5,2,9,8,3,1]
+>
+> 解释：
+
+![](../../pictures/145_2.png "") 
+
+示例 3：
+
+> 输入：root = []
+>
+> 输出：[]
+
+示例 4：
+
+> 输入：root = [1]
+>
+> 输出：[1]
+
+提示：
+
+- 树中节点的数目在范围 [0, 100] 内
+- -100 <= Node.val <= 100
+ 
+**进阶：**递归算法很简单，你可以通过迭代算法完成吗？
+
+**递归版**
+```
+class Solution {
+    List<Integer> res = new ArrayList<>();
+
+    public List<Integer> postorderTraversal(TreeNode root) {
+        traverse(root);
+        return res;  
+    }
+
+    // 二叉树遍历函数
+    // 没有返回值的函数命名为 void traverse()
+    void traverse(TreeNode root) {
+        if (root == null) {
+            return;
+        }    
+
+        traverse(root.left);
+        traverse(root.right);
+        // 后序位置
+        res.add(root.val);
+    }
+}
+```
+
