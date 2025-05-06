@@ -120,8 +120,8 @@ class Solution {
 
 示例 1：
 
-![](../../pictures/94_1.jpg "") 
-
+> ![](../../pictures/94_1.jpg "") 
+>
 > 输入：root = [1,null,2,3]
 > 
 > 输出：[1,3,2]
@@ -204,8 +204,9 @@ class Solution {
 > 输出：[3,2,1]
 > 
 > 解释：
-
-![](../../pictures/145_1.png "") 
+>
+> ![](../../pictures/145_1.png "")
+> 
 
 示例 2：
 
@@ -215,7 +216,8 @@ class Solution {
 >
 > 解释：
 >
-> ![](../../pictures/145_2.png "") 
+> ![](../../pictures/145_2.png "")
+> 
 
 示例 3：
 
@@ -237,6 +239,7 @@ class Solution {
 **进阶：** 递归算法很简单，你可以通过迭代算法完成吗？
 
 ### 递归
+
 ```
 class Solution {
     List<Integer> res = new ArrayList<>();
@@ -257,6 +260,52 @@ class Solution {
         traverse(root.right);
         // 后序位置
         res.add(root.val);
+    }
+}
+```
+
+### 迭代
+
+![](../../pictures/145_3.png "")
+
+需要参考先序：
+- 先序： 中 左 右
+- 先序': 中 右 左 
+- 先序'反转得到后序
+- 后序： 左 右 中
+
+一句话，会了先序的迭代，就会了后序的迭代，只不过后序使用了两个stack，第二个stack用来反转。
+
+[左程云](https://github.com/algorithmzuo/algorithm-journey/blob/main/src/class018/BinaryTreeTraversalIteration.java)
+
+左程云这个地方讲解的比较清楚
+[【算法讲解018【入门】二叉树遍历的非递归实现和复杂度分析】 【精准空降到 22:58】](https://www.bilibili.com/video/BV15P411t7e2/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743&t=1378)
+
+```
+class Solution {
+    public List<Integer> postorderTraversal(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        if (root == null) {
+            return res;
+        }
+
+        Deque<TreeNode> stack = new ArrayDeque<>();
+        Deque<TreeNode> collect = new ArrayDeque<>();
+        stack.push(root);
+        while (!stack.isEmpty()) {
+            TreeNode curr = stack.pop();
+            collect.push(curr);
+            if (curr.left != null) {
+                stack.push(curr.left);
+            }
+            if (curr.right != null) {
+                stack.push(curr.right);
+            }
+        }
+        while (!collect.isEmpty()) {
+            res.add(collect.pop().val);
+        }
+        return res;
     }
 }
 ```
