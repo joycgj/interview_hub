@@ -67,10 +67,6 @@ class Solution {
     List<Integer> res = new ArrayList<>();
 
     public List<Integer> preorderTraversal(TreeNode root) {
-        if (root == null) {
-            return res;
-        }   
-
         traverse(root);
         return res;
     }
@@ -154,10 +150,6 @@ class Solution {
     List<Integer> res = new ArrayList<>();
 
     public List<Integer> inorderTraversal(TreeNode root) {
-        if (root == null) {
-            return res;
-        }
-
         traverse(root);
         return res;
     }
