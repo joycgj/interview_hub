@@ -28,7 +28,7 @@ labuladong p73 也讲得不错
 >
 > 解释：
 >
-> ![](../../pictures/144_Binary_Tree_Preorder_Traversal_1.png "") 
+> ![](../../pictures/144_1.png "") 
 
 示例 2：
 
@@ -38,7 +38,7 @@ labuladong p73 也讲得不错
 > 
 > 解释：
 >
-> ![](../../pictures/144_Binary_Tree_Preorder_Traversal_2.png "") 
+> ![](../../pictures/144_2.png "") 
 
 示例 3：
 
