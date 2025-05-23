@@ -1,16 +1,14 @@
-# Recursion / Backtracking
+- [Recursion / Backtracking](#recursion--backtracking)
+  - [78. Subsets 子集 中等 元素无重不可复选](#78-subsets-子集-中等-元素无重不可复选)
+  - [77. Combinations 组合 中等 元素无重不可复选](#77-combinations-组合-中等-元素无重不可复选)
+  - [46. Permutations 全排列 中等 元素无重不可复选](#46-permutations-全排列-中等-元素无重不可复选)
+  - [90. Subsets II 子集 II 中等 元素可重不可复选](#90-subsets-ii-子集-ii-中等-元素可重不可复选)
+  - [40. Combination Sum II 组合总和 II 中等 元素可重不可复选](#40-combination-sum-ii-组合总和-ii-中等-元素可重不可复选)
+  - [47. Permutations II 全排列 II 中等 元素可重不可复选](#47-permutations-ii-全排列-ii-中等-元素可重不可复选)
+  - [39. Combination Sum 组合总和 中等 元素可重不可复选](#39-combination-sum-组合总和-中等-元素可重不可复选)
+  - [491. Non-decreasing Subsequences 非递减子序列 中等 元素可重不可排序](#491-non-decreasing-subsequences-非递减子序列-中等-元素可重不可排序)
 
-题目列表
-<ol>
-<li>78. Subsets 子集 中等 元素无重不可复选</li>
-<li>77. Combinations 组合 中等 元素无重不可复选</li>
-<li>46. Permutations 全排列 中等 元素无重不可复选</li>
-<li>90. Subsets II 子集 II 中等 元素可重不可复选</li>
-<li>40. Combination Sum II 组合总和 II 中等 元素可重不可复选</li>
-<li>47. Permutations II 全排列 II 中等 元素可重不可复选</li>
-<li>39. Combination Sum 组合总和 中等 元素可重不可复选</li>
-<li>491. Non-decreasing Subsequences 非递减子序列 中等 元素可重不可排序</li>
-</ol>
+# Recursion / Backtracking
 
 ## 78. Subsets 子集 中等 元素无重不可复选
 
