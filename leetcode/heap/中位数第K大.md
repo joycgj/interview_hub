@@ -48,40 +48,92 @@
 **思路：**
 
 - 用 **两个堆** 来维护数据流的中位数：
-	- 最大堆 left：存储较小一半，堆顶是最大值
-	- 最小堆 right：存储较大一半，堆顶是最小值
-	- 保持：left.size() == right.size() 或 left.size() == right.size() + 1
+	- 最大堆 maxHeap：存储较小一半，堆顶是最大值
+	- 最小堆 minHeap：存储较大一半，堆顶是最小值
+	- 保持：maxHeap.size() == minHeap.size() 或 maxHeap.size() == minHeap.size() + 1
+  
+```
+class MedianFinder {
+    DualHeap dh;
+
+    public MedianFinder() {
+        dh = new DualHeap();   
+    }
+    
+    public void addNum(int num) {
+        dh.addNum(num);  
+    }
+    
+    public double findMedian() {
+        return dh.findMedian();
+    }
+
+    private static class DualHeap {
+        // 大根堆
+        private PriorityQueue<Integer> maxHeap;
+        // 小根堆
+        private PriorityQueue<Integer> minHeap;
+
+        public DualHeap() {
+            minHeap = new PriorityQueue<>((a, b) -> a.compareTo(b));
+            maxHeap = new PriorityQueue<>((a, b) -> b.compareTo(a));
+        }
+
+        public double findMedian() {
+            return maxHeap.size() > minHeap.size() ? maxHeap.peek() : ((double) minHeap.peek() + maxHeap.peek()) / 2.0;
+        }
+
+        public void addNum(int num) {
+            // 小于等于大根堆堆顶或者大根堆为空(优先放入大根堆)
+            if (maxHeap.size() == 0 || num <= maxHeap.peek()) {
+                maxHeap.offer(num);
+            } else {
+                minHeap.offer(num);
+            }
+            makebalance();
+        }
+
+        public void makebalance() {
+            if (minHeap.size() > maxHeap.size()) {
+                maxHeap.offer(minHeap.poll());
+            } else if (maxHeap.size() > minHeap.size() + 1) {
+                minHeap.offer(maxHeap.poll());
+            }
+        }  
+    }  
+}
+```
 
 ```
 class MedianFinder {
     // 最大堆（存左半边）
-    PriorityQueue<Integer> left;
+    PriorityQueue<Integer> maxHeap;
     // 最小堆（存右半边）
-    PriorityQueue<Integer> right;
+    PriorityQueue<Integer> minHeap;
 
     public MedianFinder() {
-        left = new PriorityQueue<>((a, b) -> b - a);   
-        right = new PriorityQueue<>((a, b) -> a - b);     
+        maxHeap = new PriorityQueue<>((a, b) -> b - a);   
+        minHeap = new PriorityQueue<>((a, b) -> a - b);     
     }
     
     public void addNum(int num) {
         // 先加入最大堆
-        left.offer(num);
+        maxHeap.offer(num);
         // 平衡两个堆（大数移到右边）
-        right.offer(left.poll());
+        minHeap.offer(maxHeap.poll());
 
         // 保持左边数量不少于右边（中位数在左/中间）
-        if (left.size() < right.size()) {
-            left.offer(right.poll());
+        if (maxHeap.size() < minHeap.size()) {
+            maxHeap.offer(minHeap.poll());
         }
     }
     
     public double findMedian() {
-        if (left.size() > right.size()) {
-            return left.peek(); // 奇数个，最大堆堆顶为中位数
+        if (maxHeap.size() > minHeap.size()) {
+            return maxHeap.peek(); // 奇数个，最大堆堆顶为中位数
         } 
         // 偶数个
-        return (left.peek() + right.peek()) / 2.0; 
+        return (maxHeap.peek() + minHeap.peek()) / 2.0; 
     }
 }
 ```
