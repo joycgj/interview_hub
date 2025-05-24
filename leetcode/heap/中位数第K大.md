@@ -170,7 +170,9 @@ class MedianFinder {
 - 你可以假设 k 始终有效，即：k 始终小于等于输入的非空数组的元素个数。
 - 与真实值误差在 10 ^ -5 以内的答案将被视作正确答案。
 
-通过不了用例 [-2147483648,-2147483648,2147483647,-2147483648 的，把最大堆改为 new PriorityQueue<>((o1,o2)->Integer.compare(o2,o1))
+双堆 + 延迟删除机制（最优解 ✅） 和295. Find Median from Data Stream相似
+
+采用延迟删除策略 先在删除表中记录 只有当该元素出现在大根堆或小根堆堆顶的时候才删除
 
 ```
 class Solution {
@@ -277,7 +279,6 @@ class Solution {
     }
 }
 ```
-[收到了启发](https://blog.csdn.net/qq_44822951/article/details/123727498)
 
 时间 & 空间复杂度分析：
 | 操作                     | 复杂度说明                  |
@@ -286,4 +287,9 @@ class Solution {
 | `getMedian()`          | `O(1)`                 |
 | 总体时间复杂度                | `O(n log k)` — 最优 ✅    |
 | 空间复杂度                  | `O(k)` — 存储窗口内元素 + 延迟表 |
+
+[收到了启发](https://blog.csdn.net/qq_44822951/article/details/123727498)
+通过不了用例 [-2147483648,-2147483648,2147483647,-2147483648 的，把最大堆改为 new PriorityQueue<>((o1,o2)->Integer.compare(o2,o1))
+
+
 
