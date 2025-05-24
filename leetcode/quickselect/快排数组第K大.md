@@ -26,63 +26,63 @@
 - 1 <= k <= nums.length <= 10<sup>5</sup>
 - -10<sup>4</sup> <= nums[i] <= 10<sup>4</sup>
 
+![](../../pictures/912_1.png "")
+
+![](../../pictures/912_2.png "")
+
+[左程云 023随机快速排序](https://github.com/algorithmzuo/algorithm-journey/blob/main/src/class023/Code02_QuickSort.java)
+
 ```
-// labuladong 快速排序 p235
 class Solution {
-    public int findKthLargest(int[] nums, int k) {
-        int l = 0, h = nums.length - 1;
-        k = nums.length - k;
-        while (l <= h) {
-            int p = partition(nums, l, h);
-            if (p < k) {
-                l = p + 1;
-            } else if (p > k) {
-                h = p - 1;
-            } else {
-                return nums[p];
-            }
-        }
-        return -1;
+    public int[] sortArray(int[] nums) {
+        quickSort(nums, 0, nums.length - 1);
+        return nums;
     }
 
-    // 对nums[l..h]进行切分
-    int partition(int[] nums, int l, int h) {
-        int pivot = nums[l];
-        // 关于区间的边界控制应格外小心，稍有不慎就会出错
-        // 这里把i,j定义为开区间，同时定义
-        // [l, i) <= pivot; (j, h] > pivot
-        // 之后都要正确维护这个边界区间的定义
-        int i = l + 1, j = h;
-        // 当i>j时结束循环，以保证区间[l..h]都被覆盖
-        while (i <= j) {
-            while (i < h && nums[i] <= pivot) {
-                i++; // 此while结束时恰好nums[i]>pivot
-            }
-            while (j > l && nums[j] > pivot) {
-                j--; // 此while结束时恰好nums[j]<=pivot
-            }
-            if (i >= j) {
-                break;
-            }
-            // 此时[l, i) <= pivot && (j, h] > pivot
-            // 交换nums[j]和nums[i]
-            swap(nums, i, j);
+    private void quickSort(int[] arr, int l, int r) {
+        // l == r，只有一个数
+        // l > r，范围不存在，不用管        
+        if (l >= r) {
+            return;
         }
-        // 最后将pivot放到合适的位置，即pivot左边元素较小，右边元素较大
-        swap(nums, l, j);
-        return j;
-    }   
+        // 随机这一下，常数时间比较大
+        // 但只有这一下随机，才能在概率上把快速排序的时间复杂度收敛到O(n * logn)
+        // l......r 随机选一个位置，x这个值，做划分 
+        // Math.random() 方法返回一个伪随机的 double 类型数字，范围从0.0到1.0
+        int x = arr[l + (int) (Math.random() * (r - l + 1))];
+        int[] res = partition(arr, l, r, x);
+        // 为了防止底层的递归过程覆盖全局变量
+        // 这里用临时变量记录first、last
+        int left = res[0];
+        int right = res[1];
+        quickSort(arr, l, left - 1);
+        quickSort(arr, right + 1, r);
+    }
 
-    void swap(int[] nums, int i, int j) {
-        int tmp = nums[i];
-        nums[i] = nums[j];
-        nums[j] = tmp;
+    // 荷兰国旗问题 分为三部分
+    // 已知arr[l....r]范围上一定有x这个值
+    // 划分数组 <x放左边，==x放中间，>x放右边
+    // 把全局变量first, last，更新成==x区域的左右边界
+    private int[] partition(int[] arr, int l, int r, int x) {
+        int first = l;
+        int last = r;
+        int i = l;
+        while (i <= last) {
+            if (arr[i] == x) {
+                i++;
+            } else if (arr[i] < x) {
+                swap(arr, first++, i++);
+            } else {
+                swap(arr, i, last--);
+            }
+        }
+        return new int[] { first, last };
+    }
+
+    private void swap(int[] arr, int i, int j) {
+        int tmp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = tmp;
     }
 }
 ```
-
-- 平均时间复杂度：O(n) 
-- 最坏时间复杂度：O(n²)（极端情况）
-- 空间复杂度：O(1)（原地划分）
-
-说明：理论上最快，面试时非常高频，但需注意最坏情况
