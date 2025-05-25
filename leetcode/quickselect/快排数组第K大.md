@@ -169,7 +169,7 @@ class Solution {
 }
 ```
 
-75. Sort Colors 颜色分类 中等
+## 75. Sort Colors 颜色分类 中等
 
 给定一个包含红色、白色和蓝色、共 n 个元素的数组 nums ，**原地** 对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
 
@@ -222,3 +222,59 @@ class Solution {
     }
 }
 ```
+
+## 905. Sort Array By Parity 按奇偶排序数组 简单
+
+给你一个整数数组 nums，将 nums 中的的所有偶数元素移动到数组的前面，后跟所有奇数元素。
+
+返回满足此条件的 **任一数组** 作为答案。
+
+示例 1：
+
+> 输入：nums = [3,1,2,4]
+> 
+> 输出：[2,4,3,1]
+> 
+> 解释：[4,2,3,1]、[2,4,1,3] 和 [4,2,1,3] 也会被视作正确答案。
+
+示例 2：
+
+> 输入：nums = [0]
+> 
+> 输出：[0]
+ 
+提示：
+
+- 1 <= nums.length <= 5000
+- 0 <= nums[i] <= 5000
+
+```
+class Solution {
+    public int[] sortArrayByParity(int[] nums) {
+        int l = 0, r = nums.length - 1;
+        // 双指针：类似荷兰国旗划分
+        while (l < r) {
+            if (nums[l] % 2 == 0) {
+                l++;    // 如果左边是偶数，跳过
+            } else if (nums[r] % 2 == 1) {
+                r--;    // 如果右边是奇数，跳过
+            } else {
+                // 左是奇数，右是偶数，交换
+                swap(nums, l++, r--);
+            }
+        }   
+        return nums; 
+    }
+
+    private void swap(int[] nums, int i, int j){
+        int tmp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = tmp;
+    }
+}
+```
+
+复杂度分析
+
+- 时间复杂度：O(n)。原数组中每个元素只遍历一次。
+- 空间复杂度：O(1)。原地排序，只消耗常数空间。
