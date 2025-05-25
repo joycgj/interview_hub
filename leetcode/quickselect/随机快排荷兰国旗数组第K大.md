@@ -1,4 +1,7 @@
 - [912. Sort an Array 排序数组 中等](#912-sort-an-array-排序数组-中等)
+  - [随机快速排序](#随机快速排序)
+  - [归并排序非递归](#归并排序非递归)
+  - [归并排序递归](#归并排序递归)
 - [215. Kth Largest Element in an Array 数组中的第K个最大元素 中等](#215-kth-largest-element-in-an-array-数组中的第k个最大元素-中等)
 - [75. Sort Colors 颜色分类 中等](#75-sort-colors-颜色分类-中等)
 - [905. Sort Array By Parity 按奇偶排序数组 简单](#905-sort-array-by-parity-按奇偶排序数组-简单)
@@ -28,6 +31,8 @@
 
 - 1 <= nums.length <= 5 * 10<sup>4</sup>
 - -5 * 10<sup>4</sup> <= nums[i] <= 5 * 10<sup>4</sup>
+
+### 随机快速排序
 
 ![](../../pictures/912_1.png "")
 ![](../../pictures/912_2.png "")
@@ -86,6 +91,108 @@ class Solution {
         int tmp = arr[i];
         arr[i] = arr[j];
         arr[j] = tmp;
+    }
+}
+```
+
+### 归并排序非递归
+
+![](../../pictures/912_4.png "")
+
+![](../../pictures/912_3.png "")
+
+- [算法讲解021【必备】归并排序-代码](https://github.com/algorithmzuo/algorithm-journey/blob/main/src/class021/Code01_MergeSort.java)
+- [算法讲解021【必备】归并排序-视频](https://www.bilibili.com/video/BV1wu411p7r7/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
+
+```
+class Solution {
+    int[] help;
+
+    // 归并排序非递归版
+    // 时间复杂度O(n * logn)
+    // 空间复杂度O(n)
+    public int[] sortArray(int[] nums) {
+        int n = nums.length;
+        help = new int[n];
+        for (int l, m, r, step = 1; step < n; step <<= 1) {
+            // 内部分组merge，时间复杂度O(n)
+            l = 0;
+            while (l < n) {
+                // if step is 4, 0 1 2 3
+                //               l     m, m = l + 4 - 1
+                m = l + step - 1;
+                if (m + 1 >= n) {
+                    break; // 已经没有右侧了
+                }
+                // 有右侧，求右侧的右边界
+                r = Math.min(l + (step << 1) - 1, n - 1);
+                // l...m m+1...r
+                merge(nums, l, m, r);
+                l = r + 1;
+            }
+        } 
+        return nums;  
+    }
+
+    private void merge(int[] arr, int l, int m, int r) {
+        int i = l;
+        int a = l;
+        int b = m + 1;
+        while (a <= m && b <= r) {
+            help[i++] = arr[a] <= arr[b] ? arr[a++] : arr[b++];
+        }
+        while (a <= m) {
+            help[i++] = arr[a++];
+        }
+        while (b <= r) {
+            help[i++] = arr[b++];
+        }
+        for (i = l; i <= r; i++) {
+            arr[i] = help[i];
+        }
+    }    
+}
+```
+
+### 归并排序递归
+
+```
+class Solution {
+    int[] help;
+
+    public int[] sortArray(int[] nums) {
+        help = new int[nums.length];
+        sort(nums, 0, nums.length - 1);
+        return nums;   
+    }
+
+    private void sort(int[] arr, int l, int r) {  
+        if (l == r) {
+            return; // 单个元素不用排序
+        }
+
+        int m = l + (r - l) / 2;
+        sort(arr, l, m); // 先对左半部分数组nums[l..mid]排序
+        sort(arr, m + 1, r); // 再对右半部分数组nums[mid+1..r]排序
+        merge(arr, l, m, r); // 将两部分有序数组合并成一个有序数组
+    }
+
+    private void merge(int[] arr, int l, int m, int r) {
+        int i = l;
+        int a = l;
+        int b = m + 1;
+        while (a <= m && b <= r) {
+            help[i++] = arr[a] <= arr[b] ? arr[a++] : arr[b++];
+        }
+        while (a <= m) {
+            help[i++] = arr[a++];
+        }
+        while (b <= r) {
+            help[i++] = arr[b++];
+        }
+        for (i = l; i <= r; i++) {
+            arr[i] = help[i];
+        }
     }
 }
 ```
