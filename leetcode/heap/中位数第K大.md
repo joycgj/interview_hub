@@ -1,3 +1,6 @@
+- [295. Find Median from Data Stream 数据流的中位数 困难](#295-find-median-from-data-stream-数据流的中位数-困难)
+- [480. Sliding Window Median 滑动窗口中位数 困难](#480-sliding-window-median-滑动窗口中位数-困难)
+
 ## 295. Find Median from Data Stream 数据流的中位数 困难
 
 **中位数** 是有序整数列表中的中间值。如果列表的大小是偶数，则没有中间值，中位数是两个中间值的平均值。
