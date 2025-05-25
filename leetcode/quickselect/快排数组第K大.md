@@ -21,11 +21,11 @@
 - 1 <= nums.length <= 5 * 10<sup>4</sup>
 - -5 * 10<sup>4</sup> <= nums[i] <= 5 * 10<sup>4</sup>
 
-- ![](../../pictures/912_1.png "")
-- ![](../../pictures/912_2.png "")
+![](../../pictures/912_1.png "")
+![](../../pictures/912_2.png "")
 
-[023随机快速排序代码](https://github.com/algorithmzuo/algorithm-journey/blob/main/src/class023/Code02_QuickSort.java)
-[023随机快速排序视频](https://www.bilibili.com/video/BV1cc411F7Y6/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
+- [算法讲解023【必备】随机快速排序-代码](https://github.com/algorithmzuo/algorithm-journey/blob/main/src/class023/Code02_QuickSort.java)
+- [算法讲解023【必备】随机快速排序-视频](https://www.bilibili.com/video/BV1cc411F7Y6/?share_source=copy_web&vd_source=59203eaa2a5b43acef991f52c90c9743)
 
 ```
 class Solution {
