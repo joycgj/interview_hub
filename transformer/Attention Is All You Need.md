@@ -66,6 +66,138 @@ RNN类的模型有一个本质的问题：**它们是一步一步处理的**。�
 
 ---
 
+当然可以！下面我来**逐句**用通俗易懂的语言帮你解释这段话：
+
+---
+
+### 原文：
+
+> **Recurrent models typically factor computation along the symbol positions of the input and output sequences.**
+
+✅ **解释：**
+循环神经网络（RNN）这种模型在处理输入和输出的时候，通常是**一个字（或词）一个字地处理**。也就是说，它是**按顺序来处理句子中每一个位置的内容**。
+
+“**factor computation**” 是一个在机器学习和数学中常见的术语，字面意思是“将计算进行因式分解”或“分步分解处理”。在这段论文中的语境下，它指的是：**将一个完整的计算任务拆解成若干个更小的、与输入位置相关的步骤来处理。**
+
+---
+
+我们来**详细拆解一下**这个术语在这里的含义：
+
+---
+
+### 📘 原句：
+
+> "Recurrent models typically factor computation along the symbol positions of the input and output sequences."
+
+### 🧠 翻译直白点是：
+
+> 循环模型通常会**按照输入输出序列中每个符号（比如每个词或字符）的位置，把整个计算任务拆开来做**。
+
+---
+
+### ✅ 通俗解释：
+
+我们以一句话翻译为例，比如英语句子 “I love cats.”：
+
+循环神经网络会像这样做：
+
+1. 第一步处理 “I” → 得到隐藏状态 $h_1$
+2. 第二步处理 “love”，用 “love” + 上一步结果 $h_1$ → 得到 $h_2$
+3. 第三步处理 “cats”，用 “cats” + $h_2$ → 得到 $h_3$
+
+整个模型不是一下子处理完整句话，而是**把整个计算流程“拆开”（factor）成了每个词一步的计算**。这就是“factor computation along the symbol positions”：
+
+👉 **每个词一个步骤，整个过程就是多个步骤的组合。**
+
+---
+
+### 📌 更技术一点的解释：
+
+> "factor computation" 在深度学习中有时也意味着：**将一个复杂的函数拆分为多个子函数**，比如先做嵌入，再做编码，再做解码，每一层处理一个方面。
+> 在RNN中，这种“因式分解”是**沿着时间维度（序列位置）来分解**的——每个时间点/序列位置独立完成一小步。
+
+---
+
+### 🔍 类比举个例子：
+
+就好比你在做一道数学题，传统方法是一步到尾一口气做完。而RNN的思路是：
+
+> 把这道题拆成 3 个步骤，每步都只算当前这一步，必须按顺序完成。
+> 这就是 “factor computation along time steps”。
+
+---
+
+### ✍️ 总结一下：
+
+* **factor computation** = 把整体计算任务拆成多个小步骤来做；
+* 在 RNN 里，是 **按照词的位置/顺序** 来分步骤处理；
+* 好处是结构清晰，但坏处是**不能并行处理**，速度慢。
+
+---
+
+如你想看个代码示例或图解这个概念，我也可以帮你画出来！
+
+
+---
+
+### 原文：
+
+> **Aligning the positions to steps in computation time, they generate a sequence of hidden states ht, as a function of the previous hidden state ht−1 and the input for position t.**
+
+✅ **解释：**
+这个模型在每一步都会生成一个“隐藏状态”（可以理解为当前处理结果的中间记忆），叫做 $h_t$。这个状态是根据两个东西算出来的：
+
+1. 上一步的隐藏状态 $h_{t-1}$
+2. 当前这一步输入的词（比如第t个词）
+
+简单说就是：**当前的处理结果，取决于你上一步的结果加上这一步的输入**。
+
+---
+
+### 原文：
+
+> **This inherently sequential nature precludes parallelization within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples.**
+
+✅ **解释：**
+因为这个模型必须**一步一步处理**（比如必须先处理第1个词，才能处理第2个词），所以它**不能并行处理同一个句子里的所有词**。
+这在句子很长的时候就成了大问题，因为：
+
+* 并行不了 → 慢；
+* 每次只能处理有限数量的句子 → **内存不够，批处理数量受限**。
+
+---
+
+### 原文：
+
+> **Recent work has achieved significant improvements in computational efficiency through factorization tricks \[21] and conditional computation \[32], while also improving model performance in case of the latter.**
+
+✅ **解释：**
+最近有些研究尝试用一些“技巧”来让计算变快，比如：
+
+* **分解计算**：把大的问题拆成多个小块来处理；
+* **条件计算**：模型只激活一部分，而不是全部都跑一遍。
+
+这些方法在提高运行效率的同时，有时还能让模型表现更好。
+
+---
+
+### 原文：
+
+> **The fundamental constraint of sequential computation, however, remains.**
+
+✅ **解释：**
+但**最大的问题还在**：这种“必须一步步来”的方式，还是没法解决。
+
+---
+
+### 总结一句话：
+
+循环模型是“按顺序”一个一个词地处理的，这种处理方式限制了并行计算，尤其在长句子里效率低。虽然有些技巧能缓解这个问题，但**本质上的顺序限制还是存在**。
+
+---
+
+
+
 
 
 
