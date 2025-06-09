@@ -437,3 +437,83 @@ To the best of our knowledge, however, the Transformer is the first transduction
 
 如果你想，我可以画一个图来展示“在Transformer里，所有位置如何同时relate signals”。是否需要？
 
+---
+
+In the following sections, we will describe the Transformer, motivate self-attention and discuss its advantages over models such as [17, 18] and [9].
+
+详细解释一下 motivate 
+
+---
+
+当然可以！这句话中的 **“motivate self-attention”** 是一个常见的学术表达，我们来详细拆解 **“motivate”** 在这里的意思和用法。
+
+---
+
+## 📘 原句：
+
+> **“In the following sections, we will describe the Transformer, motivate self-attention and discuss its advantages over models such as \[17, 18] and \[9].”**
+
+---
+
+## ✅ 首先，什么是 **motivate**？
+
+在日常英语中，**motivate** 常常表示：
+
+* 激励、驱动某人去做某事
+
+  * e.g. “She was motivated to study harder.”
+
+👆 这是情绪或行为层面的“动机”。
+
+但在**学术写作中**，尤其是在技术论文里，**motivate** 的意思是：
+
+> **“阐明动机”、“说明为什么要这样做”**
+
+也可以理解为：
+
+> **解释某个技术选择的必要性和合理性**
+
+---
+
+### ✅ 举个例子：
+
+* “We motivate the use of convolution by showing its efficiency.”
+  → 我们通过展示它的效率，来说明为什么选择用卷积。
+
+* “This section motivates our new algorithm.”
+  → 这一节会讲我们为什么要用这个新算法。
+
+---
+
+## ✅ 回到原句里的用法：
+
+> **“motivate self-attention”**
+
+在这句话中就是：
+
+> **“解释我们为什么采用自注意力机制（self-attention）”**
+
+也就是接下来的内容会：
+
+* 分析自注意力机制的优势；
+* 说明它相比RNN或CNN的必要性；
+* 引导读者理解：“不是我们想用 attention，而是 attention 很合理、很必要。”
+
+---
+
+## 📌 整句话通俗翻译：
+
+> “在接下来的章节里，我们将介绍 Transformer 模型，说明我们为什么采用自注意力机制，并讨论它相比其他模型（如\[17]、\[18]、\[9]）的优势。”
+
+---
+
+## ✅ 总结：
+
+| 词汇                      | 技术语义                 |
+| ----------------------- | -------------------- |
+| motivate                | 阐明理由、说明设计动机          |
+| motivate self-attention | 解释为什么用自注意力机制，而不是其他方法 |
+
+---
+
+如果你想了解“motivate”在其他论文中的经典用法，我也可以举几个真实例子供你参考。需要吗？
