@@ -231,7 +231,7 @@ The Transformer follows this overall architecture using stacked self-attention a
 
 **原文：**
 
-> This masking, combined with the fact that the output embeddings are offset by one position, ensures that the predictions for position i can depend only on the known outputs at positions less than i.
+> This masking, combined with the fact that the output embeddings are offset by one position, ensures that the predictions for position $i$ can depend only on the known outputs at positions less than $i$.
 
 **解释：**
 通过这种“遮挡（masking）”+“输出序列右移一位”的方式，保证了模型在生成第 `i` 个词时，**只能看到前面已经生成的词，不能提前看答案**。这对语言生成是非常重要的。
