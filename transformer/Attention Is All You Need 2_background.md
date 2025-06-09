@@ -8,6 +8,7 @@ End-to-end memory networks are based on a recurrent attention mechanism instead 
 
 To the best of our knowledge, however, the Transformer is the first transduction model relying entirely on self-attention to compute representations of its input and output without using sequence- aligned RNNs or convolution. In the following sections, we will describe the Transformer, motivate self-attention and discuss its advantages over models such as [17, 18] and [9].
 
+---
 
 好的！我们来逐句用**通俗易懂的大白话**解释这段《Attention Is All You Need》论文中的“2 Background（背景）”部分。这段内容主要是在介绍其他试图减少“顺序计算”的模型，以及为什么 Transformer 是一种更优的选择。
 
