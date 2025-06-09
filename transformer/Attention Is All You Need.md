@@ -799,6 +799,64 @@ Attention mechanisms have become an integral part of compelling sequence modelin
 
 需要我继续讲下一段吗？或者要不要我画个“远距离依赖 + 注意力”的小图？
 
+当然可以！我们来一句一句、用大白话来解释你给出的这段话。它是《Attention Is All You Need》论文中非常重要的一段，介绍了 Transformer 的核心思想和优势。
+
+---
+
+## 📘 原句 1：
+
+> **"In this work we propose the Transformer, a model architecture eschewing recurrence and instead relying entirely on an attention mechanism to draw global dependencies between input and output."**
+
+### ✅ 大白话解释：
+
+在这篇论文里，我们提出了一种新模型，叫做 **Transformer**。
+
+它和以前的模型很不一样——
+
+* **它完全不用循环结构（RNN/LSTM）了**（就是“eschewing recurrence”，意思是“抛弃了循环”）；
+* 而是 **只靠注意力机制（attention）来工作**；
+* 注意力机制可以让模型自动找出输入和输出之间**全局范围内的依赖关系**（global dependencies）；
+
+  * 不管这些词或信息在句子中离得远不远，它都能处理到。
+
+🎯 换句话说：
+
+> 我们做了个新模型，只用注意力机制，不用 RNN，就能学会输入和输出之间的联系。
+
+---
+
+## 📘 原句 2：
+
+> **"The Transformer allows for significantly more parallelization and can reach a new state of the art in translation quality after being trained for as little as twelve hours on eight P100 GPUs."**
+
+### ✅ 大白话解释：
+
+这个 Transformer 模型有两个大优点：
+
+1. ✅ **并行能力很强**：
+
+   * 不像 RNN 那样一步一步来，它可以一次性处理整句话 → **速度快！**
+
+2. ✅ **翻译效果很好**：
+
+   * 在翻译任务上，它能达到目前最好的表现（state of the art）；
+   * 而且训练速度超快——**只用 8 块 P100 显卡，训练 12 个小时就搞定了！**
+
+🎯 换句话说：
+
+> Transformer 不但翻译效果好，而且训练又快又高效。
+
+---
+
+## 📌 总结整段话：
+
+这段话的意思就是：
+
+> 我们提出了一个不依赖RNN、只用注意力机制的新模型 Transformer。它能更快地训练（因为能并行），并且在翻译任务上效果更好，训练时间也大大缩短了。
+
+---
+
+如果你想，我还可以给你做一张“Transformer vs RNN”对比图，或者解释“全局依赖关系”是怎么通过注意力实现的。需要吗？
 
 
 
