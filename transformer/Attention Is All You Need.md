@@ -1,23 +1,5 @@
 # Attention Is All You Need
 
-- Ashish Vaswani<sup>∗</sup> Google Brain avaswani@google.com
-- Noam Shazeer<sup>∗</sup> Google Brain noam@google.com
-- Niki Parmar<sup>∗</sup> Google Research nikip@google.com
-- Jakob Uszkoreit<sup>∗</sup> Google Research usz@google.com
-- Llion Jones<sup>∗</sup> Google Research llion@google.com
-- Aidan N. Gomez<sup>∗ †</sup> University of Toronto aidan@cs.toronto.edu
-- Łukasz Kaiser<sup>∗</sup> Google Brain lukaszkaiser@google.com
-- Illia Polosukhin<sup>∗ ‡</sup> illia.polosukhin@gmail.com
-
-## Abstract
-
-The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train. Our model achieves 28.4 BLEU on the WMT 2014 English- to-German translation task, improving over the existing best results, including ensembles, by over 2 BLEU. On the WMT 2014 English-to-French translation task, our model establishes a new single-model state-of-the-art BLEU score of 41.8 after training for 3.5 days on eight GPUs, a small fraction of the training costs of the best models from the literature. We show that the Transformer generalizes well to other tasks by applying it successfully to English constituency parsing both with large and limited training data.
-
-> <sup>∗</sup>Equal contribution. Listing order is random. Jakob proposed replacing RNNs with self-attention and started the effort to evaluate this idea. Ashish, with Illia, designed and implemented the first Transformer models and has been crucially involved in every aspect of this work. Noam proposed scaled dot-product attention, multi-head attention and the parameter-free position representation and became the other person involved in nearly every detail. Niki designed, implemented, tuned and evaluated countless model variants in our original codebase and tensor2tensor. Llion also experimented with novel model variants, was responsible for our initial codebase, and efficient inference and visualizations. Lukasz and Aidan spent countless long days designing various parts of and implementing tensor2tensor, replacing our earlier codebase, greatly improving results and massively accelerating our research.
-†Work performed while at Google Brain. ‡Work performed while at Google Research.
->
-> 31st Conference on Neural Information Processing Systems (NIPS 2017), Long Beach, CA, USA.
-
 ## 摘要
 
 主流的序列转换模型主要基于复杂的循环神经网络（RNN）或卷积神经网络（CNN），这些模型通常包括一个编码器和一个解码器。性能最好的模型还通过注意力机制将编码器和解码器连接起来。我们提出了一种全新的、基于注意力机制的简单网络架构——Transformer，它完全摒弃了循环和卷积结构。
@@ -34,12 +16,53 @@ The dominant sequence transduction models are based on complex recurrent or conv
 > 
 > 发表于第31届神经信息处理系统大会（NIPS 2017），地点：美国加利福尼亚州长滩。
 
-## 1 Introduction
+## 1 引言
 
-Recurrent neural networks, long short-term memory [13] and gated recurrent [7] neural networks in particular, have been firmly established as state of the art approaches in sequence modeling and transduction problems such as language modeling and machine translation [35, 2, 5]. Numerous efforts have since continued to push the boundaries of recurrent language models and encoder-decoder architectures [38, 24, 15].
-Recurrent models typically factor computation along the symbol positions of the input and output sequences. Aligning the positions to steps in computation time, they generate a sequence of hidden states ht, as a function of the previous hidden state ht−1 and the input for position t. This inherently sequential nature precludes parallelization within training examples, which becomes critical at longer sequence lengths, as memory constraints limit batching across examples. Recent work has achieved significant improvements in computational efficiency through factorization tricks [21] and conditional computation [32], while also improving model performance in case of the latter. The fundamental constraint of sequential computation, however, remains.
-Attention mechanisms have become an integral part of compelling sequence modeling and transduc- tion models in various tasks, allowing modeling of dependencies without regard to their distance in the input or output sequences [2, 19]. In all but a few cases [27], however, such attention mechanisms are used in conjunction with a recurrent network.
-In this work we propose the Transformer, a model architecture eschewing recurrence and instead relying entirely on an attention mechanism to draw global dependencies between input and output. The Transformer allows for significantly more parallelization and can reach a new state of the art in translation quality after being trained for as little as twelve hours on eight P100 GPUs.
+这是《Attention Is All You Need》论文的第一部分，它主要讲了几个核心点：
+
+---
+
+### ✅ **背景是什么？**
+
+传统上，处理语言（比如翻译、语言建模）的方法主要是用循环神经网络（RNN）、长短期记忆网络（LSTM）和门控循环单元（GRU）。这些方法已经被广泛认为是效果最好的解决方案。很多研究也在不断改进这些模型。
+
+---
+
+### 🤔 **这些旧方法有什么问题？**
+
+RNN类的模型有一个本质的问题：**它们是一步一步处理的**。也就是说，它只能先处理第一个词，再处理第二个词，然后第三个……所以整个训练过程不能并行，速度慢，特别是在句子很长的时候，更难搞，因为内存不够用，不能批量处理太多句子。
+
+虽然有一些新技术（比如把模型分段计算或只在某些情况下激活部分模型）可以提高效率和效果，但**必须按顺序处理**这个限制还是没有解决。
+
+---
+
+### 🧠 **注意力机制（Attention）是个好东西**
+
+注意力机制可以让模型直接关注输入中的关键部分，不管它们离得远不远。比如翻译时，句子开头的词可能跟句子结尾的词有关，注意力机制能捕捉到这种远距离的关系。
+
+但之前大部分模型都是把注意力和RNN一起用的，还是受限于RNN的“顺序处理”。
+
+---
+
+### 💡 **我们做了啥创新？**
+
+这篇论文提出了一个新模型叫 **Transformer**。它**完全不用RNN，也不用卷积神经网络**，**只靠注意力机制**！
+
+好处是：
+
+* 它可以并行处理所有词，更快；
+* 效果还更好；
+* 我们用8块P100显卡训练12小时，就在翻译任务上达到了最先进的水平。
+
+---
+
+### 总结一句话：
+
+> 以前翻译模型都靠一步步来的RNN，我们这次干脆不用RNN了，直接用注意力机制来做，还做得更快更好！
+
+---
+
+
 
 
 ## 7 Conclusion
