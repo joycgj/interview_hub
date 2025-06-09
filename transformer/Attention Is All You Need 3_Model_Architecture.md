@@ -135,7 +135,6 @@ The Transformer follows this overall architecture using stacked self-attention a
 > The encoder is composed of a stack of N = 6 identical layers.
 
 **解释：**
-
 编码器一共有 **6层**，每一层的结构都是一样的。就像把同一个模块复制了6次，一层叠一层地堆起来。
 
 ---
@@ -145,7 +144,6 @@ The Transformer follows this overall architecture using stacked self-attention a
 > Each layer has two sub-layers. The first is a multi-head self-attention mechanism, and the second is a simple, position-wise fully connected feed-forward network.
 
 **解释：**
-
 每一层又包含两个小部分（叫子层）：
 
 1. **第一个子层**：是“多头自注意力”机制，用来让每个词看到句子中其他词的信息。
@@ -158,7 +156,6 @@ The Transformer follows this overall architecture using stacked self-attention a
 > We employ a residual connection \[11] around each of the two sub-layers, followed by layer normalization \[1].
 
 **解释：**
-
 在每个子层的外面都加了一个“残差连接”（Residual Connection），然后做“层归一化”（Layer Normalization）。
 
 残差连接可以帮助训练得更稳定，不容易出现梯度消失；而层归一化能帮助模型更快收敛。
@@ -170,7 +167,6 @@ The Transformer follows this overall architecture using stacked self-attention a
 > That is, the output of each sub-layer is LayerNorm(x + Sublayer(x)), where Sublayer(x) is the function implemented by the sub-layer itself.
 
 **解释：**
-
 也就是说，每个子层的输出不是直接用子层的计算结果，而是用这个公式：
 
   **LayerNorm(x + Sublayer(x))**
@@ -184,7 +180,6 @@ The Transformer follows this overall architecture using stacked self-attention a
 > To facilitate these residual connections, all sub-layers in the model, as well as the embedding layers, produce outputs of dimension d\_model = 512.
 
 **解释：**
-
 为了让“输入 x”和“子层输出”能相加，它们的维度必须一样。所以，所有子层和嵌入层的输出维度都固定是 **512维**。
 
 ---
