@@ -2867,8 +2867,6 @@ def parameters(self):
 
 这样，我们就实现了一个简单的神经网络训练流程。
 
-
-
 # doing gradient descent optimization manually, training the network
 that unfortunately we have slightly different predictions and slightly different laws
 but that's okay okay so we see that this neurons gradient is slightly negative we can
@@ -2993,7 +2991,73 @@ working with neural nets is sometimes tricky because uh
 you may have lots of bugs in the code and uh your network might actually work just like ours worked
 but chances are is that if we had a more complex problem then actually this bug would have made us not optimize the loss
 very well and we were only able to get away with it because the problem is very simple
-summary of what we learned, how to go towards modern neural nets
+
+以下是这段代码的中文翻译：
+
+---
+
+### 手动进行梯度下降优化，训练网络
+
+我们注意到，预测结果和损失值稍有不同，但这没有关系。
+
+首先，我们看到了这个神经元的梯度是负的。我们也可以查看它的当前数据值，0.85，这就是当前神经元的值，而这个值的梯度是关于损失的。接下来，我们希望遍历所有参数，并根据梯度信息稍微调整每个参数的数据。
+
+```python
+for p in n.parameters():
+    p.data -= step_size * p.grad
+```
+
+在梯度下降法中，梯度向量指向损失增加的方向。因此，在梯度下降中，我们会稍微按照梯度的方向修改参数数据。比如，步长（step size）可以是一个很小的数值，比如 `0.01`，然后乘以 `p.grad`。
+
+需要注意的是，当前这个神经元的值是0.85，而它的梯度是负数。如果我们直接根据这个梯度调整，它的值会稍微下降，这可能使得损失增加。因此我们实际上需要在更新时加上一个负号，这样才能减少损失。我们想要的是最小化损失，而不是最大化损失。
+
+因此，我们在调整权重时会加上负号，因为我们希望减少损失。稍微调整这些参数后，神经元的值将会增加，变为 0.857，这使得损失降低。
+
+接下来，我们希望通过重新计算损失来验证这一点。我们可以重新执行前向传播并验证损失值是否降低了。比如，新的损失值应该略低于 4.84（之前的损失值），比如 4.36。
+
+### 训练过程中的迭代
+
+在梯度下降过程中，我们会不断地进行前向传播、反向传播和更新。每次更新后，损失值应该会逐渐减小。例如，经过一次更新后，损失从 4.84 降到 4.36，之后再降到 3.9，最终接近 0。
+
+```python
+# 假设我们设置了合适的步长
+step_size = 0.01
+```
+
+### 学习率的选择
+
+学习率的选择非常重要。如果步长太小，优化会非常缓慢；如果步长太大，可能会导致训练不稳定，甚至损失值爆炸。为了避免这个问题，我们需要找到一个合适的学习率。
+
+例如，使用较高的学习率会导致我们快速收敛，但如果设置得过高，可能会导致梯度更新过大，反而使训练不稳定，损失值可能爆炸。我们发现，如果过度更新，损失可能会从极低值（0.04）变得非常高，这表明训练过程出现了不稳定的情况。
+
+### 解决梯度累积问题
+
+有一个常见的 bug，通常是由于在反向传播之前没有清空梯度（`zero_grad`）。如果不清除梯度，梯度会在每次反向传播时累积，导致梯度值不正确。
+
+```python
+# 在每次反向传播之前，我们必须手动清空梯度
+for p in self.parameters():
+    p.grad = 0
+```
+
+这种错误的原因是每次调用 `.backward()` 时，梯度会加到之前的梯度上，而没有重置它们。这就是我们需要在每次反向传播之前清除旧的梯度。
+
+### 正确的训练过程
+
+在修复了这个 bug 后，我们可以重新初始化神经网络并使用更合理的学习率进行训练。随着训练的进行，损失逐渐下降，最终我们能够训练出一个性能不错的神经网络。
+
+例如，通过调整学习率和步骤数，我们能够将损失降到一个非常低的值，接近 0，这时我们的预测结果也非常接近目标值。
+
+### 总结
+
+* **梯度下降**：通过计算梯度并根据梯度调整神经网络的权重，最小化损失。
+* **学习率**：合适的学习率对于稳定的训练至关重要，步长过大或过小都会影响训练效果。
+* **梯度累积问题**：在每次反向传播之前清除梯度，避免梯度累积导致的问题。
+* **训练过程的迭代**：通过不断迭代前向传播、反向传播和更新，逐步优化神经网络的参数。
+
+这个过程虽然看起来简单，但在实际应用中，优化和调试神经网络时可能会遇到许多挑战，尤其是处理更复杂的任务时。
+
+# summary of what we learned, how to go towards modern neural nets
 so let's now bring everything together and summarize what we learned what are neural nets neural nets are
 these mathematical expressions fairly simple mathematical expressions in the case of multi-layer perceptron
 that take input as the data and they take input the weights and the parameters of the
