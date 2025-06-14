@@ -2774,7 +2774,102 @@ change some of the numbers but let me do that so that we pick up the new api we 
 parameters and these are all the weights and biases inside the entire neural net
 so in total this mlp has 41 parameters
 and now we'll be able to change them if we recalculate the loss here we see
-doing gradient descent optimization manually, training the network
+
+以下是这段代码的中文翻译：
+
+---
+
+### 创建一个简单的数据集，编写损失函数
+
+我们现在有一个包含四个样本的数据集，这意味着我们有四个可能的输入和四个期望的目标输出。我们的目标是让神经网络在输入时输出以下目标：
+
+* 当输入为第一个样本时，输出为 1.0；
+* 当输入为第二和第三个样本时，输出为 -1.0；
+* 当输入为第四个样本时，输出为 1.0。
+
+这实际上是一个非常简单的二分类问题，我们希望神经网络能够预测这些目标。
+
+接下来，让我们看看神经网络当前对这四个样本的预测。我们可以通过以下方式获取它们的预测结果：
+
+```python
+predictions = [n(x) for x in inputs]
+```
+
+然后，我们打印出神经网络对这些样本的预测结果。假设我们得到以下输出：
+
+* 第一个预测为 0.91，但我们希望它是 1.0；
+* 第二个预测为 0.88，我们希望它是 -1.0；
+* 第三个预测为 0.8，我们希望它是 -1.0；
+* 第四个预测为 0.8，我们希望它是 1.0。
+
+### 计算损失函数
+
+为了使神经网络的输出更接近目标，我们需要调整神经网络的权重。为此，我们需要计算一个度量网络性能的单一数值，这个数值叫做 **损失**。
+
+**损失** 是用来衡量神经网络当前预测与目标值之间差距的数值。理想情况下，损失值应为 0，表示预测值完全等于目标值。
+
+我们这里使用 **均方误差损失（Mean Squared Error, MSE）**。该损失函数通过以下步骤计算：
+
+* 我们通过 `zip` 将目标值（ground truth）与预测值（output）配对；
+* 对每对目标和预测，我们计算它们之间的差的平方。
+
+具体实现如下：
+
+```python
+loss = sum([(y_true - y_pred) ** 2 for y_true, y_pred in zip(targets, predictions)])
+```
+
+这样，我们就得到了每个预测和目标之间的差异，并通过平方操作来消除正负号。
+
+* 如果预测与目标完全一致，损失为 0；
+* 如果预测与目标相差较大，损失值较高。
+
+### 反向传播
+
+为了调整网络的权重，使损失最小化，我们需要使用反向传播。通过调用 `.backward()`，我们能够看到每个神经元的梯度，这些梯度告诉我们每个权重如何影响最终的损失。
+
+当我们调用反向传播后，神经网络的每个权重和偏置都会有一个与损失相关的梯度。这个梯度告诉我们如果稍微改变这个权重或偏置，损失会如何变化。
+
+例如，如果某个权重的梯度是负数，那么我们知道增加该权重会导致损失减少。因此，我们可以通过调整这些权重来最小化损失。
+
+### 参数收集与更新
+
+为了高效地更新所有权重和偏置，我们需要收集神经网络中的所有参数。PyTorch 等框架通常会将这些参数封装在一个可迭代的对象中，方便我们进行统一操作。
+
+我们可以使用如下方法收集所有参数：
+
+```python
+def parameters(self):
+    return [p for neuron in self.neurons for p in neuron.parameters()]
+```
+
+对于多层感知机（MLP），我们可以为每一层收集它的参数，最后统一返回：
+
+```python
+def parameters(self):
+    return [p for layer in self.layers for p in layer.parameters()]
+```
+
+现在我们可以访问并更新所有神经网络中的权重和偏置。
+
+### 重新初始化神经网络
+
+由于我们对 `MLP` 类进行了修改，需要重新初始化网络。这样我们就可以使用新的 API 来访问和更新网络中的所有权重和偏置。
+
+---
+
+### 总结
+
+* **损失函数**：我们计算均方误差（MSE），这是一个衡量神经网络输出与目标值差异的标准方法。
+* **反向传播**：通过 `.backward()`，我们计算每个权重的梯度，以便更新它们，使损失最小化。
+* **参数收集**：通过编写 `parameters()` 方法，我们将神经网络的所有参数收集到一个列表中，方便统一管理和更新。
+* **权重更新**：通过计算损失的梯度，我们可以使用这些信息来调整神经网络的权重，以提高预测的准确性。
+
+这样，我们就实现了一个简单的神经网络训练流程。
+
+
+
+# doing gradient descent optimization manually, training the network
 that unfortunately we have slightly different predictions and slightly different laws
 but that's okay okay so we see that this neurons gradient is slightly negative we can
 also look at its data right now which is 0.85 so this is the current
