@@ -79,6 +79,15 @@
     - [📈 使用训练过的 bigram 模型：](#-使用训练过的-bigram-模型)
   - [✅ 总结](#-总结-4)
   - [🎯 关键结论](#-关键结论)
+  - [✅ 函数原型：](#-函数原型)
+  - [✅ 参数解释：](#-参数解释)
+  - [✅ 返回值：](#-返回值)
+  - [✅ 示例 1：从概率分布中采样](#-示例-1从概率分布中采样)
+  - [✅ 示例 2：多次采样 + 有放回](#-示例-2多次采样--有放回)
+  - [✅ 示例 3：设定随机种子（保证可复现）](#-示例-3设定随机种子保证可复现)
+  - [❗ 注意事项：](#-注意事项)
+  - [✅ 应用场景（语言模型中）：](#-应用场景语言模型中)
+  - [✅ 总结一句话：](#-总结一句话-2)
 - [efficiency! vectorized normalization of the rows, tensor broadcasting](#efficiency-vectorized-normalization-of-the-rows-tensor-broadcasting)
 - [loss function (the negative log likelihood of the data under our model)](#loss-function-the-negative-log-likelihood-of-the-data-under-our-model)
 - [model smoothing with fake counts](#model-smoothing-with-fake-counts)
@@ -1615,6 +1624,100 @@ p = torch.ones(27) / 27
 * Bigram 模型能学到一些字符组合模式，但非常有限，效果不理想；
 * 这是构建语言模型的**第一步**，后续我们可以用 MLP、RNN、Transformer 来增强；
 * 当前的采样逻辑对后续构建更复杂模型仍然适用，框架已经搭好了。
+
+---
+
+`torch.multinomial` 是 PyTorch 中的一个函数，用于**从给定的概率分布中采样**整数索引（即选择下一个动作、字符、token 等），非常适用于语言模型中的生成任务。
+
+---
+
+## ✅ 函数原型：
+
+```python
+torch.multinomial(input, num_samples, replacement=False, *, generator=None)
+```
+
+---
+
+## ✅ 参数解释：
+
+| 参数            | 含义                        |
+| ------------- | ------------------------- |
+| `input`       | 一维或二维张量，表示概率或权重（非负数）      |
+| `num_samples` | 要采样多少个结果（整数）              |
+| `replacement` | 是否有放回采样（True 表示可以重复抽中同一个） |
+| `generator`   | 可选，用于控制随机种子的生成器（保证结果可复现）  |
+
+---
+
+## ✅ 返回值：
+
+返回一个张量，表示采样出的索引（索引位置，而不是概率本身）。
+
+---
+
+## ✅ 示例 1：从概率分布中采样
+
+```python
+import torch
+
+p = torch.tensor([0.6, 0.3, 0.1])  # 概率分布
+sample = torch.multinomial(p, num_samples=1)
+print(sample)  # 可能是 tensor([0])
+```
+
+表示：60% 概率采样出索引 0，30% 是索引 1，10% 是索引 2。
+
+---
+
+## ✅ 示例 2：多次采样 + 有放回
+
+```python
+torch.multinomial(p, num_samples=10, replacement=True)
+```
+
+* 表示从 `p` 中采样 10 次，允许重复。
+* 这类似于根据概率分布“投 10 次骰子”。
+
+---
+
+## ✅ 示例 3：设定随机种子（保证可复现）
+
+```python
+g = torch.Generator().manual_seed(42)
+sample = torch.multinomial(p, 1, generator=g)
+```
+
+使用固定的随机数生成器 `g`，确保你和别人跑出相同的结果（在教学、调试中很有用）。
+
+---
+
+## ❗ 注意事项：
+
+* `input` 不需要是正规化的概率分布（即总和不必是 1），但它不能包含负数。
+* 如果是未归一化的“权重”，函数会自动在内部转换为概率。
+* `replacement=False` 时不能采样数量超过非零元素数量。
+
+---
+
+## ✅ 应用场景（语言模型中）：
+
+在字符级语言模型中，我们常常用：
+
+```python
+p = next_char_probs  # 一个 1D 的概率分布张量，长度为字符表大小（如 27）
+ix = torch.multinomial(p, num_samples=1).item()
+```
+
+这一步的意思是：**根据模型当前预测出的概率，随机“选中”一个下一个字符的索引**，而不是总是选最大概率那个。
+
+---
+
+## ✅ 总结一句话：
+
+> `torch.multinomial` 是用来**从一组概率或权重中按概率随机抽样索引**的工具，广泛用于语言模型、强化学习等任务中的“决策采样”操作。
+
+---
 
 # efficiency! vectorized normalization of the rows, tensor broadcasting
 
