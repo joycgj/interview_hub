@@ -6,8 +6,11 @@
     - [许可证](#许可证)
 - [makemore.py introduction](#makemorepy-introduction)
 - [intro](#intro)
+- [介绍](#介绍)
 - [reading and exploring the dataset](#reading-and-exploring-the-dataset)
+- [读取和探索数据集](#读取和探索数据集)
 - [exploring the bigrams in the dataset](#exploring-the-bigrams-in-the-dataset)
+- [探索数据集中的二元组](#探索数据集中的二元组)
 - [counting bigrams in a python dictionary](#counting-bigrams-in-a-python-dictionary)
 - [counting bigrams in a 2D torch tensor ("training the model")](#counting-bigrams-in-a-2d-torch-tensor-training-the-model)
 - [visualizing the bigram tensor](#visualizing-the-bigram-tensor)
@@ -251,6 +254,16 @@ larger documents and then we're probably going to go into images and image text
 networks such as dolly stable diffusion and so on but for now we have to start
 here character level language modeling let's go so like before we are starting with a completely blank jupiter notebook page
 
+# 介绍
+
+大家好，希望你们一切都好。接下来我想做的是构建 make more，就像之前的 micrograd 一样，make more 是我在 GitHub 上的一个仓库，你可以去看看。但就像 micrograd 一样，我会一步步地构建它，并且详细解释每一个步骤，我们将一起慢慢构建它。那么，什么是 make more 呢？顾名思义，make more 是让你给它的东西生成更多类似的东西。比如说，`names.txt` 就是一个用于 make more 的示例数据集。当你查看 `names.txt` 时，你会发现它是一个非常大的名字数据集。里面有很多不同类型的名字，实际上，我相信这些名字有大约 32000 个，是我从政府网站随机找到的。如果你用这个数据集训练 make more，它会学习生成更多类似的东西，特别是像这样听起来像名字的东西，但实际上是独一无二的名字。也许你有一个宝宝，正在为他/她选择名字，可能你在寻找一个独特且听起来酷的新名字，make more 可能会帮到你。那么，这里有一些神经网络在我们用数据集训练后生成的示例名字。这里是一些它会生成的独特名字：dontel, irot, zhendi 等等。所有这些名字听起来像名字，但它们当然并不是已存在的名字。
+
+在后台，make more 是一个字符级语言模型。这意味着它将每一行都当作一个示例，并且在每个示例中，它将这些示例看作是单独字符的序列。比如说，`r e e s e` 就是一个示例，它是一个字符序列，我们就是在这个级别上构建 make more。作为一个字符级语言模型，它的意思就是，它建模这些字符序列，并且能够预测序列中的下一个字符。
+
+我们实际上将实现大量的字符级语言模型，包括简单的二元组模型和工作模型、多层感知器、递归神经网络，一直到现代的 Transformer。事实上，我们将构建的 Transformer 基本上是 GPT-2 的等效模型，如果你听说过 GPT，那么这就是一个大事，它是一个现代的网络，到系列的最后，你将真正理解它如何在字符级别上运作。
+
+为了让你们更清楚接下来的扩展，除了字符级别外，我们可能还会花一些时间在单词级别上，这样我们就可以生成完整的单词文档，而不仅仅是字符的小片段。我们可以生成更大规模的文档，然后我们可能还会进入图像和图像文本网络，比如 Dolly、Stable Diffusion 等等。但目前我们必须从这里开始——字符级语言建模。那么，开始吧！就像之前一样，我们从一个完全空白的 Jupyter Notebook 页面开始。
+
 # reading and exploring the dataset
 
 the first thing is i would like to basically load up the dataset names.txt so we're going to open up names.txt for
@@ -286,6 +299,53 @@ follow a and so on and we're just modeling that kind of a little local structure
 may have a lot more information we're always just looking at the previous character to predict the next one so
 it's a very simple and weak language model but i think it's a great place to start so now let's begin by looking at these
 
+# 读取和探索数据集
+
+首先，我想做的基本步骤是加载数据集 `names.txt`。我们将打开 `names.txt` 以读取内容，并把所有内容读取为一个大的字符串。
+然后，由于这是一个长字符串，我们希望获取其中的每一个单词，并把它们放入一个列表中，所以我们会对这个字符串使用 `splitlines()`，把它拆分成一个 Python 的字符串列表。
+接下来我们可以查看前十个单词，例如前10个是 `emma`、`olivia`、`eva` 等等。
+如果我们看页面的顶部，那确实是我们看到的内容，说明读取成功了。
+
+这个列表看起来让我感觉这些名字可能是按出现频率排序的，但没关系。
+这些就是我们要处理的“单词”。
+
+接下来我们想进一步了解一下这个数据集。比如说：
+
+* 总共有多少个名字？我们预计大概是 32000 个。
+* 最短的名字有多长？我们可以计算每个名字的长度，取最小值，结果是 2。
+* 最长的名字有多长？同样的方法，最大长度是 15 个字符。
+
+现在我们开始思考我们的第一个语言模型。
+
+正如我之前提到的，字符级语言模型的目标是：**在给定前面一段具体字符序列的情况下，预测下一个字符**。
+现在我们要意识到的一点是：数据集中每一个单词，比如 "isabella"，实际上在统计结构上包含了许多预测信息。
+
+比如说，"isabella" 这个名字的存在告诉我们很多事情：
+
+* 字符 `i` 很可能是名字开头的字符，
+* 字符 `s` 很可能出现在 `i` 之后，
+* 字符 `a` 很可能出现在 `is` 之后，
+* 字符 `b` 很可能出现在 `isa` 之后，
+* 一直到最后 `a` 可能出现在 `isabell` 后面。
+
+并且还有一点隐含的信息是：当我们看到完整的 "isabella" 后，名字很可能就结束了。因此，"结束" 也是一个明确的预测目标。
+
+所以在一个单词中，实际上包含了丰富的结构和信息，用来训练字符级语言模型。而我们不只有一个单词，总共有约 32000 个这样的单词，因此可以提取出大量有结构的训练数据。
+
+在一开始，我们想从最简单的模型做起——**bigram 语言模型**。
+
+在 bigram 模型中，我们始终只关注两个字符：我们有一个字符作为输入，要预测下一个字符是谁。
+
+比如：
+
+* 哪些字符常常出现在 `a` 后面？
+* 哪些字符常常出现在 `b` 后面？
+
+我们只建模这种**局部结构**，不考虑更长的上下文，也就是只看前一个字符来预测下一个字符。
+
+这是一种非常简单且较弱的语言模型，但它是一个很好的起点。
+接下来我们就要开始实现它。
+
 # exploring the bigrams in the dataset
 
 bi-grams in our data set and what they look like and these bi-grams again are just two characters in a row
@@ -317,6 +377,34 @@ so e is likely so this is a bigram of the start character and e and this is a bi
 a and the special end character and now we can look at for example what this looks like for
 olivia or eva and indeed we can actually potentially do this for the entire data
 set but we won't print that that's going to be too much but these are the individual character diagrams and we can print them
+
+# 探索数据集中的二元组
+
+我们来看看数据集中的二元组是什么样的。二元组就是相邻的两个字符。
+对于每个单词 `w`，每个 `w` 是一个单独的字符串，我们想要迭代这个单词，将其按顺序拆分成两个字符一组，滑动遍历整个单词。
+顺便提一下，Python 中有一个很有趣且简洁的方式来做这个：你可以使用像这样的代码：
+
+```python
+for character1, character2 in zip(w, w[1:]):
+    print(character1, character2)
+```
+
+不过我们先不对所有单词进行操作，只处理前三个单词。我马上给你演示这个方法是如何工作的，但现在先举个简单的例子，只处理第一个单词 `emma`。
+你会看到输出是这样的：
+`e m`, `m m`, `m a`。
+之所以会这样输出，是因为 `w` 是字符串 "emma"，`w[1:]` 是字符串 "mma"。
+`zip` 会将这两个迭代器配对，然后生成一系列连续字符的元组。如果其中一个列表的长度比另一个短，`zip` 会停止并返回结果。所以，我们得到的是 `e m`, `m m`, `m a`，然后由于第二个迭代器没有更多元素，`zip` 就结束了，因此我们只得到这几个元组。这很有趣吧！
+
+这些就是第一个单词中的连续字符对。
+
+不过我们需要注意的是，我们实际上拥有比这三个例子更多的信息。正如我之前提到的，我们知道字符 `e` 很可能出现在名字的开头，而字符 `a` 很可能出现在结尾。
+
+一种方法是，我们为每个单词创建一个特殊的数组，包括每个字符，并为每个单词加上一个特殊的开始符号和结束符号。
+我们可以把它称作 `special_start`，所以数组会变成这样的格式：`[special_start] + w + [special_end]`。
+这样做的原因是，`w` 是一个字符串 "emma"，而 `list(w)` 就会把它转化为一个字符列表。然后，当我们用这种方式再次进行迭代时，会得到以下的二元组：
+`special_start` 和 `e`，`e` 和 `m`，`m` 和 `m`，`m` 和 `a`，`a` 和 `special_end`。
+
+接下来我们可以看一下类似的情况，比如 `olivia` 或 `eva`，并且我们实际上可以对整个数据集进行操作，不过我们不会打印出来，因为那会太多了。但这些就是我们得到的每个单词的二元组。我们可以把它们打印出来查看。
 
 # counting bigrams in a python dictionary
 
