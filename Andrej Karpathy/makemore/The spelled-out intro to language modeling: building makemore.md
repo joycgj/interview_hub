@@ -41,6 +41,11 @@
     - [✅ 第三步：完整可视化逻辑](#-第三步完整可视化逻辑)
     - [✅ 补充解释：](#-补充解释)
     - [✅ 总结：](#-总结-1)
+    - [🔸 `import matplotlib.pyplot as plt`](#-import-matplotlibpyplot-as-plt)
+    - [🔸 `%matplotlib inline`](#-matplotlib-inline)
+    - [🔸 `plt.imshow(N)`](#-pltimshown)
+    - [✅ 举个例子：](#-举个例子)
+    - [✅ 总结：](#-总结-2)
 - [deleting spurious (S) and (E) tokens in favor of a single . token](#deleting-spurious-s-and-e-tokens-in-favor-of-a-single--token)
 - [sampling from the model](#sampling-from-the-model)
 - [efficiency! vectorized normalization of the rows, tensor broadcasting](#efficiency-vectorized-normalization-of-the-rows-tensor-broadcasting)
@@ -1065,6 +1070,67 @@ plt.show()
 4. 学会了 `.item()` 把 tensor 转换为 Python 整数。
 
 这个图能直观反映哪些 bigram 很常见，哪些几乎没出现。分析这些结构对构建语言模型非常有帮助。
+
+---
+
+这段代码用于**在 Jupyter Notebook 中可视化一个二维张量（例如 bigram 统计矩阵）**。
+下面逐行解释：
+
+---
+
+### 🔸 `import matplotlib.pyplot as plt`
+
+* 导入 Python 中最常用的可视化库 **Matplotlib** 的子模块 `pyplot`。
+* 并给它起了一个简写名 `plt`，方便后面使用。
+* `pyplot` 提供了类似 MATLAB 的绘图 API，比如画图、显示图像、添加文字等。
+
+---
+
+### 🔸 `%matplotlib inline`
+
+* 这是 **Jupyter Notebook** 特有的“魔法命令”（magic command）。
+* 它的作用是：**让图像直接显示在 notebook 单元格中，而不是弹出一个新窗口**。
+* 你只需要在 notebook 的开头运行一次这个命令。
+
+---
+
+### 🔸 `plt.imshow(N)`
+
+* `imshow` 是 `pyplot` 提供的函数，用来**以图像形式展示一个二维数组**。
+* `N` 是一个 **28×28 的 PyTorch 张量**，记录了 bigram 出现的频率。
+* `imshow` 会把它当成“像素矩阵”画出来，数值越大，颜色越深（默认是彩色热图）。
+
+等价于可视化一个“统计热力图”或“灰度图”。
+
+---
+
+### ✅ 举个例子：
+
+假设：
+
+```python
+N = torch.tensor([[1, 2], [3, 4]])
+plt.imshow(N)
+```
+
+会显示一个 2×2 的彩色方格图，其中：
+
+* 颜色深浅表示数字的大小，
+* 左上角是 `1`，右下角是 `4`，颜色最深。
+
+---
+
+### ✅ 总结：
+
+| 行号                                | 含义                             |
+| --------------------------------- | ------------------------------ |
+| `import matplotlib.pyplot as plt` | 导入绘图库                          |
+| `%matplotlib inline`              | 让图嵌入在 Jupyter 单元格中显示           |
+| `plt.imshow(N)`                   | 把张量 N 作为图像显示出来（比如 bigram 统计热图） |
+
+这在分析神经网络中的矩阵结构、注意力图、统计频次等场景中非常常用。
+
+---
 
 # deleting spurious (S) and (E) tokens in favor of a single . token
 
