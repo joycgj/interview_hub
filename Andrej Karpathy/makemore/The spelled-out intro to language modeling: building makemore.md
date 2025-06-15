@@ -13,6 +13,7 @@
 - [exploring the bigrams in the dataset](#exploring-the-bigrams-in-the-dataset)
 - [探索数据集中的二元组](#探索数据集中的二元组)
 - [counting bigrams in a python dictionary](#counting-bigrams-in-a-python-dictionary)
+- [在 Python 字典中统计二元组（bigrams）](#在-python-字典中统计二元组bigrams)
 - [counting bigrams in a 2D torch tensor ("training the model")](#counting-bigrams-in-a-2d-torch-tensor-training-the-model)
 - [visualizing the bigram tensor](#visualizing-the-bigram-tensor)
 - [deleting spurious (S) and (E) tokens in favor of a single . token](#deleting-spurious-s-and-e-tokens-in-favor-of-a-single--token)
@@ -468,6 +469,10 @@ it's a very simple and weak language model but i think it's a great place to sta
 这是一种非常简单且较弱的语言模型，但它是一个很好的起点。
 接下来我们就要开始实现它。
 
+如何上传本地文件 names.txt
+
+点击左侧的文件夹，上传之后和sample_data并列，参考 https://blog.csdn.net/lcnana/article/details/122409044
+
 # exploring the bigrams in the dataset
 
 bi-grams in our data set and what they look like and these bi-grams again are just two characters in a row
@@ -563,6 +568,58 @@ we're going to see the most likely bigrams so we see that n was very often an en
 many many times and apparently n almost always follows an a and that's a very likely combination as
 well so this is kind of the individual counts
 that we achieve over the entire data set now it's actually going to be significantly more convenient for us to
+
+# 在 Python 字典中统计二元组（bigrams）
+
+现在，为了了解哪些字符更可能出现在其他字符之后（即字符之间的统计关系），在 bigram 语言模型中，最简单的方式就是直接**数数**。
+我们只需要统计每种字符对（bigram）在训练集（这些单词）中出现的次数。
+
+所以我们需要一个字典 `b`，它用来记录每一个 bigram 出现的次数。
+我们使用一个字典 `b`，它的键（key）是字符对的元组 `(character1, character2)`，值（value）是它们出现的次数。
+
+```python
+bigram = (ch1, ch2)
+b[bigram] = b.get(bigram, 0) + 1
+```
+
+这行代码的含义是：
+
+* `b.get(bigram, 0)` 会在字典中查找这个 bigram，如果没有找到就返回默认值 0；
+* 然后加 1，相当于把这个 bigram 的出现次数加一。
+
+这样我们就能遍历整个数据集，并把所有的 bigram 出现次数累加到字典里。
+
+我们可以把打印结果保留一下，检查 `b` 的内容。我们看到很多 bigram 只出现了一次。
+比如某个 bigram 出现了三次，表示字符 `a` 是结尾字符的情况发生了三次，这确实出现在了 “emma”、“olivia” 和 “eva” 中。
+
+接着我们对 **所有单词** 运行这段统计代码，构建整个数据集的 bigram 统计表。
+不过我们不再打印这些内容，因为太多了。运行完后，`b` 中就包含了所有单词中每一个字符 bigram 的出现频次。
+
+现在我们可以分析最常见的和最罕见的 bigram。Python 中最简单的做法就是使用 `b.items()`：
+
+```python
+b.items()
+```
+
+它返回的是字典中的 `(key, value)` 元组列表，即 `(bigram, count)`。
+
+接着我们可以对这些项进行排序：
+
+```python
+sorted(b.items(), key=lambda kv: kv[1])
+```
+
+这里的 `lambda kv: kv[1]` 表示我们按第二项（出现次数）排序，而不是默认的按键（bigram）排序。
+
+我们还可以加上 `reverse=True` 实现**从高到低排序**，来查看最常出现的 bigram：
+
+```python
+sorted(b.items(), key=lambda kv: kv[1], reverse=True)
+```
+
+比如我们会发现字符 `n` 作为结尾的 bigram 出现了很多次，或者字符 `a` 后面跟着 `n` 是非常常见的组合。
+
+这些就是我们通过遍历整个数据集得到的每个字符对的统计信息，后续我们就可以利用这些统计结果来建模或采样新数据了。
 
 # counting bigrams in a 2D torch tensor ("training the model")
 

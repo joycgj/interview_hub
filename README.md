@@ -13,3 +13,7 @@ Mermaid 在线渲染器：[Online FlowChart & Diagrams Editor（需要挂梯子�
 
 [如何生成 markdown 目录](https://markdown.com.cn/basic-syntax/)
 
+## vscode 选中多行（MAC）
+
+- shift + alt + 鼠标 可以选中多行
+- alt + 鼠标 只能一行一行选
