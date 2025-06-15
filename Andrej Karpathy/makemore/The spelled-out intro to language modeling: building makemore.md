@@ -64,6 +64,21 @@
     - [✅ 更新后的行为：](#-更新后的行为)
     - [✅ 总结：](#-总结-3)
 - [sampling from the model](#sampling-from-the-model)
+- [从模型中进行采样（Sampling from the model）](#从模型中进行采样sampling-from-the-model)
+    - [🔹 总体流程](#-总体流程)
+  - [✅ 步骤详解](#-步骤详解)
+    - [🔸 第一步：取起始行（即点号开头的频率分布）](#-第一步取起始行即点号开头的频率分布)
+    - [🔸 第二步：将 raw count 转为概率分布](#-第二步将-raw-count-转为概率分布)
+    - [🔸 第三步：使用 `torch.multinomial` 按概率采样](#-第三步使用-torchmultinomial-按概率采样)
+    - [🔸 第四步：循环采样完整单词](#-第四步循环采样完整单词)
+    - [🔸 示例采样代码简化版：](#-示例采样代码简化版)
+    - [🔸 多次采样多个名字：](#-多次采样多个名字)
+  - [🧠 模型的实际效果](#-模型的实际效果)
+  - [✅ 与其他情况对比：](#-与其他情况对比)
+    - [📉 使用随机均匀分布（完全未训练的模型）：](#-使用随机均匀分布完全未训练的模型)
+    - [📈 使用训练过的 bigram 模型：](#-使用训练过的-bigram-模型)
+  - [✅ 总结](#-总结-4)
+  - [🎯 关键结论](#-关键结论)
 - [efficiency! vectorized normalization of the rows, tensor broadcasting](#efficiency-vectorized-normalization-of-the-rows-tensor-broadcasting)
 - [loss function (the negative log likelihood of the data under our model)](#loss-function-the-negative-log-likelihood-of-the-data-under-our-model)
 - [model smoothing with fake counts](#model-smoothing-with-fake-counts)
@@ -1454,6 +1469,152 @@ this is what you have from a model that is completely untrained where everything
 garbage and then if we have a trained model which is trained on just bi-grams
 this is what we get so you can see that it is more name-like it is actually working it's just um
 my gram is so terrible and we have to do better now next i would like to fix an inefficiency that we have going on here
+
+# 从模型中进行采样（Sampling from the model）
+
+这一部分讲解了如何**根据 bigram 字符级语言模型生成新单词（比如名字）**，即“从模型中采样”。
+
+---
+
+### 🔹 总体流程
+
+1. 模型的输入是字符对（bigram）统计矩阵 `N`（27×27）
+2. 我们从特殊起始符号 `.`（索引 0）开始
+3. 每一步根据当前字符对应的行（即当前字符后面可能接什么），**按概率采样下一个字符**
+4. 如果采到 `.`，表示结束，采样终止
+5. 否则继续采样下一个字符
+
+---
+
+## ✅ 步骤详解
+
+---
+
+### 🔸 第一步：取起始行（即点号开头的频率分布）
+
+```python
+N[0]  # 取张量第0行，对应从“起始”字符出发的 bigram 统计
+```
+
+得到一个大小为 27 的一维数组，对应于从“.”开始，分别接 a、b、c... 的次数。
+
+---
+
+### 🔸 第二步：将 raw count 转为概率分布
+
+```python
+p = N[0].float()      # 将整数张量转为 float
+p = p / p.sum()       # 归一化：每个元素除以总和，使其变成合法的概率分布（和为 1）
+```
+
+---
+
+### 🔸 第三步：使用 `torch.multinomial` 按概率采样
+
+```python
+g = torch.Generator().manual_seed(2147483647)   # 创建随机生成器，设定随机种子（保证结果可复现）
+ix = torch.multinomial(p, num_samples=1, replacement=True, generator=g).item()
+```
+
+* `torch.multinomial(p, 1)` 从概率分布 `p` 中采样一个索引
+* `.item()` 把结果从 tensor 转为普通整数
+
+---
+
+### 🔸 第四步：循环采样完整单词
+
+我们不断地重复以上过程：
+
+1. 每次根据当前字符的索引 `ix` 选取 `N[ix]` 这一行
+2. 归一化为概率分布 `p`
+3. 用 `torch.multinomial` 采样下一个字符的索引
+4. 如果采出的是索引 0（即点号），表示单词结束，退出循环
+5. 否则，将字符加入输出列表，继续循环
+
+---
+
+### 🔸 示例采样代码简化版：
+
+```python
+out = []
+ix = 0  # 从 . 开始
+while True:
+    p = N[ix].float()
+    p = p / p.sum()
+    ix = torch.multinomial(p, num_samples=1, replacement=True, generator=g).item()
+    if ix == 0:
+        break
+    out.append(itos[ix])  # 将索引转回字符
+print(''.join(out))
+```
+
+这样可以生成一个“看起来像名字”的字符串。
+
+---
+
+### 🔸 多次采样多个名字：
+
+```python
+for i in range(20):
+    out = []
+    ix = 0
+    while True:
+        ...
+    print(''.join(out))
+```
+
+---
+
+## 🧠 模型的实际效果
+
+你可能注意到，生成的名字看起来很奇怪（例如 "yanu", "chm", "eet"）。原因是：
+
+* **Bigram 模型本质上很弱**：它只根据前一个字符预测下一个字符，无法理解整体结构。
+* 它不理解“单词长度”、“发音结构”、“元音辅音交替”等规律。
+* 它不知道自己生成的是名字，也无法考虑“历史上下文”。
+
+---
+
+## ✅ 与其他情况对比：
+
+### 📉 使用随机均匀分布（完全未训练的模型）：
+
+```python
+p = torch.ones(27) / 27
+```
+
+每个字符都有相同概率，会生成完全没有规律的乱码。
+
+### 📈 使用训练过的 bigram 模型：
+
+虽然弱，但结果看起来更像“名字”，比如：
+
+* "mory"
+* "jorlen"
+* "avie"
+* "ronna"
+
+说明模型确实学习到了某些字符之间的组合模式，虽然还远不够好。
+
+---
+
+## ✅ 总结
+
+| 步骤         | 内容                                |
+| ---------- | --------------------------------- |
+| 1. 初始化     | 从特殊字符 `.` 开始（索引 0）                |
+| 2. 获取概率    | 从 bigram 计数矩阵中取出对应行，并归一化为概率       |
+| 3. 采样下一个字符 | 使用 `torch.multinomial()` 从概率分布中采样 |
+| 4. 判断是否结束  | 如果采样结果是 `.`，就终止，否则继续              |
+| 5. 重复      | 不断构建字符，直到遇到 `.`                   |
+
+---
+
+## 🎯 关键结论
+
+* Bigram 模型能学到一些字符组合模式，但非常有限，效果不理想；
+* 这是构建语言模型的**第一步**，后续我们可以用 MLP、RNN、Transformer 来增强；
+* 当前的采样逻辑对后续构建更复杂模型仍然适用，框架已经搭好了。
 
 # efficiency! vectorized normalization of the rows, tensor broadcasting
 
