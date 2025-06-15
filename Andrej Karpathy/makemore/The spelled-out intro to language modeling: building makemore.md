@@ -5,6 +5,7 @@
     - [使用方法](#使用方法)
     - [许可证](#许可证)
 - [makemore.py introduction](#makemorepy-introduction)
+- [The spelled-out intro to language modeling: building makemore 视频介绍](#the-spelled-out-intro-to-language-modeling-building-makemore-视频介绍)
 - [intro](#intro)
 - [介绍](#介绍)
 - [reading and exploring the dataset](#reading-and-exploring-the-dataset)
@@ -32,7 +33,6 @@
 - [note 2: model smoothing as regularization loss](#note-2-model-smoothing-as-regularization-loss)
 - [sampling from the neural net](#sampling-from-the-neural-net)
 - [conclusion](#conclusion)
-
 
 # makemore
 
@@ -219,6 +219,127 @@ Changes from minGPT:
 * 我移除了 `from_pretrained` 函数，原本用于初始化 GPT2 权重。
 * 我移除了 dropout 层，因为我们在这里训练的模型很小，在这个阶段和规模下不需要。
 * 我移除了权重衰减以及关于哪些参数需要衰减、哪些不需要的所有复杂性。我认为在我们操作的规模下，这不会产生巨大差异。
+
+# The spelled-out intro to language modeling: building makemore 视频介绍
+
+We implement a bigram character-level language model, which we will further complexify in followup videos into a modern Transformer language model, like GPT. In this video, the focus is on (1) introducing torch.Tensor and its subtleties and use in efficiently evaluating neural networks and (2) the overall framework of language modeling that includes model training, sampling, and the evaluation of a loss (e.g. the negative log likelihood for classification).
+
+Links:
+makemore on github: https://github.com/karpathy/makemore
+jupyter notebook I built in this video: https://github.com/karpathy/nn-zero-t...
+my website: https://karpathy.ai
+my twitter:   / karpathy  
+(new) Neural Networks: Zero to Hero series Discord channel:   / discord   , for people who'd like to chat more and go beyond youtube comments
+
+Useful links for practice:
+Python + Numpy tutorial from CS231n https://cs231n.github.io/python-numpy... . We use torch.tensor instead of numpy.array in this video. Their design (e.g. broadcasting, data types, etc.) is so similar that practicing one is basically practicing the other, just be careful with some of the APIs - how various functions are named, what arguments they take, etc. - these details can vary.
+PyTorch tutorial on Tensor https://pytorch.org/tutorials/beginne...
+Another PyTorch intro to Tensor https://pytorch.org/tutorials/beginne...
+
+Exercises:
+E01: train a trigram language model, i.e. take two characters as an input to predict the 3rd one. Feel free to use either counting or a neural net. Evaluate the loss; Did it improve over a bigram model?
+E02: split up the dataset randomly into 80% train set, 10% dev set, 10% test set. Train the bigram and trigram models only on the training set. Evaluate them on dev and test splits. What can you see?
+E03: use the dev set to tune the strength of smoothing (or regularization) for the trigram model - i.e. try many possibilities and see which one works best based on the dev set loss. What patterns can you see in the train and dev set loss as you tune this strength? Take the best setting of the smoothing and evaluate on the test set once and at the end. How good of a loss do you achieve?
+E04: we saw that our 1-hot vectors merely select a row of W, so producing these vectors explicitly feels wasteful. Can you delete our use of F.one_hot in favor of simply indexing into rows of W?
+E05: look up and use F.cross_entropy instead. You should achieve the same result. Can you think of why we'd prefer to use F.cross_entropy instead?
+E06: meta-exercise! Think of a fun/interesting exercise and complete it.
+
+Chapters:
+00:00:00 intro
+00:03:03 reading and exploring the dataset
+00:06:24 exploring the bigrams in the dataset
+00:09:24 counting bigrams in a python dictionary
+00:12:45 counting bigrams in a 2D torch tensor ("training the model")
+00:18:19 visualizing the bigram tensor
+00:20:54 deleting spurious (S) and (E) tokens in favor of a single . token
+00:24:02 sampling from the model
+00:36:17 efficiency! vectorized normalization of the rows, tensor broadcasting 
+00:50:14 loss function (the negative log likelihood of the data under our model)
+01:00:50 model smoothing with fake counts
+01:02:57 PART 2: the neural network approach: intro
+01:05:26 creating the bigram dataset for the neural net
+01:10:01 feeding integers into neural nets? one-hot encodings
+01:13:53 the "neural net": one linear layer of neurons implemented with matrix multiplication
+01:18:46 transforming neural net outputs into probabilities: the softmax
+01:26:17 summary, preview to next steps, reference to micrograd
+01:35:49 vectorized loss
+01:38:36 backward and update, in PyTorch
+01:42:55 putting everything together
+01:47:49 note 1: one-hot encoding really just selects a row of the next Linear layer's weight matrix
+01:50:18 note 2: model smoothing as regularization loss
+01:54:31 sampling from the neural net
+01:56:16 conclusion
+
+我们实现了一个二元组（bigram）字符级语言模型，之后我们将在后续视频中将其逐步复杂化，最终发展成像 GPT 那样的现代 Transformer 语言模型。
+本视频的重点在于：
+
+1. 介绍 `torch.Tensor`，包括其细节和在高效评估神经网络中的使用方式；
+2. 讲解语言建模的整体框架，包括模型训练、采样，以及损失的评估（例如分类任务中的负对数似然）。
+
+---
+
+🔗 **相关链接：**
+
+* **makemore 项目 GitHub**：[https://github.com/karpathy/makemore](https://github.com/karpathy/makemore)
+* **本视频中构建的 Jupyter Notebook**：[https://github.com/karpathy/nn-zero-t](https://github.com/karpathy/nn-zero-t)...
+* **我的网站**：[https://karpathy.ai](https://karpathy.ai)
+* **我的推特**：[@karpathy](https://twitter.com/karpathy)
+* **新建的神经网络「从零到精通」系列 Discord 频道**：用于更深入交流，适合不满足于只看 YouTube 评论的朋友。
+
+---
+
+🛠 **练习推荐：**
+
+* **E01**：训练一个三元组（trigram）语言模型，也就是说，输入两个字符来预测第三个字符。你可以使用计数方式或神经网络。评估损失，看看是否优于 bigram 模型？
+* **E02**：将数据集随机划分为 80% 训练集、10% 验证集、10% 测试集。分别在训练集上训练 bigram 和 trigram 模型，并在验证集与测试集上评估性能。你观察到了什么？
+* **E03**：使用验证集调节 trigram 模型中的平滑（或正则化）强度——尝试多个设置，并观察哪个在验证集上的损失最小。在训练集与验证集损失随平滑强度变化时你观察到什么规律？用最优设置在测试集上评估一次最终损失。
+* **E04**：我们看到 one-hot 向量只是用于选择矩阵 W 的某一行，因此显式生成 one-hot 向量有些浪费。你能否去掉 `F.one_hot` 的用法，改为直接索引矩阵的行？
+* **E05**：查阅并使用 `F.cross_entropy`，它应该能得到相同的结果。你能想到为什么我们更愿意用 `F.cross_entropy` 吗？
+* **E06**：元练习！自己设计一个有趣/有创意的练习，并完成它。
+
+---
+
+📚 **实用学习链接：**
+
+* Python + Numpy 教程（来自 CS231n）：[https://cs231n.github.io/python-numpy/](https://cs231n.github.io/python-numpy/)
+
+  > 本视频中我们使用的是 `torch.tensor` 而不是 `numpy.array`，但两者设计非常相似（如广播、数据类型等），练习一个几乎等于练习另一个。注意细节：函数命名、参数等 API 差异。
+
+* PyTorch Tensor 教程：[https://pytorch.org/tutorials/beginner/introyt/tensors\_deeper\_tutorial.html](https://pytorch.org/tutorials/beginner/introyt/tensors_deeper_tutorial.html)
+
+* 另一个 PyTorch 入门 Tensor 教程：[https://pytorch.org/tutorials/beginner/basics/tensorqs\_tutorial.html](https://pytorch.org/tutorials/beginner/basics/tensorqs_tutorial.html)
+
+---
+
+📺 **章节目录：**
+
+```
+00:00:00 介绍
+00:03:03 读取并探索数据集
+00:06:24 探索数据集中的 bigram
+00:09:24 使用 Python 字典统计 bigram
+00:12:45 使用 2D torch 张量统计 bigram（“训练模型”）
+00:18:19 可视化 bigram 张量
+00:20:54 用单个 “.” 替代起始 (S) 和结束 (E) 标记
+00:24:02 从模型中进行采样
+00:36:17 提升效率！对行进行向量化归一化，张量广播
+00:50:14 损失函数（模型下数据的负对数似然）
+01:00:50 使用虚假计数进行模型平滑
+01:02:57 第2部分：神经网络方法介绍
+01:05:26 为神经网络创建 bigram 数据集
+01:10:01 将整数输入神经网络？使用 one-hot 编码
+01:13:53 构建神经网络：一层线性神经元（矩阵乘法实现）
+01:18:46 将神经网络输出转化为概率：softmax
+01:26:17 总结 + 下一步预告 + 提到 micrograd
+01:35:49 向量化损失计算
+01:38:36 PyTorch 实现反向传播与更新
+01:42:55 模型整合
+01:47:49 附注1：one-hot 编码实质是选线性层权重矩阵的一行
+01:50:18 附注2：模型平滑作为正则化损失
+01:54:31 从神经网络中采样
+01:56:16 总结
+```
+
 
 字幕翻译
 
