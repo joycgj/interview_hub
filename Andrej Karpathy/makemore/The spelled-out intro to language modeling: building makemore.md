@@ -35,6 +35,12 @@
     - [🧠 举个例子再总结：](#-举个例子再总结)
     - [✅ 总结一句话：](#-总结一句话)
 - [visualizing the bigram tensor](#visualizing-the-bigram-tensor)
+- [可视化 bigram 张量](#可视化-bigram-张量)
+    - [✅ 第一步：使用 matplotlib 简单可视化](#-第一步使用-matplotlib-简单可视化)
+    - [✅ 第二步：构造更美观的可视化](#-第二步构造更美观的可视化)
+    - [✅ 第三步：完整可视化逻辑](#-第三步完整可视化逻辑)
+    - [✅ 补充解释：](#-补充解释)
+    - [✅ 总结：](#-总结-1)
 - [deleting spurious (S) and (E) tokens in favor of a single . token](#deleting-spurious-s-and-e-tokens-in-favor-of-a-single--token)
 - [sampling from the model](#sampling-from-the-model)
 - [efficiency! vectorized normalization of the rows, tensor broadcasting](#efficiency-vectorized-normalization-of-the-rows-tensor-broadcasting)
@@ -983,6 +989,82 @@ would be just an integer 149 but it's actually a torch.tensor and so if you do d
 that in individual integer so it will just be 149.
 so that's what's happening there and these are just some options to make it look nice so what is the structure of this array
 we have all these counts and we see that some of them occur often and some of them do not occur often now if you scrutinize this carefully you
+
+# 可视化 bigram 张量
+
+现在我们想把统计好的 bigram 张量（28×28）**更漂亮地可视化**出来。为此，我们将使用一个叫做 **matplotlib** 的可视化库，它可以创建图表和图形。
+
+---
+
+### ✅ 第一步：使用 matplotlib 简单可视化
+
+我们可以用 `matplotlib.pyplot` 中的 `imshow` 方法展示二维数组：
+
+```python
+import matplotlib.pyplot as plt
+
+plt.imshow(N)  # N 是 28×28 的 bigram 计数张量
+plt.show()
+```
+
+这会画出一个矩阵热图，但样子可能还是比较“丑”，不太直观。
+
+---
+
+### ✅ 第二步：构造更美观的可视化
+
+我们可以改进可视化效果。首先，我们需要把原来的字符→索引字典 `s2i` 反转，得到一个从索引→字符的字典 `i2s`：
+
+```python
+i2s = {i: s for s, i in s2i.items()}
+```
+
+这样我们就能在图里显示字符而不是数字，例如横轴是字符 b，纵轴是字符 g，表示的是 “g 后面接 b 出现了几次”。
+
+---
+
+### ✅ 第三步：完整可视化逻辑
+
+你可以使用如下结构进行更详细的绘制（伪代码结构如下）：
+
+```python
+plt.figure(figsize=(16, 16))  # 创建大画布
+plt.imshow(N, cmap='Blues')   # 用蓝色色带显示计数矩阵
+for i in range(28):
+    for j in range(28):
+        chstr = i2s[i] + i2s[j]             # 比如 "th"、"ar" 等 bigram
+        count = N[i, j].item()              # 获取具体数字（tensor → int）
+        plt.text(j, i, chstr, ha='center', va='bottom', color='gray')
+        plt.text(j, i, count, ha='center', va='top', color='black')
+plt.axis('off')
+plt.show()
+```
+
+---
+
+### ✅ 补充解释：
+
+* `N[i, j]` 是 torch tensor，如果你直接打印是 `tensor(41)` 之类的对象。
+  用 `.item()` 可以将其变为普通整数，如 `41`。
+* `plt.text(...)` 是在图的某个位置写字，比如 bigram 的字符对和出现次数。
+* 关闭坐标轴 (`axis('off')`) 让图更清爽。
+* 这样你会看到一个 28×28 的字符矩阵，每个格子标注了：
+
+  * 哪个字符组合（bigram）
+  * 出现了多少次
+
+---
+
+### ✅ 总结：
+
+我们做的事是：
+
+1. 用 PyTorch 构建了一个 28×28 的 bigram 计数张量；
+2. 用 matplotlib 展示了这个张量，视觉化统计结构；
+3. 用字符标注每个 bigram 及其频次，提升可读性；
+4. 学会了 `.item()` 把 tensor 转换为 Python 整数。
+
+这个图能直观反映哪些 bigram 很常见，哪些几乎没出现。分析这些结构对构建语言模型非常有帮助。
 
 # deleting spurious (S) and (E) tokens in favor of a single . token
 
