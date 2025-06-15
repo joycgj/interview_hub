@@ -28,6 +28,12 @@
     - [✅ 步骤 4：字符转整数的映射（lookup 表）](#-步骤-4字符转整数的映射lookup-表)
     - [✅ 步骤 5：填充张量（即 bigram 统计）](#-步骤-5填充张量即-bigram-统计)
     - [✅ 总结：](#-总结)
+    - [🔍 分步解释：](#-分步解释)
+      - [第一步：`''.join(words)`](#第一步joinwords)
+      - [第二步：`set(...)`](#第二步set)
+    - [✅ 用法场景](#-用法场景)
+    - [🧠 举个例子再总结：](#-举个例子再总结)
+    - [✅ 总结一句话：](#-总结一句话)
 - [visualizing the bigram tensor](#visualizing-the-bigram-tensor)
 - [deleting spurious (S) and (E) tokens in favor of a single . token](#deleting-spurious-s-and-e-tokens-in-favor-of-a-single--token)
 - [sampling from the model](#sampling-from-the-model)
@@ -880,6 +886,75 @@ for w in words:
 
 这相当于是我们 bigram 模型的“训练”过程，只不过用的是数数而不是神经网络。
 
+---
+
+这行代码：
+
+```python
+set(''.join(words))
+```
+
+的作用是：**提取列表 `words` 中所有单词中出现过的**“**唯一字符集合**”。
+
+---
+
+### 🔍 分步解释：
+
+假设你有一个字符串列表：
+
+```python
+words = ["emma", "olivia", "ava"]
+```
+
+#### 第一步：`''.join(words)`
+
+把所有单词拼接成一个长字符串，没有空格：
+
+```python
+''.join(words)  →  "emmaoliviaava"
+```
+
+#### 第二步：`set(...)`
+
+把这个字符串转换成一个集合，自动去重，只保留每个字符出现一次：
+
+```python
+set("emmaoliviaava") → {'e', 'm', 'a', 'o', 'l', 'i', 'v'}
+```
+
+集合的特点是：**不重复、无序**。
+
+---
+
+### ✅ 用法场景
+
+这个操作常用来：
+
+* 获取训练数据中用到的所有字符（去重后）
+* 构建字符到索引的映射（如 `{'a':0, 'b':1, ...}`）
+
+---
+
+### 🧠 举个例子再总结：
+
+```python
+words = ["cat", "car", "dog"]
+set(''.join(words))  → {'c', 'a', 't', 'r', 'd', 'o', 'g'}
+```
+
+即：把所有单词连起来 → 拆成字符 → 去重 → 得到所有**唯一出现过的字符**
+
+---
+
+### ✅ 总结一句话：
+
+```python
+set(''.join(words))
+```
+
+这是一种快速获取训练语料中**全部不重复字符**的写法。
+
+---
 
 # visualizing the bigram tensor
 
