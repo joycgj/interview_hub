@@ -58,6 +58,11 @@
     - [✅ 最终效果：](#-最终效果)
     - [🎯 总结一句话：](#-总结一句话-1)
 - [deleting spurious (S) and (E) tokens in favor of a single . token](#deleting-spurious-s-and-e-tokens-in-favor-of-a-single--token)
+- [删除多余的 (S) 和 (E) 标记，改用一个统一的 `.` 特殊符号](#删除多余的-s-和-e-标记改用一个统一的--特殊符号)
+    - [✅ 我们将做出以下改变：](#-我们将做出以下改变)
+    - [✅ 额外美化处理：](#-额外美化处理)
+    - [✅ 更新后的行为：](#-更新后的行为)
+    - [✅ 总结：](#-总结-3)
 - [sampling from the model](#sampling-from-the-model)
 - [efficiency! vectorized normalization of the rows, tensor broadcasting](#efficiency-vectorized-normalization-of-the-rows-tensor-broadcasting)
 - [loss function (the negative log likelihood of the data under our model)](#loss-function-the-negative-log-likelihood-of-the-data-under-our-model)
@@ -1256,6 +1261,76 @@ then this row here now is just uh very simply the um counts for all the first le
 uh j starts a word h starts a word i starts a word etc and then these are all
 the ending characters and in between we have the structure of what characters follow each other
 so this is the counts array of our entire data set so this array actually has all
+
+# 删除多余的 (S) 和 (E) 标记，改用一个统一的 `.` 特殊符号
+
+我们可以注意到，之前的处理方式其实不是很聪明。比如你看可视化图时，会发现：
+
+* 有一整行是全 0 的，那是因为结尾符号 `E` 不可能出现在 bigram 的第一个位置（即不会作为起始字符）。
+
+  * 因为我们只在每个单词末尾放 `E`，所以它永远不会作为前一个字符。
+
+* 同样，也有一整列是全 0 的，那是因为开始符号 `S` 不会出现在 bigram 的第二个位置（即不会作为结束字符）。
+
+  * 因为我们只在单词前面加 `S`，从来不会让它出现在 bigram 的结尾。
+
+此外，在左上角的这个小 2×2 矩阵（`S` 和 `E` 交叉）中，**唯一可能的组合是 `S` 直接跟着 `E`**（即空单词的情况），其他组合根本不可能出现。
+
+所以我们浪费了不少空间，并且 `S` 和 `E` 的位置在图中很拥挤。
+
+虽然使用 `S` 和 `E` 符号是自然语言处理中常见的做法（用类似方括号的标记表示特殊符号），但我们现在决定用更简洁的方式来处理：
+
+---
+
+### ✅ 我们将做出以下改变：
+
+1. **不再使用两个特殊字符 `S` 和 `E`**，统一改为一个特殊字符 `.`（点号）。
+2. **把数组大小从 28×28 改为 27×27**：
+
+   * 26 个字母 + 1 个点号，总共 27 个字符。
+
+---
+
+### ✅ 额外美化处理：
+
+我们还希望这个特殊符号 `.` 排在字符表的最前面，对应索引 `0`，
+然后 `'a'` 从索引 `1` 开始，`'b'` 是 `2`，以此类推。
+
+因此：
+
+```python
+s2i = {
+    '.': 0,
+    'a': 1,
+    'b': 2,
+    ...
+    'z': 26
+}
+```
+
+`i2s`（索引转字符）是 `s2i` 的反转字典，所以没问题，它会正确映射回去。
+
+---
+
+### ✅ 更新后的行为：
+
+* 空单词不会出现，所以 `.` → `.` 的 bigram（即 `N[0][0]`）计数为 0。
+* 第一行记录了以 `.` 开头的 bigram，表示某字符是否是单词起始字符。
+* 第一列记录了以某字符结尾的 bigram（→ `.`），表示这些字符作为单词结尾。
+* 中间的区域记录了普通字符之间的 bigram 关系。
+
+这样处理后，数据更紧凑、结构更清晰、可视化也更美观。
+
+---
+
+### ✅ 总结：
+
+我们将：
+
+* 用一个统一的特殊字符 `.` 代替之前的 `S`（start）和 `E`（end）；
+* 把统计矩阵从 28×28 缩小为 27×27；
+* 并调整字符索引，使 `.` 对应位置 0，其它字符从 1 开始；
+* 这样可以减少冗余、节省空间、提高逻辑清晰度。
 
 # sampling from the model
 
