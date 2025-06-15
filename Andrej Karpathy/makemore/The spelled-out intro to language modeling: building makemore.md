@@ -14,6 +14,12 @@
 - [探索数据集中的二元组](#探索数据集中的二元组)
 - [counting bigrams in a python dictionary](#counting-bigrams-in-a-python-dictionary)
 - [在 Python 字典中统计二元组（bigrams）](#在-python-字典中统计二元组bigrams)
+    - [一般形式：](#一般形式)
+    - [举例说明：](#举例说明)
+      - [✅ 示例 1：普通函数 vs lambda](#-示例-1普通函数-vs-lambda)
+      - [✅ 示例 2：配合 sorted 使用](#-示例-2配合-sorted-使用)
+      - [✅ 示例 3：配合 `map()` 使用](#-示例-3配合-map-使用)
+    - [总结：](#总结)
 - [counting bigrams in a 2D torch tensor ("training the model")](#counting-bigrams-in-a-2d-torch-tensor-training-the-model)
 - [visualizing the bigram tensor](#visualizing-the-bigram-tensor)
 - [deleting spurious (S) and (E) tokens in favor of a single . token](#deleting-spurious-s-and-e-tokens-in-favor-of-a-single--token)
@@ -620,6 +626,89 @@ sorted(b.items(), key=lambda kv: kv[1], reverse=True)
 比如我们会发现字符 `n` 作为结尾的 bigram 出现了很多次，或者字符 `a` 后面跟着 `n` 是非常常见的组合。
 
 这些就是我们通过遍历整个数据集得到的每个字符对的统计信息，后续我们就可以利用这些统计结果来建模或采样新数据了。
+
+---
+
+python lambda 解释一下
+
+在 Python 中，`lambda` 是用来创建\*\*匿名函数（没有名字的函数）\*\*的一种简洁语法。
+
+---
+
+### 一般形式：
+
+```python
+lambda 参数: 表达式
+```
+
+这定义了一个函数，它接受一些参数，并返回一个表达式的结果。
+
+相当于下面这种普通函数的简写形式：
+
+```python
+def 函数名(参数):
+    return 表达式
+```
+
+---
+
+### 举例说明：
+
+#### ✅ 示例 1：普通函数 vs lambda
+
+```python
+# 普通函数
+def add(x, y):
+    return x + y
+
+# lambda函数
+add_lambda = lambda x, y: x + y
+
+print(add(2, 3))         # 输出 5
+print(add_lambda(2, 3))  # 输出 5
+```
+
+---
+
+#### ✅ 示例 2：配合 sorted 使用
+
+比如你有一个列表，想按第二个元素排序：
+
+```python
+items = [('a', 3), ('b', 1), ('c', 2)]
+sorted_items = sorted(items, key=lambda x: x[1])
+print(sorted_items)  # 输出 [('b', 1), ('c', 2), ('a', 3)]
+```
+
+解释：
+
+* `lambda x: x[1]` 创建了一个匿名函数，表示“取每个元素的第1个索引（即第2个值）”
+* `sorted(..., key=...)` 就会用这个函数来进行排序
+
+---
+
+#### ✅ 示例 3：配合 `map()` 使用
+
+```python
+nums = [1, 2, 3, 4]
+squared = list(map(lambda x: x**2, nums))
+print(squared)  # 输出 [1, 4, 9, 16]
+```
+
+---
+
+### 总结：
+
+| 特点       | 说明                                    |
+| -------- | ------------------------------------- |
+| 匿名       | 没有名字，适合临时用一次的小函数                      |
+| 表达式只能有一行 | 不能包含多条语句、赋值、循环等                       |
+| 常用于函数式操作 | 如 `sorted`, `map`, `filter`, `reduce` |
+
+---
+
+如果你看到 `lambda`，可以理解成：**临时造了个小函数，干点事就扔掉**。常用来写简洁的代码，但不要滥用，逻辑复杂时最好用 `def` 明确写出函数。
+
 
 # counting bigrams in a 2D torch tensor ("training the model")
 
