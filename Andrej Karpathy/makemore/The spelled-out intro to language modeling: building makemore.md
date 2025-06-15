@@ -21,6 +21,13 @@
       - [✅ 示例 3：配合 `map()` 使用](#-示例-3配合-map-使用)
     - [总结：](#总结)
 - [counting bigrams in a 2D torch tensor ("training the model")](#counting-bigrams-in-a-2d-torch-tensor-training-the-model)
+- [用 2D Torch 张量统计 bigram（“训练模型”）](#用-2d-torch-张量统计-bigram训练模型)
+    - [✅ 步骤 1：导入 PyTorch](#-步骤-1导入-pytorch)
+    - [✅ 步骤 2：创建张量示例](#-步骤-2创建张量示例)
+    - [✅ 步骤 3：构建 28x28 的大张量](#-步骤-3构建-28x28-的大张量)
+    - [✅ 步骤 4：字符转整数的映射（lookup 表）](#-步骤-4字符转整数的映射lookup-表)
+    - [✅ 步骤 5：填充张量（即 bigram 统计）](#-步骤-5填充张量即-bigram-统计)
+    - [✅ 总结：](#-总结)
 - [visualizing the bigram tensor](#visualizing-the-bigram-tensor)
 - [deleting spurious (S) and (E) tokens in favor of a single . token](#deleting-spurious-s-and-e-tokens-in-favor-of-a-single--token)
 - [sampling from the model](#sampling-from-the-model)
@@ -767,6 +774,112 @@ x1 ix2 this is the two-dimensional array indexing i've shown you before and hone
 because everything starts at zero so this should work
 and give us a large 28 by 28 array of all these counts so
 if we print n this is the array but of course it looks ugly so let's erase this ugly mess and
+
+# 用 2D Torch 张量统计 bigram（“训练模型”）
+
+我们现在想把统计信息存储在一个 **二维数组（2D array）** 中，而不是用 Python 字典。
+在这个数组中：
+
+* **行（row）代表 bigram 的第一个字符**，
+* **列（column）代表第二个字符**，
+* 每个数组元素（即二维坐标）记录了这个字符对在数据集中出现的次数。
+
+我们将使用 **PyTorch** 来构建这个数组。PyTorch 是一个深度学习框架，其中的 `torch.tensor` 提供了创建和高效操作多维数组的功能。
+
+---
+
+### ✅ 步骤 1：导入 PyTorch
+
+```python
+import torch
+```
+
+---
+
+### ✅ 步骤 2：创建张量示例
+
+```python
+a = torch.zeros((3, 5), dtype=torch.int32)
+```
+
+* 创建一个 3 行 5 列的全 0 整数张量。
+* 默认数据类型是 `float32`，我们改成 `int32` 是因为要统计次数。
+
+你可以像这样操作张量的某个元素：
+
+```python
+a[1, 3] = 1     # 第2行第4列设为1
+a[1, 3] += 1    # 累加
+a[0, 0] = 5     # 第1行第1列设为5
+```
+
+---
+
+### ✅ 步骤 3：构建 28x28 的大张量
+
+因为我们有：
+
+* 26 个英文字母（a\~z）
+* 加上两个特殊字符：`S`（开始）和 `E`（结束）
+
+所以我们需要一个 **28×28** 的张量来表示所有可能的 bigram：
+
+```python
+N = torch.zeros((28, 28), dtype=torch.int32)
+```
+
+---
+
+### ✅ 步骤 4：字符转整数的映射（lookup 表）
+
+张量索引只能用整数，但字符是字符串类型，所以我们需要把每个字符映射成一个整数。
+
+我们可以从数据集中收集所有字符：
+
+```python
+chars = sorted(list(set(''.join(words))))  # 把所有单词拼成一个字符串，再取唯一字符，再排序
+```
+
+然后构建字符 → 索引的映射字典：
+
+```python
+s2i = { ch:i for i, ch in enumerate(chars) }
+s2i['S'] = 26   # 开始字符
+s2i['E'] = 27   # 结束字符
+```
+
+---
+
+### ✅ 步骤 5：填充张量（即 bigram 统计）
+
+现在我们用字符对索引这个二维张量，并将对应位置的值加 1：
+
+```python
+for w in words:
+    chs = ['S'] + list(w) + ['E']  # 给每个单词加上起始和结束符
+    for ch1, ch2 in zip(chs, chs[1:]):
+        ix1 = s2i[ch1]
+        ix2 = s2i[ch2]
+        N[ix1, ix2] += 1
+```
+
+这样就完成了整个数据集中所有 bigram 的统计，保存在一个高效的 PyTorch 张量中。
+
+你可以打印 `N` 看结果，但它是一个 28×28 的大数组，可能会很“丑”。接下来可以进一步分析或可视化它。
+
+---
+
+### ✅ 总结：
+
+我们做了这些事：
+
+* 用 `torch.zeros()` 建立 2D 统计张量
+* 用 `set + sorted` 提取所有字符，构建字符→整数的映射
+* 用两个字符组成 bigram，并在张量中索引对应位置 +1
+* 用 PyTorch 高效存储和操作字符频率信息，为后续建模做准备
+
+这相当于是我们 bigram 模型的“训练”过程，只不过用的是数数而不是神经网络。
+
 
 # visualizing the bigram tensor
 
