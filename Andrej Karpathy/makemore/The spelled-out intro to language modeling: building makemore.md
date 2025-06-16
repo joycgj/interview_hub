@@ -114,6 +114,13 @@
     - [📌 举例：](#-举例)
     - [💡 延伸：](#-延伸)
 - [model smoothing with fake counts](#model-smoothing-with-fake-counts)
+    - [🧪 【背景问题：模型对未见过的 bigram 给出零概率】](#-背景问题模型对未见过的-bigram-给出零概率)
+    - [😬 问题分析](#-问题分析)
+    - [✅ 解决方案：**模型平滑（Model Smoothing）**](#-解决方案模型平滑model-smoothing)
+      - [🔧 操作方法：](#-操作方法)
+    - [🌊 平滑程度可调](#-平滑程度可调)
+    - [🧾 效果分析：](#-效果分析)
+    - [📌 总结一句话：](#-总结一句话-4)
 - [PART 2: the neural network approach: intro](#part-2-the-neural-network-approach-intro)
 - [creating the bigram dataset for the neural net](#creating-the-bigram-dataset-for-the-neural-net)
 - [feeding integers into neural nets? one-hot encodings](#feeding-integers-into-neural-nets-one-hot-encodings)
@@ -2219,6 +2226,86 @@ didn't but in principle it could but what that's going to do now is that nothing
 so now our model will predict some other probability and we see that jq now has a very small probability so the model
 still finds it very surprising that this was a word or a bigram but we don't get negative infinity so it's kind of like a
 nice fix that people like to apply sometimes and it's called model smoothing okay so we've now trained a respectable bi-gram character level
+
+以下是这段关于“**模型平滑（Model Smoothing）**”的完整中文翻译和讲解：
+
+---
+
+### 🧪 【背景问题：模型对未见过的 bigram 给出零概率】
+
+作者举了一个例子：
+
+> 我们把 "andre" 这个名字后面接一个 "q" 字母，然后计算它的概率，结果损失变成了 **无穷大（infinity）**。
+
+为什么？
+
+* 因为 bigram `"jq"` 在训练集中**从未出现过**。
+* 所以模型中 `P[j][q] = 0`，即这个组合的概率为 0。
+* 而 `log(0)` 在数学上是负无穷（`-∞`），
+* 所以最终计算的 **log likelihood = -∞**，也就是损失 = ∞。
+
+---
+
+### 😬 问题分析
+
+这意味着：
+
+* 模型认为 "jq" 这个组合**绝对不可能**出现（概率为 0），
+* 导致任何包含这个组合的词都会被模型视为“完全错误”——即损失为无穷大。
+
+但这在实际中很**不合理**，因为训练数据总是有限的，**没出现过 ≠ 完全不可能**。
+
+---
+
+### ✅ 解决方案：**模型平滑（Model Smoothing）**
+
+解决方式就是：**给所有组合都加上一个虚拟的“伪计数（fake count）”**。
+
+#### 🔧 操作方法：
+
+原来我们统计 bigram 的频数是：
+
+```python
+N[i][j] += 1   # 真实出现过就+1
+```
+
+改为：
+
+```python
+N[i][j] += 1   # 真实数据
+N += 1         # 给每一个位置都加上一个 "1" 的伪计数
+```
+
+> 这相当于我们假设每个字符组合**都出现过一次**。
+
+然后再归一化为概率（除以行和）重新得到 `P`。
+
+---
+
+### 🌊 平滑程度可调
+
+你可以加的不是 1，而是任意一个数（例如 0.1, 5, 10）：
+
+* **加得越多**：模型越“平滑”，越接近于均匀分布（越不自信）
+* **加得越少**：模型越“尖锐”，越贴近训练数据（越自信）
+
+---
+
+### 🧾 效果分析：
+
+* 原来 jq = 0，导致 `log(0)` = -∞，loss 无法使用
+* 加上平滑后，jq 的概率不再为 0，虽然很小，但 `log(prob)` 是一个有限的负数
+* 最终我们避免了无穷大的损失，让模型更加健壮
+
+---
+
+### 📌 总结一句话：
+
+> **模型平滑就是给所有 bigram 加上一个“伪造的”出现次数，避免出现零概率，从而让模型更健壮、更泛化。**
+
+这种方法也叫做 **Laplace smoothing** 或 **Add-one smoothing**，是语言建模里非常经典的一种技巧。
+
+如需，我也可以给你写一段代码实现这个平滑过程。是否需要？
 
 # PART 2: the neural network approach: intro
 
