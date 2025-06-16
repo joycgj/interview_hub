@@ -128,6 +128,13 @@
   - [🧠 训练方法：](#-训练方法)
   - [🔁 总结一下流程：](#-总结一下流程)
 - [creating the bigram dataset for the neural net](#creating-the-bigram-dataset-for-the-neural-net)
+  - [📊 为神经网络创建 bigram 数据集](#-为神经网络创建-bigram-数据集)
+    - [🛠 步骤解析](#-步骤解析)
+    - [🧩 Bigram 结构举例：](#-bigram-结构举例)
+    - [🧮 代码逻辑：](#-代码逻辑)
+    - [📦 示例输出（以 `"emma"` 为例）：](#-示例输出以-emma-为例)
+  - [⚠️ 小心 Tensor 的构建方式！](#️-小心-tensor-的构建方式)
+    - [✅ 总结建议：](#-总结建议)
 - [feeding integers into neural nets? one-hot encodings](#feeding-integers-into-neural-nets-one-hot-encodings)
 - [the "neural net": one linear layer of neurons implemented with matrix multiplication](#the-neural-net-one-linear-layer-of-neurons-implemented-with-matrix-multiplication)
 - [transforming neural net outputs into probabilities: the softmax](#transforming-neural-net-outputs-into-probabilities-the-softmax)
@@ -2450,6 +2457,105 @@ because i want to caution you and i want you to re get used to reading a lot of 
 of q and a's and threads like this and you know some of the stuff is
 unfortunately not easy and not very well documented and you have to be careful out there what we want here is integers
 because that's what makes uh sense um and so lowercase tensor is what we are using
+
+以下是这段关于**为神经网络创建 bigram 数据集**的内容翻译和详细解释：
+
+---
+
+## 📊 为神经网络创建 bigram 数据集
+
+我们现在要为神经网络创建训练集，使用的仍然是字符级的 bigram 语言模型。
+
+---
+
+### 🛠 步骤解析
+
+> **目标：** 把所有的 bigram 变成神经网络的训练样本（输入和目标输出）。
+
+---
+
+### 🧩 Bigram 结构举例：
+
+以单词 `"emma"` 为例：
+
+我们在每个词前后加上特殊字符 `'.'` 表示起始和结束：
+
+* 原始词变成：`.emma.`
+* 对应的 bigram 是：`.e`、`e.m`、`m.m`、`m.a`、`a.`
+
+---
+
+### 🧮 代码逻辑：
+
+我们遍历这些 bigram，不再**统计出现次数**，而是：
+
+* 把每对字符（x, y）转为对应的整数（索引）
+* 存入两个列表：
+
+  * `xs`：输入字符的索引
+  * `ys`：目标字符的索引
+
+例如：
+
+```python
+xs.append(ix1)  # 输入字符索引
+ys.append(ix2)  # 目标字符索引
+```
+
+最后，我们将这两个列表转换为 PyTorch 的张量：
+
+```python
+xs = torch.tensor(xs)  
+ys = torch.tensor(ys)
+```
+
+---
+
+### 📦 示例输出（以 `"emma"` 为例）：
+
+| bigram | 输入字符（x）  | 目标字符（y）  |
+| ------ | -------- | -------- |
+| `.e`   | `.` → 0  | `e` → 5  |
+| `e.m`  | `e` → 5  | `m` → 13 |
+| `m.m`  | `m` → 13 | `m` → 13 |
+| `m.a`  | `m` → 13 | `a` → 1  |
+| `a.`   | `a` → 1  | `.` → 0  |
+
+所以这个 word（emma）就贡献了 5 个训练样本。
+
+---
+
+## ⚠️ 小心 Tensor 的构建方式！
+
+作者特别提醒：
+
+* PyTorch 有两种方式可以构建 tensor：
+
+  * `torch.tensor(...)`（小写）✅ 推荐
+  * `torch.Tensor(...)`（大写）⚠️ 不推荐
+
+> 两者行为**不同**，尤其是在处理整数时！
+
+* 小写 `.tensor()` 会根据你提供的内容自动推断数据类型（例如整数 -> `int64`）
+* 大写 `.Tensor()` 会默认生成 float32 类型（即使你传的是整数！）
+
+例如：
+
+```python
+xs = torch.Tensor([1, 2, 3])  # ❌ 得到 float32
+xs = torch.tensor([1, 2, 3])  # ✅ 得到 int64
+```
+
+---
+
+### ✅ 总结建议：
+
+* 对于分类任务（如字符索引预测），你希望是 **整数类型（int64）**
+* 所以应该使用小写的 `torch.tensor(...)`
+
+---
+
+需要我帮你把这个数据处理部分的代码写出来吗？或者你想继续翻译后续内容？
 
 # feeding integers into neural nets? one-hot encodings
 
