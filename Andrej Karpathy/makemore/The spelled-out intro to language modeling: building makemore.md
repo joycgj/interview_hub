@@ -169,6 +169,11 @@
     - [🔁 与 micrograd 对比：](#-与-micrograd-对比)
     - [✅ 小结：](#-小结)
 - [vectorized loss](#vectorized-loss)
+    - [🧠 原文翻译 + 解释：](#-原文翻译--解释)
+    - [✅ PyTorch 实现向量索引：](#-pytorch-实现向量索引)
+    - [🧮 然后计算损失：](#-然后计算损失)
+    - [🧾 结果：](#-结果)
+    - [📌 总结：](#-总结-8)
 - [backward and update, in PyTorch](#backward-and-update-in-pytorch)
 - [putting everything together](#putting-everything-together)
 - [note 1: one-hot encoding really just selects a row of the next Linear layer's weight matrix](#note-1-one-hot-encoding-really-just-selects-a-row-of-the-next-linear-layers-weight-matrix)
@@ -3317,6 +3322,91 @@ so the loss here is 3.7 something and you see that this loss 3.76 3.76 is
 exactly as we've obtained before but this is a vectorized form of that expression so
 we get the same loss and the same loss we can consider service part of this forward pass
 and we've achieved here now loss okay so we made our way all the way to loss we've defined the forward pass
+
+这段内容是讲解如何**向量化地计算神经网络的损失函数**（loss），并用 PyTorch 实现一个高效的写法。下面是逐步翻译与解释：
+
+---
+
+### 🧠 原文翻译 + 解释：
+
+> **negative log likelihood** because we are doing **classification**, we're not doing **regression** as it's called
+> 因为我们在做**分类任务**，所以使用\*\*负对数似然（Negative Log Likelihood, NLL）\*\*作为损失函数，而不是回归任务里常用的均方误差（MSE）。
+
+---
+
+> so here we want to calculate loss now the way we calculate it is it's just this **average negative log likelihood**
+> 现在我们要计算 loss，我们的做法就是取所有样本的 **负对数概率的平均值**。
+
+---
+
+> `probs` here has shape (5, 27)
+> 当前变量 `probs` 是一个 5 × 27 的矩阵：
+
+* 每一行对应一个训练样本（比如来自单词 "emma" 中的 bigram）
+* 每一列对应某一个可能的输出字符（共 27 个字符）
+
+---
+
+> to get all the probabilities at the correct indices...
+> 我们要从 `probs` 里**提取出神经网络对每个样本中“正确字符”的概率**。举例：
+
+* 第一个样本的正确标签是 `5`，我们想取第0行的第5列概率（`probs[0, 5]`）
+* 第二个样本标签是 `13`，取 `probs[1, 13]`
+  ……
+
+---
+
+> but we want a more efficient way to access these probabilities
+> 我们希望用更**向量化的方式**一次性取出所有样本的对应概率。
+
+---
+
+### ✅ PyTorch 实现向量索引：
+
+```python
+probs[torch.arange(5), ys]
+```
+
+解释：
+
+* `torch.arange(5)` → `[0, 1, 2, 3, 4]` → 样本的行索引
+* `ys` 是真实标签（例如 `[5, 13, 13, 1, 0]`）→ 列索引
+* `probs[行, 列]` 就可以一次性取出每个样本中，神经网络对正确字符的概率值。
+
+---
+
+### 🧮 然后计算损失：
+
+```python
+loss = -torch.log(probs[torch.arange(5), ys]).mean()
+```
+
+* `torch.log(...)` → 取对数
+* `-log(...)` → 负对数（Negative Log-Likelihood）
+* `.mean()` → 所有样本的平均，得到 loss。
+
+---
+
+### 🧾 结果：
+
+> 所以这个 `loss` 是 `3.76`，和之前计算的一模一样，只是写法更高效、紧凑。
+> 这部分完成了我们神经网络的 **前向传播（forward pass）**，包括输出预测 → 转为概率 → 计算损失。
+
+---
+
+### 📌 总结：
+
+这段代码完成的事情：
+
+1. 网络输出 logits → softmax → probs（概率）
+2. 从 probs 中取出每个样本“正确标签”对应的概率值
+3. 对这些概率取 log，取负，求平均 → 得到 loss
+
+这就是分类问题中常见的 **交叉熵损失（Cross Entropy Loss）** 的核心计算逻辑。
+
+---
+
+需要我帮你写出完整的这部分 PyTorch 代码吗？或者可视化这个损失流程图也可以。
 
 # backward and update, in PyTorch
 
