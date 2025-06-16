@@ -105,6 +105,14 @@
   - [🛠 效率建议](#-效率建议)
   - [✅ 总结一句话：](#-总结一句话-3)
 - [loss function (the negative log likelihood of the data under our model)](#loss-function-the-negative-log-likelihood-of-the-data-under-our-model)
+    - [🎯 概述：我们已经训练了一个 Bigram 语言模型，它通过统计每对字符出现的频率来建立，然后归一化得到一个**概率矩阵** `P`，该矩阵表示每个字符后接另一个字符的概率。](#-概述我们已经训练了一个-bigram-语言模型它通过统计每对字符出现的频率来建立然后归一化得到一个概率矩阵-p该矩阵表示每个字符后接另一个字符的概率)
+    - [🧠 为什么使用对数似然？](#-为什么使用对数似然)
+    - [🚨 但问题来了：](#-但问题来了)
+    - [❗ 损失函数的语义是：**越小越好**。](#-损失函数的语义是越小越好)
+    - [📏 通常我们还会**平均化损失**，以便不同长度的句子/样本能公平比较：](#-通常我们还会平均化损失以便不同长度的句子样本能公平比较)
+    - [✅ 总结逻辑链：](#-总结逻辑链)
+    - [📌 举例：](#-举例)
+    - [💡 延伸：](#-延伸)
 - [model smoothing with fake counts](#model-smoothing-with-fake-counts)
 - [PART 2: the neural network approach: intro](#part-2-the-neural-network-approach-intro)
 - [creating the bigram dataset for the neural net](#creating-the-bigram-dataset-for-the-neural-net)
@@ -2099,6 +2107,94 @@ now what i'd like to show you is that you can actually evaluate the probability 
 if we just test a single word andre and bring back the print statement
 then you see that andre is actually kind of like an unlikely word like on average we take
 three log probability to represent it and roughly that's because ej apparently is very uncommon as an example
+
+以下是该段英文关于\*\*负对数似然损失（Negative Log Likelihood Loss, NLL）\*\*的完整中文翻译与讲解：
+
+---
+
+### 🎯 概述：我们已经训练了一个 Bigram 语言模型，它通过统计每对字符出现的频率来建立，然后归一化得到一个**概率矩阵** `P`，该矩阵表示每个字符后接另一个字符的概率。
+
+接下来，我们要评估这个模型的好坏。最常见的评估方式是使用**损失函数（loss function）**，特别是**负对数似然损失（NLL）**，它是语言模型中非常核心的一个概念。
+
+---
+
+### 🧠 为什么使用对数似然？
+
+我们希望模型能给训练集中的每个字对（bigram）分配尽可能**高的概率**。一种衡量方法是将所有这些概率**相乘**，也就是计算**整个数据的似然（likelihood）**：
+
+```
+Likelihood = P(x₁) * P(x₂ | x₁) * P(x₃ | x₂) * ...
+```
+
+这个乘积越大，说明模型对数据拟合得越好。
+
+---
+
+### 🚨 但问题来了：
+
+所有这些概率都是小于 1 的，所以乘起来会变得非常小（接近于 0），难以处理。因此我们采用对数操作：
+
+```
+Log-Likelihood = log(P₁) + log(P₂) + log(P₃) + ...
+```
+
+* 对数操作将乘法变成加法，数值上更稳定
+* 如果某个 bigram 概率高（接近 1），log 值接近 0
+* 如果某个概率低（接近 0），log 值是负数，拉低总和
+
+---
+
+### ❗ 损失函数的语义是：**越小越好**。
+
+而对数似然越大越好（越接近 0）。所以我们使用 **负对数似然（Negative Log Likelihood）**：
+
+```python
+NLL = - (log(P₁) + log(P₂) + log(P₃) + ...)
+```
+
+这样损失就变成了“越小越好”。
+
+---
+
+### 📏 通常我们还会**平均化损失**，以便不同长度的句子/样本能公平比较：
+
+```python
+avg_NLL = NLL / 总bigram数
+```
+
+---
+
+### ✅ 总结逻辑链：
+
+| 步骤            | 含义               |
+| ------------- | ---------------- |
+| 模型输出概率矩阵 `P`  | 每个字符跟随另一个字符的概率   |
+| 查找训练集中每对字符的概率 | 来自 `P[ix1, ix2]` |
+| 取对数 log(P)    | 便于加法操作和稳定计算      |
+| 取负数 -log(P)   | 转换为损失（越小越好）      |
+| 平均化           | 得到统一标准的 loss 分值  |
+
+---
+
+### 📌 举例：
+
+假设 `emma` 这个词产生了以下 bigram：
+
+* `.e`, `e.m`, `m.m`, `m.a`, `a.`
+
+对于每一对字符，我们查找概率 → 取对数 → 取负数 → 求和 → 平均
+
+最终，我们得到一个平均损失值（如 2.4），说明该模型平均每个字符需要约 2.4 bits 的信息量去编码训练数据。
+
+---
+
+### 💡 延伸：
+
+将来我们会用神经网络（而不是手动统计）来预测 `P`，即每一个 bigram 的概率将通过网络参数计算而来，训练目标仍然是最小化负对数似然。
+
+---
+
+如果你还想进一步可视化这个 loss 是怎么计算出来的，或用代码例子跑一遍，我可以给你写一个简单的实现。需要吗？
 
 # model smoothing with fake counts
 
