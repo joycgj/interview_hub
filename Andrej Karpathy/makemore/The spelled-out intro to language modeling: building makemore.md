@@ -162,6 +162,12 @@
     - [🎯 为什么要这么做？](#-为什么要这么做)
     - [🔚 总结](#-总结-7)
 - [summary, preview to next steps, reference to micrograd](#summary-preview-to-next-steps-reference-to-micrograd)
+    - [🧩 整体结构和流程回顾：](#-整体结构和流程回顾)
+    - [📉 损失计算：Negative Log Likelihood Loss（负对数似然）](#-损失计算negative-log-likelihood-loss负对数似然)
+    - [🎲 为什么 loss 可能高？](#-为什么-loss-可能高)
+    - [⚠️ 这不是训练，这只是 forward 过程！](#️-这不是训练这只是-forward-过程)
+    - [🔁 与 micrograd 对比：](#-与-micrograd-对比)
+    - [✅ 小结：](#-小结)
 - [vectorized loss](#vectorized-loss)
 - [backward and update, in PyTorch](#backward-and-update-in-pytorch)
 - [putting everything together](#putting-everything-together)
@@ -3183,6 +3189,105 @@ and so we're going to do the exact same thing here so i'm going to pull this up
 on the side here so that we have it available and we're
 actually going to do the exact same thing so this was the forward pass so where we did this
 and probs is our wipe red so now we have to evaluate the loss but we're not using the mean squared error we're using the
+
+这一段内容是一个 **神经网络语言模型**教学的**总结与过渡部分**，用来回顾我们刚刚做了什么，并引出下一步：**使用反向传播（backpropagation）来训练神经网络模型的参数**。以下是详细解释：
+
+---
+
+### 🧩 整体结构和流程回顾：
+
+1. **数据准备（输入和标签）**：
+
+   * 你有一个单词，比如 `emma`。
+   * 拆成 bigrams（双字符对）后得到：`.e`, `em`, `mm`, `ma`, `a.`。
+   * 每对字符用一个整数表示，输入是前一个字符（如 `e`），目标是后一个字符（如 `m`）。
+
+2. **One-hot 编码**：
+
+   * 输入字符用 one-hot 向量表示，比如字符总数是 27，那么每个字符就变成一个 27维向量，其中只有一个位置是 1。
+
+3. **前向传播（Forward Pass）**：
+
+   * 输入 one-hot 向量乘以权重矩阵 W，得到 27 维的输出（logits）。
+   * logits 被解释为“log-count”（对数计数），通过 softmax 转成概率分布。
+
+4. **softmax**：
+
+   * 将神经网络输出转为概率，满足总和为1，数值为正。
+   * 实现方式是：对 logits 做 `exp()`，再除以总和进行归一化。
+
+---
+
+### 📉 损失计算：Negative Log Likelihood Loss（负对数似然）
+
+* 模型预测一个概率分布，你有实际标签（正确的下一个字符）。
+* 取模型预测中 **该标签对应位置的概率**，然后对其取对数再取负号，就是这个样本的损失：
+
+  $$
+  \text{Loss} = -\log P(\text{正确字符})
+  $$
+* 多个样本取平均，就是总的 loss。
+
+例如：
+
+| 输入  | 正确输出 | 模型预测概率 | 负 log 概率         |
+| --- | ---- | ------ | ---------------- |
+| `.` | `e`  | 0.01   | -log(0.01) ≈ 4.6 |
+| `e` | `m`  | 0.01   | ≈ 4.6            |
+| `m` | `m`  | 0.02   | ≈ 3.9            |
+| `m` | `a`  | 0.07   | ≈ 2.6            |
+| `a` | `.`  | 0.01   | ≈ 4.6            |
+
+平均后得到总 loss。
+
+---
+
+### 🎲 为什么 loss 可能高？
+
+* 网络刚初始化，权重是随机的。
+* 对正确字符分配的概率可能非常小 → loss 高。
+* 所以刚开始模型“很笨”。
+
+可以手动多试几次随机权重初始化（seed 0, 1, 2, ...），看哪个初始化的 loss 更低（但这是瞎猜）。
+
+---
+
+### ⚠️ 这不是训练，这只是 forward 过程！
+
+真正的训练是：
+
+* 计算 loss
+* **反向传播（Backward Pass）**：自动计算损失函数对权重的导数（gradients）
+* **参数更新（Parameter Update）**：用梯度下降来更新 W
+
+---
+
+### 🔁 与 micrograd 对比：
+
+`micrograd` 是作者自己写的一个微型深度学习框架，用于教学。之前我们也学过：
+
+* 定义网络
+* 前向传播计算 loss
+* 反向传播 `.backward()`
+* 用 `.grad` 更新参数
+
+现在 PyTorch 也会做类似的事情，只不过用更强大的底层引擎自动处理了微分和图构建。
+
+---
+
+### ✅ 小结：
+
+| 步骤      | 内容                                       |
+| ------- | ---------------------------------------- |
+| 1. 数据   | 拆成 bigrams，映射为整数索引                       |
+| 2. 编码   | 用 one-hot 向量表示                           |
+| 3. 前向传播 | `one_hot @ W → logits → softmax → probs` |
+| 4. 计算损失 | 使用 NLL Loss                              |
+| 5. 未来步骤 | 使用反向传播 + 梯度下降训练模型（调整 W）                  |
+
+---
+
+是否需要我帮你写出 PyTorch 的完整训练代码片段，或是画出这个流程图来辅助理解？
 
 # vectorized loss
 
