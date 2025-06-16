@@ -175,6 +175,10 @@
     - [🧾 结果：](#-结果)
     - [📌 总结：](#-总结-8)
 - [backward and update, in PyTorch](#backward-and-update-in-pytorch)
+    - [🔁 原文逐段翻译与解释：](#-原文逐段翻译与解释)
+    - [🔁 训练迭代演示：](#-训练迭代演示)
+    - [✅ 示例结果：](#-示例结果-1)
+    - [🧾 总结：](#-总结-9)
 - [putting everything together](#putting-everything-together)
 - [note 1: one-hot encoding really just selects a row of the next Linear layer's weight matrix](#note-1-one-hot-encoding-really-just-selects-a-row-of-the-next-linear-layers-weight-matrix)
 - [note 2: model smoothing as regularization loss](#note-2-model-smoothing-as-regularization-loss)
@@ -3451,6 +3455,119 @@ and now the parameters changed again so if we recalculate the forward pass we ex
 okay and this is again doing the we're now doing gradient descent
 and when we achieve a low loss that will mean that the network is assigning high probabilities to the correctness
 characters okay so i rearranged everything and i put it all together from scratch
+
+这段内容是讲解如何用 PyTorch 手动完成**反向传播（backward）与参数更新（update）**，实现神经网络训练中的\*\*梯度下降（gradient descent）\*\*过程。以下是详细的翻译与解释：
+
+---
+
+### 🔁 原文逐段翻译与解释：
+
+---
+
+> **we forwarded the network and the loss**, now we're ready to do the **backward pass**
+> 我们已经完成了神经网络的前向传播（forward pass）和损失计算（loss），现在可以进行反向传播（backward pass）。
+
+---
+
+> **make sure all the gradients are reset to zero**
+> 确保所有梯度被清零（以免残留上一次的梯度）。
+
+```python
+w.grad = None
+```
+
+PyTorch 中，你可以用 `.zero_()` 来将梯度清零，也可以将 `.grad = None`，后者**更高效**，因为 PyTorch 会把 `None` 当作“无梯度”，等价于零。
+
+---
+
+> **loss.backward()**
+> 这是 PyTorch 中最核心的一步。执行这句后：
+
+* PyTorch 会从 `loss` 开始，
+* 沿着前向图中的计算路径，逐层反向传播，
+* 自动计算出所有需要的 `.grad`（梯度）。
+
+这和你之前在 `micrograd` 里做的手动 `.backward()` 是一样的机制。
+
+---
+
+> PyTorch builds a **computational graph** under the hood
+> PyTorch 会在你执行前向传播时，**自动记录所有操作**，并构建一个**动态的计算图（computation graph）**。
+
+这个图记录了所有张量之间的依赖关系，供后续 `backward()` 使用。
+
+---
+
+> when you then calculate the loss, we can call `.backward()` on it
+> 当你有了 `loss` 之后，就可以对它调用 `.backward()`，PyTorch 会从这里出发，反向传播所有梯度。
+
+---
+
+> and now we can do `w.grad`
+> 执行完 `.backward()` 后，你可以通过 `w.grad` 查看张量 `w` 的梯度。比如：
+
+```python
+print(w.grad.shape)  # 是 (27, 27)，和 w 的形状一样
+```
+
+`w.grad[i][j]` 表示：权重 `w[i][j]` 对 loss 的影响（∂loss/∂w\[i]\[j]）
+
+---
+
+> and now we do the update
+> 现在可以进行权重更新了。我们使用 \*\*最基本的 SGD（随机梯度下降）\*\*公式：
+
+```python
+w.data += -0.1 * w.grad
+```
+
+这里：
+
+* `-0.1` 是学习率（learning rate）
+* `.data` 是张量的原始值，直接修改不会影响 autograd 计算图
+* 更新方向是朝 **梯度的反方向**（即下降）
+
+---
+
+### 🔁 训练迭代演示：
+
+每执行一轮：
+
+```python
+1. w.grad = None
+2. 前向传播，计算 loss
+3. loss.backward()
+4. w.data -= learning_rate * w.grad
+```
+
+就完成了一次参数更新。然后再 forward 看 loss 是否下降。
+
+---
+
+### ✅ 示例结果：
+
+> 第一次 loss 是 **3.76**，更新后变成 **3.74**，再更新是 **3.72** —— 说明模型在变好！
+
+这就是一个最小神经网络的训练过程。
+
+---
+
+### 🧾 总结：
+
+这一段的核心内容是：
+
+| 步骤       | 操作                      | 解释          |
+| -------- | ----------------------- | ----------- |
+| 1️⃣ 清空梯度 | `w.grad = None`         | 避免旧梯度影响     |
+| 2️⃣ 前向传播 | `forward pass`          | 得到概率和 loss  |
+| 3️⃣ 反向传播 | `loss.backward()`       | 自动计算所有参数的梯度 |
+| 4️⃣ 参数更新 | `w.data -= lr * w.grad` | 应用 SGD 更新权重 |
+
+你就已经亲手实现了一个**完整的神经网络训练循环**！
+
+---
+
+需要我把这一部分代码整理成完整的 PyTorch 脚本模板吗？或者解释 `.data` 与 `.detach()` 的区别？
 
 # putting everything together
 
