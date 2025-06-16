@@ -153,6 +153,14 @@
     - [🧪 验证：点积确实是这么来的](#-验证点积确实是这么来的)
     - [✅ 总结](#-总结-6)
 - [transforming neural net outputs into probabilities: the softmax](#transforming-neural-net-outputs-into-probabilities-the-softmax)
+  - [🔁 将神经网络的输出转换为概率：Softmax 函数](#-将神经网络的输出转换为概率softmax-函数)
+    - [🧠 我们想让输出代表什么？](#-我们想让输出代表什么)
+    - [❓如何把这些输出变成“概率”？](#如何把这些输出变成概率)
+    - [🧮 Softmax 的操作过程：](#-softmax-的操作过程)
+    - [✅ 得到的结果是什么？](#-得到的结果是什么)
+    - [🔄 举个例子：](#-举个例子-1)
+    - [🎯 为什么要这么做？](#-为什么要这么做)
+    - [🔚 总结](#-总结-7)
 - [summary, preview to next steps, reference to micrograd](#summary-preview-to-next-steps-reference-to-micrograd)
 - [vectorized loss](#vectorized-loss)
 - [backward and update, in PyTorch](#backward-and-update-in-pytorch)
@@ -2957,6 +2965,129 @@ these characters um the 27 characters are to come next
 and as we tune the weights w we're going to be of course getting different probabilities out for any
 character that you input and so now the question is just can we optimize and find a good w
 such that the probabilities coming out are pretty good and the way we measure pretty good is by the loss function okay
+
+以下是你提供内容的完整中文翻译和讲解：
+
+---
+
+## 🔁 将神经网络的输出转换为概率：Softmax 函数
+
+---
+
+我们前面已经做了什么？
+
+我们将 27 维的 one-hot 编码输入到了一个**包含 27 个神经元的神经网络层**中，这些神经元执行的是一个线性变换：
+**`output = W·x`**（没有偏置，没有激活函数）。
+
+这个神经网络非常简单，只有一个线性层，是最“笨”的网络之一。
+
+---
+
+### 🧠 我们想让输出代表什么？
+
+我们希望每一个输入样本，最终输出的是一个概率分布（用于预测下一个字符），因为我们想训练的是一个**语言模型**。
+
+* 一共有 27 个可能的字符（a-z 和 `.`），所以每个输出应该是一个长度为 27 的向量。
+* 这个向量的每一项表示当前输入字符后面某个字符出现的“概率”。
+
+但问题是：
+
+> 现在神经网络的输出只是一些正数或负数，分布随意。它**不是概率分布**。
+
+---
+
+### ❓如何把这些输出变成“概率”？
+
+我们需要满足两个条件：
+
+1. 所有值都为正数
+2. 所有值加起来等于 1
+
+这就是我们需要用 **Softmax** 函数的地方。
+
+---
+
+### 🧮 Softmax 的操作过程：
+
+1. **解释输出为 Log-count（logits）**
+
+   * 输出值不是概率，而是“对数的计数”值（log-count）
+   * 神经网络直接输出 logits（通常称为“未归一化得分”）
+
+2. **对这些 log-count 执行 `exp()` 操作**
+
+   * 所有负数会变成 (0,1) 之间的小数
+   * 所有正数变成大于 1 的数
+   * 这样得到的就是“伪计数”
+
+3. **将这些“计数”归一化（normalize）**
+
+   * 每一行除以其总和，就可以得到一个真正的概率分布
+
+这个过程就是 Softmax：
+
+```python
+logits = x_enc @ W           # 线性输出 (logits)
+counts = logits.exp()        # 伪计数（全为正）
+probs = counts / counts.sum(dim=1, keepdim=True)  # 按行归一化为概率
+```
+
+---
+
+### ✅ 得到的结果是什么？
+
+* `probs` 的形状是 `[5, 27]`，表示 5 个样本，每个样本一个概率分布
+* 每一行都代表一个样本下所有可能字符的概率和为 1
+
+---
+
+### 🔄 举个例子：
+
+假设输入是字符 `.`，它的 one-hot 是 `[1, 0, 0, ..., 0]`
+它经过神经网络后，输出一个 logits 向量，比如：
+
+```
+[ 0.1, -1.3, 0.5, ..., -0.7 ]
+```
+
+然后我们进行 `exp()` 得到：
+
+```
+[1.11, 0.27, 1.65, ..., 0.49]
+```
+
+接着再除以总和，得到：
+
+```
+[0.05, 0.01, 0.07, ..., 0.02]
+```
+
+现在它就是一个概率分布了，每一项表示 `.` 后面接哪个字符的概率。
+
+---
+
+### 🎯 为什么要这么做？
+
+* 输出 logits 是神经网络更容易学习的形式（不用强制满足归一化）
+* Softmax 保留了这些 logits 的“相对大小”信息
+* 所有步骤是可微的（可以反向传播）
+
+---
+
+### 🔚 总结
+
+| 阶段            | 说明                      |
+| ------------- | ----------------------- |
+| `W·x`         | 得到 logits，未归一化的分数（可正可负） |
+| `exp(logits)` | 转换为正数（伪计数）              |
+| `softmax`     | 按行归一化，得到合法的概率分布         |
+| 结果            | 每个输入字符，得到 27 个输出字符的概率分布 |
+
+这样，我们就能让神经网络输出一个可以用于采样和计算损失的合法分布了。
+
+---
+
+需要我帮你画出整个流程图或代码示意图吗？这能帮助你更直观理解每一步。
 
 # summary, preview to next steps, reference to micrograd
 
