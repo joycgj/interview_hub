@@ -145,6 +145,13 @@
     - [⚠️ 小心数据类型！](#️-小心数据类型)
   - [✅ 总结：](#-总结-5)
 - [the "neural net": one linear layer of neurons implemented with matrix multiplication](#the-neural-net-one-linear-layer-of-neurons-implemented-with-matrix-multiplication)
+  - [🧠「神经网络」的第一层：用矩阵乘法实现的线性层（Linear Layer）](#神经网络的第一层用矩阵乘法实现的线性层linear-layer)
+    - [🎯 一个神经元的计算过程回顾：](#-一个神经元的计算过程回顾)
+    - [🛠 第一步：定义权重 W](#-第一步定义权重-w)
+    - [🧮 第二步：进行矩阵乘法](#-第二步进行矩阵乘法)
+    - [🎯 拓展：用 27 个神经元代替 1 个](#-拓展用-27-个神经元代替-1-个)
+    - [🧪 验证：点积确实是这么来的](#-验证点积确实是这么来的)
+    - [✅ 总结](#-总结-6)
 - [transforming neural net outputs into probabilities: the softmax](#transforming-neural-net-outputs-into-probabilities-the-softmax)
 - [summary, preview to next steps, reference to micrograd](#summary-preview-to-next-steps-reference-to-micrograd)
 - [vectorized loss](#vectorized-loss)
@@ -2762,6 +2769,119 @@ and then we can do x and get three elementwise multiply with w at 13.
 and sum that up that's wx plus b well there's no plus b it's just wx dot
 product and that's this number so you see that this is just being done efficiently by the matrix multiplication
 operation for all the input examples and for all the output neurons of this first layer
+
+以下是这段内容的详细中文翻译与解释：
+
+---
+
+## 🧠「神经网络」的第一层：用矩阵乘法实现的线性层（Linear Layer）
+
+---
+
+我们现在要实现一个**线性神经元层**，这个神经元层会接收前面构造的 one-hot 向量作为输入。
+
+---
+
+### 🎯 一个神经元的计算过程回顾：
+
+还记得在 micrograd 中，我们的神经元的计算公式是：
+
+```
+output = w · x + b
+```
+
+其中 `w·x` 是点积（dot product），然后加上偏置 b。
+
+---
+
+### 🛠 第一步：定义权重 W
+
+我们用 `torch.randn()` 初始化神经元的权重：
+
+```python
+W = torch.randn(27, 1)
+```
+
+这里是一个 **27×1 的列向量**，表示有一个神经元，它需要乘以一个 27 维的输入向量（因为我们用的是 one-hot 编码，有 27 个可能字符）。
+
+`torch.randn` 生成的是服从**正态分布**（均值为 0，标准差为 1）的随机数，大多数值在 \[-3, 3] 区间内。
+
+---
+
+### 🧮 第二步：进行矩阵乘法
+
+假设我们有五个输入样本（比如 "emma" 的 5 个 bigram），它们的 one-hot 编码是一个形状为：
+
+```python
+x_enc.shape = (5, 27)
+```
+
+我们进行矩阵乘法：
+
+```python
+out = x_enc @ W
+```
+
+* `x_enc` 是 5×27（5 个样本，每个样本是一个 27 维向量）
+* `W` 是 27×1（一个神经元的权重）
+* 结果 `out` 是 5×1（5 个样本分别被神经元处理后的输出）
+
+这表示我们**一次性并行计算了**这个神经元对 5 个样本的响应（firing rate）。
+
+---
+
+### 🎯 拓展：用 27 个神经元代替 1 个
+
+我们不只需要一个神经元，而是要有 **27 个神经元** —— 每个神经元预测一个字符的概率（a-z + .）。
+
+因此我们把 `W` 扩展为：
+
+```python
+W = torch.randn(27, 27)
+```
+
+现在进行矩阵乘法：
+
+```python
+out = x_enc @ W
+```
+
+* `x_enc`: 5×27
+* `W`: 27×27
+* `out`: 5×27
+
+现在的输出 `out[i][j]` 表示：
+
+> 第 `i` 个样本输入，在第 `j` 个神经元上的激活值。
+
+每一行是一个样本，每一列是一个神经元。
+
+---
+
+### 🧪 验证：点积确实是这么来的
+
+例如：
+
+```python
+x_enc[3]         # 第4个输入样本
+W[:,13]          # 第14个神经元的权重（W 的第13列）
+(x_enc[3] * W[:,13]).sum()  # 这就是 dot product（手动计算）
+```
+
+这会给出和 `out[3,13]` 相同的结果，验证矩阵乘法的确是高效完成了所有 dot product 的并行计算。
+
+---
+
+### ✅ 总结
+
+| 步骤   | 内容                                    |
+| ---- | ------------------------------------- |
+| 定义权重 | 使用 `torch.randn(27, N)`，N 是神经元数目      |
+| 输入数据 | One-hot 编码，形状为 `[样本数, 27]`            |
+| 前向传播 | 使用矩阵乘法 `@` 批量计算所有输入的响应                |
+| 输出结果 | 一个 `[样本数, 神经元数]` 的矩阵，每个值表示对应神经元对输入的响应 |
+
+如果你愿意，我可以帮你画一个示意图来说明这些矩阵操作的含义，是否需要？
 
 # transforming neural net outputs into probabilities: the softmax
 
