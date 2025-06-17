@@ -195,9 +195,31 @@
   - [⚠️ **bigram 表格方法的局限**](#️-bigram-表格方法的局限)
   - [✅ **神经网络语言模型是未来方向**](#-神经网络语言模型是未来方向)
 - [note 1: one-hot encoding really just selects a row of the next Linear layer's weight matrix](#note-1-one-hot-encoding-really-just-selects-a-row-of-the-next-linear-layers-weight-matrix)
+  - [🔢 背景：one-hot 向量和权重矩阵的乘法](#-背景one-hot-向量和权重矩阵的乘法)
+  - [🧠 关键点：one-hot 向量 × 矩阵 = 查表取某一行](#-关键点one-hot-向量--矩阵--查表取某一行)
+  - [📚 对比前面的方法：数数法 vs 神经网络法](#-对比前面的方法数数法-vs-神经网络法)
+  - [🤖 现在用神经网络也在做类似的事！](#-现在用神经网络也在做类似的事)
+  - [🎯 总结一句话：](#-总结一句话-5)
 - [note 2: model smoothing as regularization loss](#note-2-model-smoothing-as-regularization-loss)
+  - [🧂【1】平滑回顾：防止概率为0](#1平滑回顾防止概率为0)
+  - [🤖【2】在神经网络中如何实现这种“平滑”？](#2在神经网络中如何实现这种平滑)
+    - [👉 原因如下：](#-原因如下)
+  - [🧮【3】添加正则项的方法（L2正则化）](#3添加正则项的方法l2正则化)
+  - [🎯【4】调节平滑强度的方法](#4调节平滑强度的方法)
+  - [🧠 总结一句话：](#-总结一句话-6)
 - [sampling from the neural net](#sampling-from-the-neural-net)
+  - [🧪 背景回顾：采样过程](#-背景回顾采样过程)
+  - [🤖 用神经网络来做采样（与 bigram 类似）](#-用神经网络来做采样与-bigram-类似)
+  - [✅ 采样结果](#-采样结果)
+  - [🧠 总结一句话：](#-总结一句话-7)
 - [conclusion](#conclusion)
+  - [🎯 本节总结内容](#-本节总结内容)
+    - [✅ 我们学会了如何训练语言模型（Language Model）](#-我们学会了如何训练语言模型language-model)
+    - [✅ 我们学会了如何从模型中采样（Sampling）](#-我们学会了如何从模型中采样sampling)
+    - [✅ 我们学会了如何评估模型好坏（Evaluation）](#-我们学会了如何评估模型好坏evaluation)
+  - [🧠 两种方式，本质一样](#-两种方式本质一样)
+  - [🚀 下一步：让模型“更复杂”](#-下一步让模型更复杂)
+  - [📌 总结一句话](#-总结一句话-8)
 
 # makemore
 
@@ -3780,6 +3802,83 @@ so this array exactly here is basically the array w at the end of
 optimization except we arrived at it piece by piece by following the loss
 and that's why we also obtain the same loss function at the end and the second note is if i come here
 
+这段内容的核心是：**在神经网络中用 one-hot 编码乘以权重矩阵，其实就等价于“查表”操作**。下面是详细的中文解释：
+
+---
+
+## 🔢 背景：one-hot 向量和权重矩阵的乘法
+
+在前面的实现中：
+
+* 输入字符被编码成一个 one-hot 向量（例如 27 个字符中的第 5 个字符，会变成只有第 5 位是 1，其余是 0 的向量）。
+* 然后这个 one-hot 向量和权重矩阵 `W` 相乘。
+
+---
+
+## 🧠 关键点：one-hot 向量 × 矩阵 = 查表取某一行
+
+举例：
+
+假设 one-hot 向量为：
+
+```
+[0, 0, 0, 0, 1, 0, 0, ...]   # 第5位是1
+```
+
+这个向量去乘以权重矩阵 `W`（维度是 27×27）时，由于其他位置都是0，只有第5位是1，所以相当于直接“**选中权重矩阵第5行**”。
+
+也就是说：
+
+```python
+logits = one_hot_vector @ W   # 实际等价于 W[5]
+```
+
+这其实就是查表操作。
+
+---
+
+## 📚 对比前面的方法：数数法 vs 神经网络法
+
+在最早的 bigram 模型里，我们是通过“数数”来得到每个字符后面接哪些字符的频率，例如：
+
+```python
+count[char1][char2] += 1
+```
+
+然后我们得到了一个二维数组，按行归一化就能得到预测下一个字符的概率分布。这相当于：
+
+```python
+P = count / count.sum(axis=1, keepdims=True)
+```
+
+这时候，给定第一个字符，我们就直接查这个二维数组的某一行，得到下一个字符的概率。
+
+---
+
+## 🤖 现在用神经网络也在做类似的事！
+
+区别只在于：
+
+* 之前是数出来的结果存在数组里；
+* 现在我们用 one-hot 编码查的是 `W` 矩阵的某一行；
+* 然后我们对这行做 `exp()`（指数），再 softmax 得到概率分布；
+* 这个 `W` 就是“log-counts”，也就是对数下的统计计数值。
+
+因此，**整个过程结构几乎一模一样**，只是方式不同：
+
+| 方式             | 查表内容        | 得到概率的方法       |
+| -------------- | ----------- | ------------- |
+| 数数方法           | count 表的某一行 | 行归一化（softmax） |
+| 神经网络 + one-hot | 权重矩阵 W 的某一行 | `exp()` 再归一化  |
+
+---
+
+## 🎯 总结一句话：
+
+**one-hot 编码 × 权重矩阵，其实就是在“查表”；只是神经网络让我们通过梯度下降，把这个“表”一步步学出来了。**
+
+如果你愿意，我可以画张图帮助你理解这个“查表 vs 神经网络”的对比流程图。需要的话请告诉我。
+
 # note 2: model smoothing as regularization loss
 
 remember the smoothing where we added fake counts to our counts in order to
@@ -3824,6 +3923,86 @@ and so if this is strong enough then we are not able to overcome the
 force of this loss and we will never and basically everything will be uniform predictions
 so i thought that's kind of cool okay and lastly before we wrap up i wanted to show you how you would sample from this neural net model
 
+这段话讲的是神经网络中的**正则化（regularization）**，它相当于“平滑”（smoothing）的一种形式，目的是**防止模型过拟合、提高泛化能力**。以下是详细的中文解释：
+
+---
+
+## 🧂【1】平滑回顾：防止概率为0
+
+在 bigram 语言模型中，我们曾对词对计数 `count[i][j]` 进行了“**加1平滑（additive smoothing）**”，例如：
+
+```python
+count[i][j] += 1
+```
+
+这样做的目的是：即使某个词对在训练集中从没出现过，它的概率也不会是0，从而避免模型出错（比如生成的时候无法选择）。
+
+此外，当我们增加的“伪计数”越大，分布会变得**越均匀**，趋近于平均分布（uniform distribution）。
+
+---
+
+## 🤖【2】在神经网络中如何实现这种“平滑”？
+
+在神经网络中，并没有直接“加伪计数”，但我们可以用一种**等效的方式**来实现：通过 **正则项** 惩罚权重。
+
+### 👉 原因如下：
+
+* 如果神经网络的权重矩阵 `W` 全为零：
+
+  * 那么 `logits = one_hot @ W = 0`
+  * 对 logits 做 `exp()` 得到全是 1 的向量
+  * softmax 后就得到均匀分布（所有类别概率一样）
+
+所以：
+
+> **使 W 趋近于 0，会使神经网络输出趋于均匀分布**
+> → 这就起到了和“加平滑”一样的效果
+
+---
+
+## 🧮【3】添加正则项的方法（L2正则化）
+
+我们可以修改 loss 函数，加入一个**额外的惩罚项**：
+
+```python
+loss = 原始损失 + 正则损失
+     = NLL损失 + λ * (W ** 2).mean()
+```
+
+其中：
+
+* `W**2`：对所有参数取平方（正数）
+* `.mean()`：计算平均值，控制幅度
+* `λ`：控制正则项的权重（越大，惩罚越强）
+* 这个过程等价于 **L2 正则化**，也被称为 **权重衰减（weight decay）**
+
+你可以把它想象成一个“弹簧力”或“重力”，把 `W` 拉向零。
+
+---
+
+## 🎯【4】调节平滑强度的方法
+
+正则项越强（λ越大）：
+
+* 网络越倾向于输出“保守”的、均匀的概率分布
+* W 不容易变大（因为大就会带来大的正则损失）
+* 就像在原始 bigram 模型里加了很大的“伪计数”
+
+相反，λ 越小：
+
+* 网络越自由去学习训练数据中的强烈模式（例如某些 bigram 特别常见）
+* 越容易过拟合
+
+---
+
+## 🧠 总结一句话：
+
+> **在神经网络中通过惩罚权重矩阵 W 的大小（L2 正则化），可以起到和“加伪计数”一样的平滑作用。**
+
+这种方法既简单又有效，而且非常常见于所有神经网络中。
+
+如果你想，我可以帮你写出这部分的 PyTorch 正则化代码。需要的话直接告诉我。
+
 # sampling from the neural net
 
 and i copy-pasted the sampling code from before where remember that we sampled five
@@ -3844,6 +4023,62 @@ what we've estimated before but we came to this answer in a very different way a
 interpretation but fundamentally this is basically the same model and gives the same samples here and so
 that's kind of cool okay so we've actually covered a lot of ground we introduced the bigram character level
 
+这段话讲的是如何**用训练好的神经网络模型来进行采样（sampling）**，也就是**从模型中“生成”新字符**。以下是详细中文解释：
+
+---
+
+## 🧪 背景回顾：采样过程
+
+最早在用“**统计 bigram 模型**”时，我们做采样是这样的：
+
+1. 从一个起始字符（比如 `.`，索引为 0）开始；
+2. 查找 `P[0]` 这一行，里面是从 `.` 出发到所有字符的概率分布；
+3. 用这个概率分布采样下一个字符；
+4. 然后再查 `P[next]`，不断重复，直到生成一个终止符（比如再次采样出 `.`）；
+
+---
+
+## 🤖 用神经网络来做采样（与 bigram 类似）
+
+现在我们已经训练好了一个非常简单的神经网络（只有一层），我们用它来生成字符的方式如下：
+
+1. 从一个起始索引（比如 `ix = 0`）开始；
+2. 把这个索引 one-hot 编码成 `x_inc`（大小是 1×27）；
+3. 将 `x_inc` 与权重矩阵 `W` 做矩阵乘法，得到 `logits`（大小为 1×27）；
+
+   * 注意这个过程本质上是**取出 `W` 的第 `ix` 行**，因为 one-hot 乘法只保留那一行；
+4. 对 `logits` 做 `exp()` 得到“伪计数”；
+5. 对这些值做归一化（softmax），得到一个合法的**概率分布**；
+6. 用这个分布采样下一个字符索引 `ix_next`；
+7. 重复这个过程，直到采样出终止符（比如索引为 0）为止；
+
+---
+
+## ✅ 采样结果
+
+作者运行了这段代码之后，发现：
+
+> “我们得到的采样结果跟以前统计 bigram 模型的一模一样。”
+
+为什么？
+
+因为：
+
+* 这个神经网络模型本质上学到的就是那个 `bigram` 表格；
+* 它通过 **梯度下降** 方式学到的 log-count（对数计数）其实就是统计模型中 count 表格的 log 形式；
+* 所以虽然“实现方式”完全不同，但“学到的分布”是一样的；
+* 所以采样结果也是一样的。
+
+---
+
+## 🧠 总结一句话：
+
+> 虽然我们是用神经网络训练的方式得到了 W，但采样过程本质上和最初的 bigram 表格是一样的。因此生成结果也完全一致！
+
+---
+
+如果你想，我可以帮你整理这个神经网络采样的完整 PyTorch 代码作为示例。是否需要？
+
 # conclusion
 language model we saw how we can train the model how we can sample from the model and how we can
 evaluate the quality of the model using the negative log likelihood loss and then we actually trained the model
@@ -3859,3 +4094,64 @@ and we're going to be feeding them into a neural net but this neural net will st
 and these logits will still be normalized in the exact same way and all the loss and everything else and the gradient gradient-based framework
 everything stays identical it's just that this neural net will now complexify all the way to transformers
 so that's gonna be pretty awesome and i'm looking forward to it for now bye
+
+这段是整个讲解的**总结部分**，作者回顾了我们是如何构建和训练语言模型的，并且预告了接下来的发展方向。下面是中文解释：
+
+---
+
+## 🎯 本节总结内容
+
+我们已经完成了以下几个关键步骤：
+
+### ✅ 我们学会了如何训练语言模型（Language Model）
+
+* 一种是**统计 bigram 模型**：直接数每个字符对（bigram）的出现频率，然后**归一化**得到概率分布。
+* 另一种是**神经网络 + 梯度下降**：用\*\*负对数似然（Negative Log Likelihood）\*\*作为损失函数，通过优化神经网络的权重矩阵 $W$，让它学习到正确的预测概率分布。
+
+### ✅ 我们学会了如何从模型中采样（Sampling）
+
+* 给定一个起始字符，使用模型预测下一个字符的概率分布；
+* 用该概率分布随机采样出一个字符；
+* 然后继续以此字符为输入，直到生成终止符。
+
+### ✅ 我们学会了如何评估模型好坏（Evaluation）
+
+* 使用 **负对数似然损失函数（Negative Log Likelihood Loss）**；
+* 这个损失越低，说明模型对真实下一个字符的概率预测越高，也就越好。
+
+---
+
+## 🧠 两种方式，本质一样
+
+作者强调了一点：
+
+> 我们用两种完全不同的方式，得到了**相同的模型**！
+
+* **统计方式**：直接数 bigram 的次数，然后归一化；
+* **神经网络方式**：初始化随机参数，用梯度下降优化损失函数。
+
+尽管方式不同，但结果是一样的，因为它们都在学习相同的目标：预测下一个字符的概率。
+
+---
+
+## 🚀 下一步：让模型“更复杂”
+
+作者预告：
+
+> 现在的模型非常简单：只看一个前置字符，通过一个线性层就输出了 logits（即预测的对数概率）。
+
+接下来我们要做的事情是：
+
+* 输入不再只是 1 个字符，而是多个字符（比如前 3 个或前 10 个）；
+* 神经网络结构也会变得更复杂（比如多层感知机、循环神经网络，最后是 Transformer）；
+* 但是输出形式不会变，依然是 logits，接 softmax 得到概率，然后用 NLL 作为损失函数。
+
+这就是现代语言模型的基本框架，我们现在所学的是它的最简版本，后面会逐步扩展到 GPT 等更强大的模型。
+
+---
+
+## 📌 总结一句话
+
+> 我们已经用两种方式实现了一个 bigram 语言模型，并准备将它扩展为更强大的神经网络模型，最终走向 Transformer！
+
+是否需要我帮你整理一个总流程图，来概括这个 bigram 神经网络语言模型的输入、训练、采样、评估的全过程？
