@@ -175,11 +175,25 @@
     - [🧾 结果：](#-结果)
     - [📌 总结：](#-总结-8)
 - [backward and update, in PyTorch](#backward-and-update-in-pytorch)
-    - [🔁 原文逐段翻译与解释：](#-原文逐段翻译与解释)
-    - [🔁 训练迭代演示：](#-训练迭代演示)
-    - [✅ 示例结果：](#-示例结果-1)
-    - [🧾 总结：](#-总结-9)
+  - [🔁 1. 前向传播（forward）和损失函数（loss）已经准备好了](#-1-前向传播forward和损失函数loss已经准备好了)
+  - [🔄 2. 设置梯度为 None（清零）](#-2-设置梯度为-none清零)
+  - [✅ 3. 开启参数追踪：`requires_grad=True`](#-3-开启参数追踪requires_gradtrue)
+  - [📉 4. 反向传播：`loss.backward()`](#-4-反向传播lossbackward)
+  - [📊 5. 查看梯度：`w.grad`](#-5-查看梯度wgrad)
+  - [🛠 6. 更新参数：使用梯度下降法](#-6-更新参数使用梯度下降法)
+  - [🔄 7. 继续训练循环](#-7-继续训练循环)
+  - [🎯 总结](#-总结-9)
 - [putting everything together](#putting-everything-together)
+  - [🧱 **构建 bigram 数据集并训练神经网络**](#-构建-bigram-数据集并训练神经网络)
+  - [🔁 **将前向传播 + 反向传播 + 参数更新组合成循环**](#-将前向传播--反向传播--参数更新组合成循环)
+  - [🔄 **从只训练一个单词到训练整个数据集**](#-从只训练一个单词到训练整个数据集)
+  - [⚙️ **优化过程与学习率调节**](#️-优化过程与学习率调节)
+  - [📉 **损失函数预期值与 bigram 基线比较**](#-损失函数预期值与-bigram-基线比较)
+  - [🔍 **计数法 vs 神经网络法**](#-计数法-vs-神经网络法)
+  - [🚀 **为什么神经网络是未来的方向？**](#-为什么神经网络是未来的方向)
+  - [🔁 **softmax + NLL Loss 机制不会变**](#-softmax--nll-loss-机制不会变)
+  - [⚠️ **bigram 表格方法的局限**](#️-bigram-表格方法的局限)
+  - [✅ **神经网络语言模型是未来方向**](#-神经网络语言模型是未来方向)
 - [note 1: one-hot encoding really just selects a row of the next Linear layer's weight matrix](#note-1-one-hot-encoding-really-just-selects-a-row-of-the-next-linear-layers-weight-matrix)
 - [note 2: model smoothing as regularization loss](#note-2-model-smoothing-as-regularization-loss)
 - [sampling from the neural net](#sampling-from-the-neural-net)
@@ -3456,118 +3470,110 @@ okay and this is again doing the we're now doing gradient descent
 and when we achieve a low loss that will mean that the network is assigning high probabilities to the correctness
 characters okay so i rearranged everything and i put it all together from scratch
 
-这段内容是讲解如何用 PyTorch 手动完成**反向传播（backward）与参数更新（update）**，实现神经网络训练中的\*\*梯度下降（gradient descent）\*\*过程。以下是详细的翻译与解释：
+这段内容讲的是：**如何在 PyTorch 中进行反向传播（backward pass）和参数更新（update）**，也就是神经网络训练的核心步骤。以下是详细中文解释：
 
 ---
 
-### 🔁 原文逐段翻译与解释：
+## 🔁 1. 前向传播（forward）和损失函数（loss）已经准备好了
+
+我们已经把神经网络“跑了一遍”，计算出了预测结果和损失值（loss）。现在，要开始**反向传播**来更新网络的参数，让损失变小。
 
 ---
 
-> **we forwarded the network and the loss**, now we're ready to do the **backward pass**
-> 我们已经完成了神经网络的前向传播（forward pass）和损失计算（loss），现在可以进行反向传播（backward pass）。
+## 🔄 2. 设置梯度为 None（清零）
 
----
+在 PyTorch 中，每次反向传播前，**必须清空之前累积的梯度**。有两种方式：
 
-> **make sure all the gradients are reset to zero**
-> 确保所有梯度被清零（以免残留上一次的梯度）。
+* 设置为 `0`（常用）
+* 设置为 `None`（更高效）
 
 ```python
 w.grad = None
 ```
 
-PyTorch 中，你可以用 `.zero_()` 来将梯度清零，也可以将 `.grad = None`，后者**更高效**，因为 PyTorch 会把 `None` 当作“无梯度”，等价于零。
+PyTorch 会自动把 `None` 视作“没有梯度”，等同于清零。
 
 ---
 
-> **loss.backward()**
-> 这是 PyTorch 中最核心的一步。执行这句后：
+## ✅ 3. 开启参数追踪：`requires_grad=True`
 
-* PyTorch 会从 `loss` 开始，
-* 沿着前向图中的计算路径，逐层反向传播，
-* 自动计算出所有需要的 `.grad`（梯度）。
-
-这和你之前在 `micrograd` 里做的手动 `.backward()` 是一样的机制。
-
----
-
-> PyTorch builds a **computational graph** under the hood
-> PyTorch 会在你执行前向传播时，**自动记录所有操作**，并构建一个**动态的计算图（computation graph）**。
-
-这个图记录了所有张量之间的依赖关系，供后续 `backward()` 使用。
-
----
-
-> when you then calculate the loss, we can call `.backward()` on it
-> 当你有了 `loss` 之后，就可以对它调用 `.backward()`，PyTorch 会从这里出发，反向传播所有梯度。
-
----
-
-> and now we can do `w.grad`
-> 执行完 `.backward()` 后，你可以通过 `w.grad` 查看张量 `w` 的梯度。比如：
+为了让 PyTorch 跟踪参数的计算过程，我们需要在创建参数时显式地设置：
 
 ```python
-print(w.grad.shape)  # 是 (27, 27)，和 w 的形状一样
+w = torch.randn((27, 27), requires_grad=True)
 ```
 
-`w.grad[i][j]` 表示：权重 `w[i][j]` 对 loss 的影响（∂loss/∂w\[i]\[j]）
+否则，PyTorch **不会计算 w 的梯度**。
 
 ---
 
-> and now we do the update
-> 现在可以进行权重更新了。我们使用 \*\*最基本的 SGD（随机梯度下降）\*\*公式：
+## 📉 4. 反向传播：`loss.backward()`
+
+调用：
+
+```python
+loss.backward()
+```
+
+PyTorch 会根据我们前向传播中所有的计算步骤，自动构建**计算图（computation graph）**，并计算每个参与计算的参数的梯度（梯度就是 loss 对每个参数的导数）。
+
+---
+
+## 📊 5. 查看梯度：`w.grad`
+
+可以打印 `w.grad` 来查看每个权重的梯度。
+
+* `w.grad[i][j]` 表示：如果稍微改变第 i 行第 j 列的权重，会对损失函数造成多大影响
+* 正值：权重变大会导致 loss 变大
+* 负值：权重变大反而让 loss 变小
+
+---
+
+## 🛠 6. 更新参数：使用梯度下降法
+
+由于我们只有一个参数矩阵 `w`，可以直接手动更新：
 
 ```python
 w.data += -0.1 * w.grad
 ```
 
-这里：
-
+* `.data` 表示跳过 PyTorch 自动梯度机制，直接修改原始数据
 * `-0.1` 是学习率（learning rate）
-* `.data` 是张量的原始值，直接修改不会影响 autograd 计算图
-* 更新方向是朝 **梯度的反方向**（即下降）
 
 ---
 
-### 🔁 训练迭代演示：
+## 🔄 7. 继续训练循环
 
-每执行一轮：
+你可以反复执行：
 
-```python
-1. w.grad = None
+1. `w.grad = None`
+2. `loss.backward()`
+3. `w.data += -lr * w.grad`
+4. 再次 forward 计算 loss
+
+每次循环，loss 应该会逐渐下降，说明神经网络预测得越来越准。
+
+比如：
+
+* 第一次 loss 是 **3.76**
+* 更新后变成 **3.74**
+* 再更新一次，loss 降到 **3.72**
+
+---
+
+## 🎯 总结
+
+这就是 PyTorch 中最基本的训练流程：
+
+1. 设置参数 `requires_grad=True`
 2. 前向传播，计算 loss
-3. loss.backward()
-4. w.data -= learning_rate * w.grad
-```
-
-就完成了一次参数更新。然后再 forward 看 loss 是否下降。
+3. 调用 `loss.backward()` 进行反向传播
+4. 查看或使用 `.grad` 更新参数
+5. 循环迭代
 
 ---
 
-### ✅ 示例结果：
-
-> 第一次 loss 是 **3.76**，更新后变成 **3.74**，再更新是 **3.72** —— 说明模型在变好！
-
-这就是一个最小神经网络的训练过程。
-
----
-
-### 🧾 总结：
-
-这一段的核心内容是：
-
-| 步骤       | 操作                      | 解释          |
-| -------- | ----------------------- | ----------- |
-| 1️⃣ 清空梯度 | `w.grad = None`         | 避免旧梯度影响     |
-| 2️⃣ 前向传播 | `forward pass`          | 得到概率和 loss  |
-| 3️⃣ 反向传播 | `loss.backward()`       | 自动计算所有参数的梯度 |
-| 4️⃣ 参数更新 | `w.data -= lr * w.grad` | 应用 SGD 更新权重 |
-
-你就已经亲手实现了一个**完整的神经网络训练循环**！
-
----
-
-需要我把这一部分代码整理成完整的 PyTorch 脚本模板吗？或者解释 `.data` 与 `.detach()` 的区别？
+如果你想，我可以用图示或代码片段再补充这段逻辑的结构图，帮助你更好理解训练过程。需要的话请告诉我。
 
 # putting everything together
 
@@ -3619,6 +3625,133 @@ we can just keep everything in a table that counts but if you have the last 10 c
 actually keep everything in the table anymore so this is fundamentally an unscalable approach and the neural network approach is significantly more
 scalable and it's something that actually we can improve on over time so that's where we will be digging next i
 wanted to point out two more things number one i want you to notice that
+
+这段内容是对前面整个神经网络语言模型（从 bigram 计数模型过渡到神经网络模型）实现过程的总结和过渡。以下是逐段解释和整理：
+
+---
+
+## 🧱 **构建 bigram 数据集并训练神经网络**
+
+作者一开始只用一个单词 `emma` 来构建 bigram 数据集，比如：
+
+* `.e`
+* `e.m`
+* `m.m`
+* `m.a`
+* `a.`
+
+每对字符都变成一个训练样本。
+
+他说：“我们只用了 emma 这个单词，所以样本数是 5，现在我要换成所有的名字。”
+
+---
+
+## 🔁 **将前向传播 + 反向传播 + 参数更新组合成循环**
+
+他说他添加了一个训练循环，包含：
+
+1. 前向传播
+2. 反向传播
+3. 参数更新（梯度下降）
+
+运行这个循环 10 次后，loss 有所下降。
+
+---
+
+## 🔄 **从只训练一个单词到训练整个数据集**
+
+现在我们要用整个词表（所有名字）来训练，这时就不是 5 个样本，而是 **228,000 个 bigram 训练样本**。
+
+作者强调：“我们不需要改代码”，因为所有逻辑都已向量化，可以处理任意数量的样本。
+
+---
+
+## ⚙️ **优化过程与学习率调节**
+
+训练过程中，loss 缓慢下降。于是作者尝试调高学习率，甚至将学习率设为 50（在这个非常简单的例子里也能用）。
+
+他重新初始化并训练了 100 次，然后发现：
+
+> “loss 降到了 2.47，再训练 100 次，可能还会进一步下降。”
+
+---
+
+## 📉 **损失函数预期值与 bigram 基线比较**
+
+他说：
+
+> “我们预期的 loss 应该和最开始通过统计 bigram 得到的模型差不多。”
+
+回忆一下，如果用统计 bigram + 平滑处理，loss 大概在 **2.45 左右**。
+
+现在用神经网络方式（虽然更复杂）也得到 **2.45\~2.47 左右的 loss**，说明效果相当。
+
+---
+
+## 🔍 **计数法 vs 神经网络法**
+
+* 原始的 bigram 方法：用表格统计每对字符的频率，然后归一化。
+* 神经网络方法：通过梯度下降训练一个简单的神经网络，从而“学会”这些概率。
+
+作者说：
+
+> “bigram 方法其实已经很好地优化了 loss，不需要训练。”
+> 但：
+> “神经网络方法更**灵活可扩展**。”
+
+---
+
+## 🚀 **为什么神经网络是未来的方向？**
+
+因为我们未来希望：
+
+* 不只看前 1 个字符（bigram），而是多个字符，比如前 3、前 5、甚至前 10 个字符。
+* 如果用表格统计，那组合会太多，表会爆炸，**无法扩展**。
+
+但神经网络可以：
+
+* 接收多个字符的向量作为输入（通过 embedding + 网络结构处理）
+* 输出下一个字符的概率分布
+* **网络结构可以任意扩展，比如 RNN、LSTM、Transformer**
+
+---
+
+## 🔁 **softmax + NLL Loss 机制不会变**
+
+不管网络有多复杂，核心训练逻辑都不变：
+
+1. 输出 logits（log 概率）
+2. 经过 softmax 得到概率分布
+3. 和真实标签算负对数似然（negative log likelihood）
+4. 梯度下降训练参数
+
+这些\*\*“后处理和训练逻辑”都不变\*\*，变的只是前向传播结构（即模型结构）。
+
+---
+
+## ⚠️ **bigram 表格方法的局限**
+
+> “如果你要用前 10 个字符来预测下一个字符，那组合爆炸，根本没法存在表里。”
+
+这就是 bigram 方法的根本局限。
+
+---
+
+## ✅ **神经网络语言模型是未来方向**
+
+* 可扩展
+* 可改进
+* 适合复杂模式建模
+
+作者最后暗示：“我们接下来会构建更复杂的神经网络”，包括：
+
+* 更大的上下文输入
+* 更深的网络结构
+* 一步步向 Transformer 发展
+
+---
+
+如果你想，我可以用图示总结这个模型的结构流程图，或者整理成代码/笔记。需要的话可以告诉我。
 
 # note 1: one-hot encoding really just selects a row of the next Linear layer's weight matrix
 
