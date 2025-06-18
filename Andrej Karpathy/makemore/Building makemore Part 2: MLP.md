@@ -1492,6 +1492,90 @@ h multiplied by w2 plus b2
 logistic shape is 32 by 27 and the logits look
 good now exactly as we saw in the previous video we want to take these logits and we want to first exponentiate
 
+当然可以！这段内容是在讲**输出层（output layer）的实现**，我给你分段解释：
+
+---
+
+## 📌 当前进度
+
+* 输入是名字，每个字符用 2 维 embedding；
+* 每个样本是 3 个字符 → 输入 `[32, 3, 2]` → 通过 view 变成 `[32, 6]`；
+* 经过隐藏层（100 个神经元），得到：
+
+```python
+h = torch.tanh(m.view(-1, 6) @ W1 + b1)  # shape = [32, 100]
+```
+
+---
+
+## 🎯 目标：实现输出层
+
+```python
+W2 = torch.randn(100, 27)
+b2 = torch.randn(27)
+```
+
+解释：
+
+* W2 是权重矩阵，大小是 `[100, 27]`，因为：
+
+  * 输入是隐藏层的 100 个神经元；
+  * 输出是 27 个可能的下一个字符（a-z + '.'）；
+* b2 是偏置，大小是 `[27]`，每个输出神经元 1 个偏置。
+
+---
+
+### 输出层的计算
+
+```python
+logits = h @ W2 + b2  # shape = [32, 27]
+```
+
+解释：
+
+* h 的 shape 是 `[32, 100]`，batch size 是 32；
+* 乘以 W2 后得到 `[32, 27]`，也就是说：
+
+  * 每个样本都会得到一个长度为 27 的向量；
+  * 这个向量里的每一项，对应一个字符的“打分”；
+* 这个向量叫 **logits**，是**未归一化的分数**，数值可以是正也可以是负。
+
+---
+
+## 🧠 logits 的作用
+
+logits 是模型「还没归一化」的预测结果，下一步需要：
+
+1. 对 logits **取指数**（exponentiate）：
+
+   * 让所有数值变成正数；
+2. 再用 **softmax** 归一化，让它变成**概率分布**（每一行加起来 = 1）：
+
+```python
+probs = torch.softmax(logits, dim=1)
+```
+
+* 这样，模型最终输出的 `probs` 就是：
+
+  * 对于每个样本，27 个字符的概率预测；
+  * 你可以采样、argmax 找出概率最大的字符，作为预测结果。
+
+---
+
+## ✅ 总结
+
+| 步骤      | 说明                     |
+| ------- | ---------------------- |
+| W2      | `[100, 27]`，隐藏层到输出层的权重 |
+| b2      | `[27]`，输出层偏置           |
+| logits  | `[32, 27]`，未归一化打分      |
+| softmax | 把 logits 转成概率分布        |
+| 最终输出    | 每个样本 27 个字符的概率预测       |
+
+---
+
+如果你需要，我还可以继续讲「如何用 logits 和标签算交叉熵 loss」，或者继续解释 softmax 怎么工作，要不要？🌟
+
 # implementing the negative log likelihood loss
 
 them to get our fake counts and then we want to normalize them into a probability so prob is counts divide
