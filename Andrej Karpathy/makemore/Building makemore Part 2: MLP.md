@@ -1602,6 +1602,112 @@ negative log likelihood loss so the loss here is 17
 and this is the loss that we'd like to minimize to get the network to predict the correct character in the sequence
 okay so i rewrote everything here and made it a bit more respectable so here's our data set here's all the parameters
 
+当然可以！这段内容是在讲**如何实现 Negative Log Likelihood Loss（负对数似然损失，简称 NLL Loss）**，我帮你分段解释：
+
+---
+
+## 🎯 目标
+
+我们现在有了：
+
+* logits `[32, 27]` —— 神经网络的输出（还没归一化）
+* y `[32]` —— 每个样本对应的正确“下一个字符”的索引
+
+我们需要：
+
+👉 **用 logits 算出损失（loss）**，用于训练神经网络。
+
+---
+
+## 🧠 步骤 1：把 logits 转换成概率（probabilities）
+
+先把 logits 转换成「归一化后的概率」：
+
+```python
+probs = logits.exp()  # 先取指数，得到正数
+probs /= probs.sum(dim=1, keepdim=True)  # 每行归一化成概率（softmax）
+```
+
+* probs 的形状还是 `[32, 27]`
+* 每一行（一个样本）27 个字符的概率**加起来 = 1**
+
+---
+
+## 🧠 步骤 2：取出正确字符对应的概率
+
+* 我们有 y（正确答案），每个 y\[i] 是 0 \~ 26 的一个整数，对应正确的下一个字符；
+* 现在我们希望对每一行的 probs，取出“对应正确字符”的概率，写法是：
+
+```python
+probs[range(32), y]
+```
+
+解释：
+
+* `range(32)` 遍历每一行（样本）；
+* `y` 是列索引（每行中正确的那个字符的列）；
+* 这样就取出了一个 `[32]` 向量，表示 32 个样本中，每个样本的「正确字符被模型分配到的概率」。
+
+---
+
+## 🧠 步骤 3：计算 NLL Loss
+
+NLL Loss 是：
+
+$$
+\text{Loss} = -\frac{1}{N} \sum_{i=1}^N \log(p_i)
+$$
+
+也就是说：
+
+* 先对每个样本的正确字符的概率 `p_i` 取对数；
+* 再取负号、求平均，作为 Loss。
+
+代码：
+
+```python
+loss = -torch.log(probs[range(32), y]).mean()
+```
+
+这样就得到了最终的 Loss。
+
+---
+
+## ✅ 为什么要用 NLL Loss？
+
+* 我们的目标是：**希望模型把“正确字符”的概率 p\_i 提高到 1**，log(1)=0，Loss 越小越好；
+* 如果模型预测正确，Loss → 0；
+* 如果模型错得离谱，Loss 很大；
+* Loss 是训练过程中需要优化的目标（用反向传播去优化网络参数）。
+
+---
+
+## 📊 现象解读
+
+* 一开始网络是随机初始化，probs 里很多概率很低，比如 0.07、0.2 等，Loss 可能很大（例如 17）；
+* 训练过程中，Loss 会不断下降，模型预测正确字符的概率会越来越高，Loss 越来越小。
+
+---
+
+## ✅ 总结
+
+| 步骤                   | 说明                          |
+| -------------------- | --------------------------- |
+| logits               | 网络原始输出 `[32, 27]`           |
+| probs                | softmax 归一化后概率 `[32, 27]`   |
+| probs\[range(32), y] | 取出 32 个样本中，正确字符对应的概率 `[32]` |
+| loss                 | 负对数似然损失，目标是最小化              |
+
+---
+
+如果你需要，我还可以继续解释：
+
+1. **为什么 NLL Loss 是交叉熵（cross entropy）的一种特例？**
+2. 用 PyTorch 的 `F.cross_entropy` 一行就能写完，怎么用？
+3. NLL Loss 和 accuracy 有什么关系？
+
+要不要继续？🌟
+
 # summary of the full network
 
 that we defined i'm now using a generator to make it reproducible i clustered all the parameters into a
