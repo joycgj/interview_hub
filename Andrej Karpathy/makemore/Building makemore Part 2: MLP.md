@@ -3407,6 +3407,85 @@ understand pretty good chunks of it and this paper also has quite a few ideas fo
 with so all of those are not available to you and you should be able to beat this number i'm leaving that as an exercise
 to the reader and that's it for now and i'll see you next time
 
+当然可以！这段是 Karpathy 讲课的最后总结部分，我来帮你用中文分段解释一下：
+
+---
+
+## 📌 当前模型训练结果总结
+
+* 一共训练了 200,000 步，分 2 个阶段：
+  1️⃣ 前 100,000 步，学习率 0.1
+  2️⃣ 后 100,000 步，学习率 0.01（decay 学习率）
+
+---
+
+### 📊 结果：
+
+* **训练集 loss** 和 **验证集 (dev) loss** 大约是：
+
+```text
+best dev loss ≈ 2.17
+```
+
+---
+
+## 🎯 邀请大家继续优化模型
+
+Karpathy 说：现在你们可以试着去**优化模型，打破这个 loss 2.17 的成绩**，可以通过调整以下「调节旋钮」：
+
+---
+
+### 🔧 可调参数（Hyperparameters）：
+
+1️⃣ **隐藏层大小（hidden layer neurons）**
+
+* 改大或改小隐藏层神经元数量
+
+2️⃣ **embedding size（词嵌入维度）**
+
+* 现在用了 10，可以改成 50、100，影响模型表达能力
+
+3️⃣ **输入上下文长度（block\_size）**
+
+* 输入多少个字符作为上下文，block\_size=3 → 改成 5、7
+
+4️⃣ **优化器细节（optimization details）**
+
+* 训练多少步
+* learning rate 初始值、学习率衰减策略
+* batch size 大小
+
+---
+
+### 🎮 可以玩的地方：
+
+* 更好的参数选择 → 更快收敛，训练速度更快
+* 最终得到更低的 dev loss
+
+---
+
+## 📚 推荐阅读
+
+* 这篇论文《Bengio et al. 2003》一共 19 页；
+* 你现在已经具备了理解论文大部分内容的基础，可以去读，里面有很多改进的思路，值得参考。
+
+---
+
+## ✅ 总结
+
+* 目前 baseline 成绩：**dev loss ≈ 2.17**；
+* Karpathy 把「继续改进模型」留作练习题，鼓励大家自己尝试各种优化策略，争取做到更好。
+
+---
+
+如果你需要，我还可以帮你：
+
+1️⃣ 总结一下「整体 MLP 语言模型代码流程图」；
+2️⃣ 提出几个「具体能提升 loss 的调优方向」；
+3️⃣ 解释论文里还有哪些改进思路可以参考。
+
+要不要继续？🌟
+
 # sampling from the model
 
 before we wrap up i also wanted to show how you would sample from the model so we're going to generate 20 samples
