@@ -2971,6 +2971,134 @@ embedding size from two because we'd like to make uh this bottleneck potentially
 but once i make this greater than two we won't be able to visualize them so here okay we're at 2.23 and 2.24
 so um we're not improving much more and maybe the bottleneck now is the character embedding size which is two
 
+当然可以！这一段讲的是**做实验：把隐藏层 (hidden layer) 变大，看看模型效果是否提升**。我帮你分段详细讲：
+
+---
+
+## 📌 当前背景
+
+前面训练的小 MLP 模型，hidden layer 是 100 个神经元，整体模型参数 ≈ 3400 个。
+
+观察到的现象：
+
+* training loss ≈ dev loss，说明模型「还没过拟合」，是 underfitting（欠拟合）；
+* 说明模型还不够大，不够复杂，不能很好拟合数据。
+
+---
+
+## 🎯 实验目标
+
+* 增大 hidden layer → 提高模型容量；
+* 期望模型 loss 能进一步下降。
+
+---
+
+## 🧱 操作步骤
+
+### ✅ 1️⃣ 增大 hidden layer
+
+```python
+# 原来 hidden size 是 100
+n_hidden = 300  # 变成 300 个神经元
+
+W1 = torch.randn(6, 300)
+b1 = torch.randn(300)
+
+# 输出层对应改成 300 -> 27
+W2 = torch.randn(300, 27)
+b2 = torch.randn(27)
+```
+
+结果：
+
+* 模型参数量提升到 ≈ 10,000 个（比原来多 3 倍）；
+* 网络容量更强，有更大能力拟合数据。
+
+---
+
+### ✅ 2️⃣ 开始训练 & 记录 loss 曲线
+
+* 训练 30,000 步；
+* 记录每一步的 step 和 loss：
+
+```python
+steps.append(i)
+losses.append(loss.item())
+```
+
+最后画图：
+
+```python
+plt.plot(steps, losses)
+```
+
+---
+
+## 🧩 观察现象
+
+1️⃣ 初期 loss 比之前慢，说明：
+
+* bigger model → convergence 慢 → 需要更多训练步数；
+* mini-batch size 小，训练过程 noisy（噪声大）；
+
+---
+
+### 2️⃣ 批量大小（batch size）
+
+* batch size 小 → 梯度波动大 → loss 曲线震荡明显；
+* batch size 大一点 → 梯度更稳定 → 收敛更快。
+
+---
+
+### 3️⃣ learning rate
+
+* learning rate 0.1 → 收敛慢；
+* learning rate 减半（0.05）后，loss 快速下降到 2.23；
+* 再继续训练，loss 进一步下降。
+
+---
+
+## 🧠 瓶颈分析（bottleneck）
+
+观察到：
+
+* 虽然 hidden layer 扩大到了 300，但 loss 提升不明显，原因可能是：
+
+👉 **embedding 层维度太小（只有 2 维）**，限制了模型表达能力。
+
+* 2 维 embedding 太少，27 个字符全挤在 2 维空间，信息密度太高，难以区分。
+* 这会成为模型性能瓶颈。
+
+---
+
+### 下一步计划
+
+* 继续可视化 embedding（因为现在还是 2 维，可以画图）；
+* 然后尝试**扩大 embedding 维度**，比如改成 10 维或 50 维；
+* 让模型表达能力更强，期待 loss 继续下降。
+
+---
+
+## ✅ 小结
+
+| 操作                       | 现象                         |
+| ------------------------ | -------------------------- |
+| hidden layer 从 100 → 300 | 参数 10,000 个，模型更大           |
+| 训练初期 loss 下降慢            | batch 小，learning rate 初选高  |
+| learning rate 减半         | loss 快速下降到 2.23            |
+| 瓶颈                       | embedding 维度太小（2 维），成为性能瓶颈 |
+| 下一步                      | 扩大 embedding 维度，继续提升效果     |
+
+---
+
+如果你需要，我还可以：
+
+1️⃣ 帮你讲讲**hidden layer 越大，模型效果一定越好吗？**
+2️⃣ 什么是 **bottleneck**，为什么 embedding 层成了瓶颈？
+3️⃣ **embedding size 应该怎么选？**
+
+要不要继续？🌟
+
 # visualizing the character embeddings
 
 so here i have a bunch of code that will create a figure and then we're going to visualize
