@@ -3505,6 +3505,105 @@ things like ham joes
 you know it's starting to sound a little bit more name-like so we're definitely making progress but we can still improve
 on this model quite a lot okay sorry there's some bonus content i wanted to mention that i want to make
 
+当然可以！这一段讲的是**如何用训练好的模型来生成文本（sampling）**，我来帮你详细解释：
+
+---
+
+## 📌 目标
+
+* 训练完模型之后，我们当然希望它「能写出名字来」；
+* 这一段代码教你如何**从模型里 sample（采样）出名字**。
+
+---
+
+## 🧱 采样步骤
+
+### 1️⃣ 初始化上下文
+
+```python
+context = [0, 0, 0]  # 用 "..." 作为起始上下文
+```
+
+* 开头的时候还没生成任何字母，通常用 padding 符号（在这里是 0 对应的 "."）当做开头。
+
+---
+
+### 2️⃣ 进入循环，不断生成字符
+
+```python
+while True:
+    # 1️⃣ 用当前 context 做 embedding
+    emb = C[context]  # shape = (1, block_size, embedding_size)
+    
+    # 2️⃣ 通过隐藏层，算出 logits
+    h = torch.tanh(emb.view(1, -1) @ W1 + b1)
+    logits = h @ W2 + b2
+
+    # 3️⃣ 用 softmax 把 logits 转成概率
+    probs = F.softmax(logits, dim=1)  # 概率分布，避免溢出问题
+
+    # 4️⃣ 按照这个概率分布 sample 出下一个字符 index
+    ix = torch.multinomial(probs, num_samples=1).item()
+
+    # 5️⃣ 更新 context（滑动窗口），记录新字符
+    context = context[1:] + [ix]
+    generated.append(ix)
+
+    # 6️⃣ 如果采样出 "."，就停止
+    if ix == 0:
+        break
+```
+
+---
+
+## 🧠 为什么 softmax + multinomial？
+
+* **softmax**：把 logits 转成 \[0,1] 之间的概率分布；
+* **torch.multinomial**：根据概率分布，随机采样出一个字符 index，越大的概率被采到的可能性越大。
+
+---
+
+## 🎨 最终结果
+
+* 把采样出的 index 列表转成字符字符串，打印出来：
+
+```python
+names = ''.join([itos[i] for i in generated])
+print(names)
+```
+
+* 结果比之前 bigram 模型生成的名字「更像名字」了：
+
+```text
+ham
+joes
+...
+```
+
+* 说明模型学到了「名字结构」的规律，生成出来的字符组合更合理了。
+
+---
+
+## ✅ 总结
+
+| 步骤                          | 作用              |
+| --------------------------- | --------------- |
+| 初始化 context                 | 生成开头            |
+| embedding → hidden → logits | 计算下一个字符概率       |
+| softmax + multinomial       | 按概率采样出下一个字符     |
+| 更新 context                  | 滑动窗口，继续生成       |
+| 终止条件                        | 采样出 "." 停止，结束生成 |
+
+---
+
+如果你需要，我可以继续讲：
+
+1️⃣ sampling 过程中 **为什么要用 multinomial，而不是 argmax？**
+2️⃣ sampling 为什么有时候会出「乱码名字」？如何调参数？
+3️⃣ 怎么控制生成名字的「多样性」？（用 temperature 技巧）
+
+要不要继续？🌟
+
 # google collab (new!!) notebook advertisement
 
 these notebooks more accessible and so i don't want you to have to like install jupyter notebooks and torch and
