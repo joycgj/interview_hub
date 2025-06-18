@@ -2317,6 +2317,101 @@ loss_full = F.cross_entropy(forward(x), y)
 
 需要的话随时告诉我！🌟
 
+---
+
+torch.randint
+
+解释一下
+
+当然可以！
+
+`torch.randint` 是 PyTorch 里一个**生成随机整数**的函数，作用是：
+
+> **生成一个张量（tensor），里面的值是 \[low, high) 区间内的随机整数。**
+
+---
+
+### 📐 函数格式
+
+```python
+torch.randint(low, high, size)
+```
+
+### 参数说明：
+
+| 参数   | 说明                          |
+| ---- | --------------------------- |
+| low  | 最小值（包含 low）                 |
+| high | 最大值（不包含 high）               |
+| size | 要生成的 tensor 的形状（用 tuple 表示） |
+
+---
+
+### 🧩 举例 1：生成 5 个 0\~9 的随机整数
+
+```python
+torch.randint(0, 10, (5,))
+```
+
+输出可能是：
+
+```
+tensor([7, 2, 4, 1, 8])
+```
+
+含义：生成了 5 个随机整数，范围是 \[0, 10) —— 也就是 0 到 9。
+
+---
+
+### 🧩 举例 2：生成一个 3x4 的随机整数矩阵
+
+```python
+torch.randint(0, 100, (3, 4))
+```
+
+输出可能是：
+
+```
+tensor([[53, 12, 79, 23],
+        [34, 88,  9, 67],
+        [45, 61, 25, 72]])
+```
+
+---
+
+### 🧠 在 Karpathy 讲的训练循环里怎么用？
+
+在 mini-batch 训练里：
+
+```python
+ix = torch.randint(0, x.shape[0], (32,))
+```
+
+意思是：
+
+* 在数据集里，**随机选 32 个样本**；
+* 取出的 32 个随机索引就放在 `ix` 这个 tensor 里。
+
+---
+
+### ✅ 总结
+
+\| 功能 | 生成随机整数张量 |
+\| 输入区间 | \[low, high) —— 包含 low，不包含 high |
+\| 输出形状 | 用 size 参数指定，比如 (32,) 就是 1 维 32 个元素 |
+\| 用途 | 随机采样、生成 mini-batch、数据增强等场景都用得到 |
+
+---
+
+如果你需要，我还可以讲：
+
+1️⃣ `torch.randint` 和 `torch.rand`、`torch.randn` 的区别；
+2️⃣ 为什么用 `randint` 比 for 循环随机采样更高效？
+
+要不要继续？🌟
+
+---
+
 # finding a good initial learning rate
 
 to determine a reasonable learning rate it works as follows let's reset our parameters
