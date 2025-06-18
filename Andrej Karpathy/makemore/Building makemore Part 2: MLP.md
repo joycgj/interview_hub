@@ -3863,3 +3863,55 @@ the google collab and so this is me executing the code in this lecture and i sho
 you're able to train the exact same network and then plot and sample from the model and everything is ready for
 you to like tinker with the numbers right there in your browser no installation necessary
 so i just wanted to point that out and the link to this will be in the video description
+
+当然可以！
+
+这一段 Karpathy 在讲**Google Colab 笔记本的推广（广告）**，我来帮你用中文总结一下：
+
+---
+
+## 📌 背景
+
+* 之前的课程代码都是在本地 Jupyter Notebook 里跑的；
+* 但是很多同学可能**没安装 Jupyter / PyTorch 环境**，不太方便操作；
+
+---
+
+## 🎯 解决方案：Google Colab
+
+* Google Colab 是谷歌提供的**在线 Jupyter Notebook**，可以直接在浏览器里运行，不用安装任何软件；
+* 只需要打开链接，就能看到 Notebook，直接运行里面的代码。
+
+---
+
+## 🧑‍💻 实际效果
+
+* 这个 Colab 笔记本里，包含了这次视频讲的所有代码（做了一些简化）；
+* 你可以直接在网页上运行：
+
+  * 训练模型
+  * 画 loss 曲线
+  * sample 出名字
+  * 改改超参数，马上看结果
+
+---
+
+## ✅ 目的
+
+* **降低门槛**，大家不需要装 Jupyter/PyTorch，只需要浏览器即可体验代码和实验过程。
+
+---
+
+### 🔗 链接
+
+* Colab 笔记本的链接会放在视频描述里，点开就可以用了！
+
+---
+
+如果你需要，我还可以：
+
+1️⃣ 教你怎么用 Google Colab（比如怎么保存、怎么换 GPU）
+2️⃣ 讲 Colab 免费版 / Pro 版的区别；
+3️⃣ 推荐几个「PyTorch 入门用 Colab」的好例子
+
+要不要继续？🌟
