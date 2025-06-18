@@ -1853,6 +1853,121 @@ subtract 100 this will work and so there's many good reasons to call
 cross-entropy number one the forward pass can be much more efficient the backward pass can be much more efficient
 and also things can be much more numerically well behaved okay so let's now set up the training of this neural
 
+当然可以！这一段讲的是：**为什么在 PyTorch 里用 `F.cross_entropy()` 来计算 loss，优于自己手写 softmax + NLL Loss**。我帮你分段解释：
+
+---
+
+## 📌 当前进度
+
+* 我们之前是「自己手写」了三行代码：
+
+```python
+probs = logits.exp() / logits.exp().sum(dim=1, keepdim=True)
+loss = -torch.log(probs[range(32), y]).mean()
+```
+
+* 这三行实现了 softmax + NLL Loss；
+* 但是 PyTorch 提供了更专业的封装函数：
+
+```python
+F.cross_entropy(logits, y)
+```
+
+---
+
+## 🎯 为什么用 `F.cross_entropy()` 更好？
+
+---
+
+### ✅ 1️⃣ 运行效率更高
+
+* 手写代码中，每一步都会创建**中间张量**，消耗内存、运算慢；
+* `F.cross_entropy()` 内部是「融合运算（fused kernel）」，更快、更省内存；
+* 对大模型训练更友好。
+
+---
+
+### ✅ 2️⃣ 反向传播更快
+
+* 手写版：自动微分系统要一层一层「反向传播」：
+
+  * softmax
+  * log
+  * 取 index
+
+* 这样反向图很复杂，速度慢，容易出错。
+
+* `F.cross_entropy()` 内部是**数学推导过的简化版反向传播**，计算更快，数值更稳定，代码也更简洁。
+
+举例：
+
+```text
+tanh 的反向传播，其实不是一层一层拆开计算，而是：
+d(tanh) = 1 - tanh^2
+```
+
+同理，cross\_entropy 也可以简化。
+
+---
+
+### ✅ 3️⃣ 数值更稳定（numerically stable）
+
+大重点 ❗：
+
+* 当 logits 里出现「极大」的数（例如 100）时：
+
+```python
+probs = exp(100) / (exp(100) + ...)
+```
+
+* exp(100) 很容易**溢出**（超出浮点数范围，变成 NaN）；
+
+如果你手写 softmax，这种溢出很容易发生，模型就崩了。
+
+PyTorch 的 `F.cross_entropy()` 内部会自动做处理：
+
+```text
+softmax(x) = softmax(x - max(x))
+```
+
+* 先减去 logits 最大值，避免 exp 结果太大；
+* 这样即使 logits 很大，也不会 NaN，数值始终稳定；
+
+---
+
+### 🔍 举例演示
+
+* 如果 logits 中有正 100，手写版 softmax 会出问题，出现 NaN；
+* 用 `F.cross_entropy()` 不会崩溃，结果稳定正常。
+
+---
+
+### ✅ 总结
+
+| 优点    | 说明                     |
+| ----- | ---------------------- |
+| 速度快   | fused kernel，节省内存、加速   |
+| 反向传播快 | 用数学推导的更简洁反向            |
+| 数值稳定  | 自动处理 logits 极大/极小，避免溢出 |
+| 简单易用  | 一行搞定，不用手写三行            |
+
+---
+
+### 🧑‍🏫 为什么一开始 Karpathy 手写？
+
+* 纯粹是**教学目的**，帮助大家理解 softmax + NLL Loss 是怎么计算的；
+* 实际工程中，应该**直接用 `F.cross_entropy()`**，性能和稳定性都更好。
+
+---
+
+如果你需要，我也可以：
+
+1. 帮你画一张「softmax + NLL Loss」的流程图 🌈；
+2. 解释 cross\_entropy 和 NLL Loss 的关系（很多人容易混淆）；
+3. 举例讲 logits 极大的溢出案例 🚀。
+
+需要的话可以随时告诉我！🌟
+
 # implementing the training loop, overfitting one batch
 
 net we have the forward pass uh we don't need these
