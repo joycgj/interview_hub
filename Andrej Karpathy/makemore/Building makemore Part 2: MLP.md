@@ -3764,6 +3764,95 @@ if ix == 0:
 
 ---
 
+当然可以！`torch.multinomial` 是 PyTorch 里一个非常有用的采样函数，作用是：
+
+> **根据给定的“概率分布”来随机采样**，而不是平均采样或最大值采样。
+
+---
+
+### 📐 函数格式
+
+```python
+torch.multinomial(input, num_samples, replacement=False, *, generator=None)
+```
+
+---
+
+### 参数解释
+
+| 参数           | 说明                          |
+| ------------ | --------------------------- |
+| input        | 一维或二维 tensor，表示“概率权重” (非负数) |
+| num\_samples | 要采样几个数                      |
+| replacement  | 是否放回（通常设 False）             |
+| generator    | 随机数生成器 (可选，设置随机种子用)         |
+
+**注意**：`input` 通常是 softmax 出来的概率分布，或者可以是 logits 先转成 prob 才行。
+
+---
+
+### 🧩 例子 1：采样 1 个字符
+
+```python
+probs = torch.tensor([0.1, 0.3, 0.6])
+ix = torch.multinomial(probs, num_samples=1).item()
+```
+
+* 这个 `probs` 表示 3 个字符的概率 \[10%, 30%, 60%]；
+* 用 multinomial 采样，60% 概率会采到 index 2，30% 概率会采到 index 1，以此类推。
+
+---
+
+### 🧩 例子 2：采样 5 个
+
+```python
+torch.multinomial(torch.tensor([0.2, 0.5, 0.3]), num_samples=5, replacement=True)
+```
+
+* 采样 5 个 index，可以重复采（放回）；
+* 通常生成文本时，我们只需要采样 1 个字符（num\_samples=1）。
+
+---
+
+### 🧠 在生成模型里的作用
+
+```python
+ix = torch.multinomial(probs, num_samples=1).item()
+```
+
+* 按照当前字符预测出来的“概率分布 probs” → 随机采样一个下一个字符；
+* 这样就不会每次都选最大概率的字符（argmax），而是有随机性，生成的名字更加**自然有趣**。
+
+---
+
+### 🔍 multinomial vs argmax
+
+| 采样方式        | 结果                    |
+| ----------- | --------------------- |
+| argmax      | 总选概率最大的，生成结果固定，名字重复性大 |
+| multinomial | 按概率采样，有多样性，名字变化丰富     |
+
+---
+
+## ✅ 总结
+
+\| 功能 | 根据给定“概率分布”进行随机采样 |
+\| 典型用途 | 语言模型 / 文本生成 / 强化学习 |
+\| 为啥用 | 保持生成的多样性，避免重复 |
+\| 配合 softmax 使用 | 通常先 softmax → 再 multinomial 采样 |
+
+---
+
+如果你需要，我还可以讲：
+
+1️⃣ 怎么用 **temperature** 调节 multinomial 的采样多样性；
+2️⃣ **multinomial 采样 vs beam search** 有啥区别；
+3️⃣ multinomial 的数学原理；
+
+要不要继续？🌟
+
+---
+
 
 # google collab (new!!) notebook advertisement
 
