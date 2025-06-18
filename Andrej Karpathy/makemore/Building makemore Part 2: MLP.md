@@ -2005,6 +2005,140 @@ output in those cases we do what's called overfit and we basically get the exact
 so now all we have to do is we just need to make sure that we read in the full data set and optimize
 the neural net okay so let's swing back up where we created the dataset and we see that here we only use the
 
+当然可以！这一段在讲「如何实现训练循环（training loop）」，以及**用一个 batch 先做 overfitting 试试看网络能不能正常收敛**。我来帮你用中文分段解释：
+
+---
+
+## 📌 当前模型状态
+
+* 前向传播（forward pass）已经做好了：
+
+  ```python
+  loss = F.cross_entropy(logits, y)
+  ```
+
+接下来就可以**训练神经网络**了，训练步骤包括：
+
+1️⃣ **清零梯度**
+2️⃣ **反向传播，计算梯度**
+3️⃣ **更新参数（梯度下降）**
+4️⃣ **重复很多轮（epoch）**
+
+---
+
+## 🧱 训练循环的实现
+
+### ✅ 步骤 1：清零梯度
+
+```python
+for p in parameters:
+    p.grad = None
+```
+
+PyTorch 里，优化之前**先把梯度清零**，否则梯度会累加。
+
+---
+
+### ✅ 步骤 2：反向传播
+
+```python
+loss.backward()
+```
+
+* 计算 loss 对各个参数的梯度；
+* 梯度会存储到参数的 `.grad` 属性里。
+
+---
+
+### ✅ 步骤 3：更新参数
+
+```python
+for p in parameters:
+    p.data -= learning_rate * p.grad
+```
+
+解释：
+
+* `p.data` 是参数的值；
+* 取当前梯度 `p.grad`，乘以学习率，做梯度下降（往 loss 变小的方向移动）；
+* 这一步就是“学习”过程。
+
+---
+
+### ✅ 步骤 4：重复训练
+
+通过循环不断训练：
+
+```python
+for i in range(1000):
+    # forward pass
+    # backward pass
+    # 参数更新
+    # 打印 loss
+```
+
+---
+
+## 🎯 为什么先做 overfitting 一个 batch？
+
+Karpathy 先只用\*\*32 个样本（来自前 5 个名字）\*\*做训练：
+
+* 因为模型参数有 3400 个，数据只有 32 个样本，很容易拟合；
+* 如果实现没问题，loss 会**迅速下降**；
+* 用来检查网络实现是否正确 —— 一种常见的调试方法。
+
+---
+
+### 结果观察
+
+* 训练 1000 轮，loss 从 17 → 非常小，说明模型能学；
+* 有些样本 loss 不是 0，是因为：
+
+  * 相同输入（比如 `...`）对应多个不同的 y（比如 e、o、a、s）；
+  * 这种情况本来就不能完全拟合成 loss = 0，属于数据本身的特性。
+
+---
+
+## 🧠 overfitting 的意义
+
+| 现象              | 解释                           |
+| --------------- | ---------------------------- |
+| loss 迅速下降       | 网络结构、forward + backward 没问题  |
+| loss 接近 0，但不是 0 | 数据本身存在歧义                     |
+| 仅 32 个样本能学好     | 网络有 3400 参数，拟合能力远大于样本量，容易过拟合 |
+
+---
+
+## ✅ 下一步
+
+目前只是**overfit 一个 batch**，证明网络 OK。
+接下来要：
+
+* 用全数据集（32,000 个名字）训练；
+* 设计 train/val/test split，防止过拟合，提升泛化能力。
+
+---
+
+## 🔔 小结
+
+| 步骤                   | 说明              |
+| -------------------- | --------------- |
+| 清零梯度                 | 避免累积            |
+| 反向传播                 | 计算 loss 对参数的梯度  |
+| 更新参数                 | 梯度下降，优化 loss    |
+| 训练 1000 轮            | loss 大幅下降，模型可以学 |
+| overfitting 一个 batch | 调试用，确认网络实现正确    |
+
+---
+
+如果你想，我也可以继续解释：
+
+1️⃣ 怎么选择 **学习率**（learning rate）
+2️⃣ 怎么设计 **train/val/test split**
+3️⃣ 怎么加 **mini-batch**，提升训练效率
+
+要不要继续？🌟
+
 # training on the full dataset, minibatches
 
 first five words so let me now erase this and let me erase the print statements otherwise we'd be printing way too much
