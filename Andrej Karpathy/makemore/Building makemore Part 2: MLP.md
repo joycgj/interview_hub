@@ -2181,6 +2181,142 @@ okay so one issue of course is we don't know if we're stepping too slow or too f
 so this point one i just guessed it so one question is how do you determine this learning rate
 and how do we gain confidence that we're stepping in the right sort of speed so i'll show you one way
 
+当然可以！这一段讲的是：
+
+✅ 如何把训练从「一个 batch 过拟合」切换成**完整数据集 + mini-batch 训练**，提高训练效率。
+
+我帮你分段解释：
+
+---
+
+## 📌 当前情况
+
+* 刚刚我们只用 5 个名字、32 个样本过拟合，loss 下降很快；
+* 现在我们要**用完整数据集**（全 32,000 个名字）训练模型。
+
+---
+
+## 🧠 处理完整数据集
+
+* 把 `first 5 words` 这行代码删除；
+* 用完整数据集生成训练样本，x、y 大小是：
+
+```text
+x.shape = [228,000, 3]
+y.shape = [228,000]
+```
+
+* 也就是说，数据集现在有 22.8 万个训练样本。
+
+---
+
+## 🚧 问题来了
+
+如果你直接对 22.8 万个样本做 forward + backward + 参数更新，每一轮迭代会很慢，效率低下。
+
+---
+
+## 🎯 解决方案：mini-batch 训练
+
+**mini-batch** 的意思是：
+
+> 每次只随机取一小批样本（比如 32 个），用来更新参数。
+
+好处：
+
+* 每次更新计算更快（forward + backward 快速完成）；
+* 参数能不断学习新数据，不用等全量数据计算完；
+* 训练更稳定，收敛效果更好。
+
+---
+
+### ✅ 如何实现 mini-batch
+
+#### 1️⃣ 随机采样 mini-batch
+
+```python
+ix = torch.randint(0, x.shape[0], (32,))
+```
+
+解释：
+
+* 随机生成 32 个整数，范围在 \[0, 228,000)
+* 相当于在数据集中随机取 32 个样本
+
+---
+
+#### 2️⃣ 取出 mini-batch 数据
+
+```python
+x_batch = x[ix]
+y_batch = y[ix]
+```
+
+* 取出这 32 个样本，对它们做 forward + backward + update；
+* 这时 embedding 的 shape 就变回：
+
+```text
+[32, 3, 2]
+```
+
+---
+
+### ✅ 3️⃣ 训练速度提升
+
+用 mini-batch 后，训练速度几乎「瞬间」就可以跑完一次迭代，非常快！
+
+---
+
+## 🧠 mini-batch 的特性
+
+* 用 mini-batch 训练，单次更新的梯度方向不再是「精确的」梯度（因为只看了 32 个样本）；
+* 但它仍然是一个「合理的近似方向」，可以帮助 loss 持续下降；
+* 在实际训练中，**频繁用小 batch 更新**，效果比「全量样本更新一次」更好。
+
+---
+
+## ✅ loss 观察
+
+* 用 mini-batch 训练时，每次打印的 loss 只是**这个 batch 的 loss**；
+* 如果你想知道「整体模型表现」，可以对整个数据集算一次 loss：
+
+```python
+loss_full = F.cross_entropy(forward(x), y)
+```
+
+例如，当前训练到全体数据集 loss ≈ 2.7，继续训练还能降到 2.6，2.53……
+
+---
+
+## 🧩 学习率问题
+
+* 目前的学习率 (learning rate) 是 0.1，随便猜的；
+* 不知道这个步长是太大还是太小，调整学习率非常关键；
+* 下一段视频会讲如何寻找好的 learning rate。
+
+---
+
+## ✅ 总结
+
+| 步骤            | 说明                               |
+| ------------- | -------------------------------- |
+| 完整数据集         | 22.8 万样本                         |
+| 训练慢           | 如果直接训练全部，速度慢                     |
+| mini-batch    | 每次随机选 32 个样本                     |
+| 优点            | 训练快、参数更新频繁、loss 快速下降             |
+| 观察            | batch 内 loss ≠ 全数据 loss，需要评估整体效果 |
+| learning rate | 下一步要学会怎么调节                       |
+
+---
+
+如果你需要，我可以继续帮你讲：
+
+1️⃣ **怎么选 batch\_size？**
+2️⃣ **怎么用 learning rate finder？**
+3️⃣ **为什么小 batch 会有更好的泛化能力？**
+
+需要的话随时告诉我！🌟
+
 # finding a good initial learning rate
 
 to determine a reasonable learning rate it works as follows let's reset our parameters
