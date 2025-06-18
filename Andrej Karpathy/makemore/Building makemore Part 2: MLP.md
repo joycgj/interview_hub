@@ -3263,6 +3263,131 @@ the sizes of the neural net or we can increase the number of uh words or charact
 are taking as an input so instead of just three characters we could be taking more characters as an input and that
 could further improve the loss okay so i changed the code slightly so we have here 200 000 steps of the
 
+当然可以！这一段讲的是：
+
+✅ **实验：增大 embedding size，看看模型效果是否提升**
+
+我来帮你分段详细讲讲：
+
+---
+
+## 📌 背景
+
+* 之前 embedding size 是 2 维；
+* 发现模型 bottleneck 可能来自 embedding 太小，27 个字符挤在 2 维空间里；
+* 现在我们把 embedding size 扩大到 10 维，继续训练观察效果。
+
+---
+
+## 🧱 操作步骤
+
+### ✅ 1️⃣ 修改 embedding size
+
+```python
+# embedding size 从 2 → 10
+C = torch.randn(27, 10)
+
+# 输入有 3 个字符 → 总输入维度是 3 x 10 = 30
+input_dim = 30
+
+# 隐藏层神经元设置成 200（之前 300）
+W1 = torch.randn(30, 200)
+b1 = torch.randn(200)
+
+# 输出层对应改成 200 → 27
+W2 = torch.randn(200, 27)
+b2 = torch.randn(27)
+
+# 参数总量大约 11,000 个
+```
+
+---
+
+### ✅ 2️⃣ 训练参数
+
+```python
+learning rate = 0.1
+训练 50,000 步
+```
+
+---
+
+### ✅ 3️⃣ 改成 log-loss 图
+
+* 画 loss 曲线时，用 log10(loss) 而不是直接画 loss：
+
+  * 因为 loss 曲线原来像「冰球棍」（hockey stick）—— 一开始很陡，后面很平；
+  * log10(loss) 可以把图压缩，形状更好看，趋势更明显。
+
+---
+
+## 🧩 观察现象
+
+1️⃣ 一开始训练完，train loss ≈ 2.3，dev loss ≈ 2.38，说明没有过拟合（overfitting）。
+
+---
+
+### 2️⃣ 学习率衰减 (learning rate decay)
+
+```python
+learning rate *= 0.1  # 降低 10 倍
+继续训练 50,000 步
+```
+
+* 希望更细致地优化模型，进一步降低 loss；
+* 结果降到：
+
+```text
+train loss ≈ 2.17
+dev loss ≈ 2.2
+```
+
+---
+
+### 3️⃣ 观察是否过拟合
+
+* 发现 train loss 和 dev loss 开始**出现轻微分离**，也就是说模型开始有一点 overfitting 的趋势；
+* 说明「增大 embedding size」确实起作用了，原来的 embedding 2 维确实是瓶颈。
+
+---
+
+## 🧠 训练经验总结
+
+1️⃣ embedding size 从 2 → 10，模型能力提升了，loss 明显下降；
+2️⃣ 继续增大 embedding、hidden size，或者增加上下文长度（block\_size），都可以进一步提升模型；
+3️⃣ 实际 production 里，会大量跑实验，调各种 hyperparameters（超参数）；
+4️⃣ 最后选一个 best model，再去测 test set loss。
+
+---
+
+## ✅ 小结
+
+| 操作                    | 结果                     |
+| --------------------- | ---------------------- |
+| embedding size 2 → 10 | loss 明显下降              |
+| learning rate decay   | 进一步降低 loss             |
+| train loss ≈ dev loss | 轻微 overfitting 开始出现    |
+| 瓶颈分析                  | embedding 2 维确实限制了模型表现 |
+
+---
+
+## 🚀 未来优化方向
+
+1️⃣ 继续增大 embedding size，比如 50 维、100 维；
+2️⃣ 继续增大 hidden layer 大小；
+3️⃣ 增大上下文长度（block\_size），比如从 3 个字符 → 5 个字符；
+4️⃣ 用更高级的优化器（Adam 等）替代 SGD。
+
+---
+
+如果你需要，我还可以讲：
+
+1️⃣ embedding size 选多大会比较合理？
+2️⃣ block\_size 改大，对语言模型性能有什么影响？
+3️⃣ 为什么 learning rate decay 会有效？
+
+要不要继续？🌟
+
 # summary of our final code, conclusion
 
 optimization and in the first 100 000 we're using a learning rate of 0.1 and then in the next 100 000 we're using a
