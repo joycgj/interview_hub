@@ -207,6 +207,175 @@ MLP 的结构和之前实现的一样，不过我把之前代码里的一些“�
 
 如果需要我还可以帮你整理 **这一段代码的关键改动点**，或者帮你写一份**中文注释版 starter code**，要不要？ 🚀
 
+---
+
+chars = sorted(list(set(''.join(words))))
+
+解释一下
+
+当然，来解释一下：
+
+```python
+chars = sorted(list(set(''.join(words))))
+```
+
+这一句代码的作用是 **提取出数据集中出现过的所有字符，放入一个有序的列表里**，详细拆解如下：
+
+1. `''.join(words)`
+
+   * 把 `words` 这个列表里所有的单词，拼成一个长字符串。
+   * 例如：
+
+     ```python
+     words = ['hello', 'world']  
+     ''.join(words) -> 'helloworld'
+     ```
+
+2. `set('helloworld')`
+
+   * 把这个字符串转换成 **集合（set）**，集合的特点是 **去重**，所以只留下**出现过的不同字符**：
+
+     ```python
+     set('helloworld') -> {'h', 'e', 'l', 'o', 'w', 'r', 'd'}
+     ```
+
+3. `list(set(...))`
+
+   * 把这个集合转回 **列表（list）**，因为后面我们通常需要用列表来索引字符。
+
+4. `sorted(...)`
+
+   * 最后对这个列表 **排序**，确保字符顺序固定（通常按字母表顺序排序），这样后续编码/解码字符时索引会稳定。
+
+**最终结果**：`chars` 就是一个 **包含所有在单词列表里出现过的字符** 的 **有序列表**，
+比如：
+
+```python
+chars = ['a', 'b', 'c', ..., 'z', '.']
+```
+
+这个 `chars` 后面就会用来建立 **字符到索引**、**索引到字符** 的映射，用于 embedding 层的输入处理。
+
+---
+
+如果你还想，我可以帮你画一个小图，直观展示这段代码的“流水线”过程，是否需要？ 🌈
+
+---
+
+```python
+# build the dataset
+block_size = 3 # context length: how many characters do we take to predict the next one?
+
+def build_dataset(words):  
+  X, Y = [], []
+  
+  for w in words:
+    context = [0] * block_size
+    for ch in w + '.':
+      ix = stoi[ch]
+      X.append(context)
+      Y.append(ix)
+      context = context[1:] + [ix] # crop and append
+
+  X = torch.tensor(X)
+  Y = torch.tensor(Y)
+  print(X.shape, Y.shape)
+  return X, Y
+```
+
+解释一下
+
+---
+
+当然可以，来详细解释这一段 **build\_dataset** 代码的作用：
+
+---
+
+首先，这一段代码是为了 **把原始单词数据变成神经网络能用的训练数据 X 和标签 Y**。
+
+### 关键变量：
+
+```python
+block_size = 3
+```
+
+* 意思是：**上下文窗口大小为 3**，也就是说，**用前 3 个字符来预测下一个字符**。
+  （注意：如果单词不够长，窗口前面用 0 填充）
+
+---
+
+### 函数：
+
+```python
+def build_dataset(words):
+    X, Y = [], []  # X 是输入，Y 是标签
+```
+
+---
+
+### 主循环：
+
+```python
+for w in words:
+    context = [0] * block_size  # 初始化 context，开始时 3 个 0
+    for ch in w + '.':          # 每个单词末尾加一个 '.' 作为终止符
+        ix = stoi[ch]           # 把字符 ch 转换成整数索引
+        X.append(context)       # 把当前 context 加到 X
+        Y.append(ix)            # 下一个要预测的字符索引 ix 加到 Y
+        context = context[1:] + [ix]  # 更新 context：右移一格，加入当前字符
+```
+
+解释一下 **这一层 for 循环**发生了什么：
+
+* 对于每个单词，初始 context 是 `[0, 0, 0]`
+* 然后从单词的第一个字符开始，循环：
+
+  * 当前 context 作为“输入” X
+  * 当前字符（转成索引 ix）作为“标签” Y
+  * context 窗口右移 1 格，加上当前字符，继续下一个字符
+
+用一句话总结就是：**用过去 3 个字符，预测下一个字符**。
+
+---
+
+### 转成 Tensor：
+
+```python
+X = torch.tensor(X)
+Y = torch.tensor(Y)
+print(X.shape, Y.shape)
+return X, Y
+```
+
+* 把 X、Y 转成 **torch tensor**，方便后续喂入模型训练。
+* X.shape: 多少个样本 × 3（窗口大小）
+* Y.shape: 多少个标签（和 X 的第一个维度相同）
+
+---
+
+### 一个简单例子：
+
+假设 `block_size=3`，词是 `"abc"`，带上结束符 `"."`，变成 `"abc."`，过程是：
+
+| context                      | 当前字符（ch） | 输出 X                         | 输出 Y（预测目标） |
+| ---------------------------- | -------- | ---------------------------- | ---------- |
+| \[0, 0, 0]                   | 'a'      | \[0, 0, 0]                   | ix('a')    |
+| \[0, 0, ix('a')]             | 'b'      | \[0, 0, ix('a')]             | ix('b')    |
+| \[0, ix('a'), ix('b')]       | 'c'      | \[0, ix('a'), ix('b')]       | ix('c')    |
+| \[ix('a'), ix('b'), ix('c')] | '.'      | \[ix('a'), ix('b'), ix('c')] | ix('.')    |
+
+---
+
+总结：
+
+* `build_dataset` 的目的是构造\*\*“前 3 个字符 -> 下一个字符”\*\*的训练数据对 `(X, Y)`
+* 这样神经网络学到的就是：**根据过去 N 个字符，预测下一个字符的概率分布**
+
+---
+
+如果你需要的话，我也可以帮你画一个 **可视化流程图**，让这个过程更直观，是否需要？ 🌟
+
+
 
 # fixing the initial loss
 
