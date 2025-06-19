@@ -1017,6 +1017,124 @@ W2 *= 0.01
 
 如果你需要，我还可以帮你画一个 **“logits 大小 vs loss”** 的对比图，或者整理一份 **初始化调优 checklist**，要不要？ 🌟
 
+---
+
+```python
+# 4-dimensional example of the issue
+logits = torch.tensor([0.0, 0.0, 5.0, 0.0])
+probs = F.softmax(logits, dim=0)
+loss = -probs[2].log()
+probs, loss
+```
+
+解释一下
+
+---
+
+当然可以，这段代码是用一个 **简单 4 维的例子** 来演示 “logits 极端值会影响 loss” 的现象，咱们一步步拆开讲：
+
+---
+
+### 代码：
+
+```python
+logits = torch.tensor([0.0, 0.0, 5.0, 0.0])
+probs = F.softmax(logits, dim=0)
+loss = -probs[2].log()
+probs, loss
+```
+
+---
+
+### 一步步解释：
+
+#### ① logits：
+
+```python
+logits = [0.0, 0.0, 5.0, 0.0]
+```
+
+* 4 维 logits，代表 4 个类别的未归一化分数
+* 第 3 个类别 logits=5，其它是 0
+
+#### ② softmax：
+
+```python
+probs = F.softmax(logits, dim=0)
+```
+
+* softmax 会把 logits 转成概率，**归一化到 0～1**，总和 = 1
+
+计算过程：
+
+```
+softmax(x_i) = exp(x_i) / sum_j exp(x_j)
+```
+
+实际算下来：
+
+```
+exp(0) = 1  
+exp(5) ≈ 148.413  
+```
+
+所以：
+
+```
+sum = 1 + 1 + 148.413 + 1 ≈ 151.413
+
+probs = [
+    1 / 151.413 ≈ 0.0066,
+    1 / 151.413 ≈ 0.0066,
+    148.413 / 151.413 ≈ 0.9802,
+    1 / 151.413 ≈ 0.0066
+]
+```
+
+#### ③ loss：
+
+```python
+loss = -probs[2].log()
+```
+
+* 这里假设 “正确标签” 就是 index=2
+* 那 loss 就是：
+
+```
+loss = -log( 0.9802 ) ≈ 0.0199
+```
+
+#### ④ 为什么要这样写？
+
+目的是演示：
+
+* 如果 logits 非常偏，比如某个值很大，softmax 就会让那个类别概率很高 → 网络 “非常自信”
+* 如果 **预测对了**，loss 很小（ ≈ 0 ）
+* 如果 **预测错了**，loss 会很大！
+
+---
+
+### 总结：
+
+这一段代码用 **4 维 logits 的 toy example** 演示：
+
+✅ 如果 logits 很 extreme（偏大），softmax 输出也会“非常偏”
+✅ 如果恰好预测对了 → loss 很小
+✅ 如果预测错了 → loss 会爆炸
+
+---
+
+一句话总结：
+
+👉 logits 太极端 → 模型“过度自信”，如果错了，loss 会非常高！
+👉 初始化 logits 时 **要接近 0**，softmax 才会合理分布。
+
+---
+
+如果需要我可以帮你画一个 **logits → softmax → loss 的小图**，要不要？ 🚀✨
+
+---
+
 
 # fixing the saturated tanh
 
