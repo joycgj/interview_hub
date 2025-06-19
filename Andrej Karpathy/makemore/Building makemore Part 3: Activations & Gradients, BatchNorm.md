@@ -375,7 +375,138 @@ return X, Y
 
 如果你需要的话，我也可以帮你画一个 **可视化流程图**，让这个过程更直观，是否需要？ 🌟
 
+---
 
+```python
+# MLP revisited
+n_embd = 10 # the dimensionality of the character embedding vectors
+n_hidden = 200 # the number of neurons in the hidden layer of the MLP
+
+g = torch.Generator().manual_seed(2147483647) # for reproducibility
+C  = torch.randn((vocab_size, n_embd),            generator=g)
+W1 = torch.randn((n_embd * block_size, n_hidden), generator=g)
+b1 = torch.randn(n_hidden,                        generator=g)
+W2 = torch.randn((n_hidden, vocab_size),          generator=g)
+b2 = torch.randn(vocab_size,                      generator=g)
+
+parameters = [C, W1, b1, W2, b2]
+print(sum(p.nelement() for p in parameters)) # number of parameters in total
+for p in parameters:
+  p.requires_grad = True
+```
+
+解释一下
+
+当然可以，来详细解释这一段 **MLP revisited** 代码的作用：
+
+---
+
+### 定义超参数：
+
+```python
+n_embd = 10  # 每个字符 embedding 向量的维度，10 维
+n_hidden = 200  # MLP 隐藏层的神经元数量，200 个
+```
+
+解释：
+
+* 每个字符（a-z 和 '.'）会被映射成一个 10 维的向量（embedding）
+* MLP 的隐藏层有 200 个神经元
+
+---
+
+### 设置随机数种子：
+
+```python
+g = torch.Generator().manual_seed(2147483647)
+```
+
+* 用来确保 **结果可复现**，固定随机数种子，训练多次结果一致。
+
+---
+
+### 初始化模型参数：
+
+```python
+C  = torch.randn((vocab_size, n_embd), generator=g)
+```
+
+* `C` 是 **字符 embedding 矩阵**，大小 `[vocab_size, n_embd]`
+* 每个字符都会映射成一个 n\_embd 维向量，初始化用高斯分布（标准正态）
+
+---
+
+```python
+W1 = torch.randn((n_embd * block_size, n_hidden), generator=g)
+b1 = torch.randn(n_hidden, generator=g)
+```
+
+* `W1` 是第一层全连接层（Linear Layer）的权重矩阵
+* 输入维度是 `n_embd * block_size`
+
+  * 因为我们用 `block_size` 个字符，每个字符是 n\_embd 维
+  * 所以一共 `n_embd * block_size` 个输入
+* `b1` 是第 1 层的 bias（偏置）
+
+---
+
+```python
+W2 = torch.randn((n_hidden, vocab_size), generator=g)
+b2 = torch.randn(vocab_size, generator=g)
+```
+
+* `W2` 是第 2 层（隐藏层 -> 输出层） 的权重矩阵
+* 输出层维度是 `vocab_size`，表示对每一个字符的概率预测
+* `b2` 是输出层的偏置
+
+---
+
+### 汇总参数：
+
+```python
+parameters = [C, W1, b1, W2, b2]
+print(sum(p.nelement() for p in parameters))
+```
+
+* 把所有模型参数放到 `parameters` 列表
+* 计算一下总共有多少个参数（nelement 是元素个数）
+
+---
+
+### 设置 requires\_grad：
+
+```python
+for p in parameters:
+    p.requires_grad = True
+```
+
+* 把所有参数设置为 `requires_grad=True`，这样后面可以用 **反向传播计算梯度**，做优化更新。
+
+---
+
+### 整体结构图：
+
+```
+字符 → embedding（10维） → 拼接成 block_size * n_embd →  
+→ MLP 隐藏层（200 neurons） → 输出层（vocab_size 维，softmax，预测下一个字符）
+```
+
+---
+
+### 总结：
+
+这一段代码做了几件事：
+
+1️⃣ 定义 embedding 大小 和 隐藏层大小
+2️⃣ 初始化所有权重和偏置参数（正态分布）
+3️⃣ 设置参数能求梯度（用于训练）
+4️⃣ 打印总参数数量，方便了解模型大小
+
+---
+
+如果需要的话，我也可以帮你画一张 **模型结构图（MLP 版）**，或者写一个**中文注释版**的代码，是否需要？ 🚀
+
+---
 
 # fixing the initial loss
 
