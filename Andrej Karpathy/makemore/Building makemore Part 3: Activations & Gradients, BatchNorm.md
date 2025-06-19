@@ -508,6 +508,103 @@ for p in parameters:
 
 ---
 
+W1 = torch.randn((n_embd * block_size, n_hidden), generator=g)
+
+为什么是n_embd * block_size
+
+---
+
+这个问题问得非常好！👍
+我们一步步来拆解 **为什么是 `n_embd * block_size`**：
+
+---
+
+### 1️⃣ 输入数据长什么样？
+
+回忆一下前面我们 build\_dataset() 做了什么：
+
+```python
+block_size = 3
+```
+
+也就是说，我们的模型是用 **3 个字符的上下文（context）去预测下一个字符**，
+例如：
+输入：\[ 'a', 'b', 'c' ] → 预测：'d'？
+
+---
+
+### 2️⃣ 每个字符如何表示？
+
+我们没有直接用 one-hot，
+而是用了 **embedding 向量** 来表示每个字符：
+
+```python
+n_embd = 10  # 每个字符 -> 10 维向量
+```
+
+也就是说，每个字符变成一个 10 维向量，
+如果 context 里有 3 个字符，
+那总共就是 **3 个 embedding 向量**，也就是：
+
+```
+[10 维向量]， [10 维向量]， [10 维向量]  →  拼接成一个 30 维向量
+```
+
+---
+
+### 3️⃣ 为什么拼接？
+
+因为我们要把整个 context（3 个字符）作为一整个输入，
+MLP 的输入是一个一维向量，
+所以需要把这 3 个 10 维向量拼在一起，形成：
+
+```
+[10, 10, 10] → [30]
+```
+
+也就是：**n\_embd \* block\_size = 10 \* 3 = 30 维输入向量**
+
+---
+
+### 4️⃣ 为什么 W1 的形状是这样？
+
+MLP 第一层是一个 **Linear 层**，
+输入是 30 维，输出是隐藏层大小 n\_hidden=200，
+所以权重矩阵 W1 应该是：
+
+```
+W1.shape = [输入维度, 输出维度]  
+           = [n_embd * block_size, n_hidden]  
+           = [30, 200]
+```
+
+这样矩阵乘法：
+
+```
+[batch_size, 30]  @  [30, 200]  →  [batch_size, 200]
+```
+
+---
+
+### 5️⃣ 总结一句话：
+
+`n_embd * block_size` 是因为：
+
+* 每个字符 embedding 是 n\_embd 维
+* context 里有 block\_size 个字符
+* 要把这几个 embedding 拼接成一个长向量，作为 MLP 的输入
+
+所以：
+
+```python
+输入维度 = n_embd * block_size
+```
+
+---
+
+如果你想，我还可以给你画一张 **输入向量流向隐藏层的示意图**，是不是更直观？ 🚀✨
+
+
 # fixing the initial loss
 
 network is very improperly configured at initialization and there's multiple things wrong with it but let's just
