@@ -163,6 +163,51 @@ get the special end token and we see that we are starting to get much nicer look
 still not amazing and they're still not fully name like uh but it's much better than what we had with the BAM
 model so that's our starting point now the first thing I would like to scrutinize is the initialization I can tell that our
 
+当然可以，下面是这一段 **starter code** 部分的中文解释：
+
+---
+
+这段代码其实是之前写的版本，我稍微做了一些整理和清理：
+首先，和以前一样，我们导入了 torch、matplotlib、math 等工具库，
+读取单词数据，例子里是 8 个单词，总共数据集中有 32,000 个单词，
+词表（vocabulary）是小写字母 + 特殊的结束符号 `.`。
+
+数据集读入后，我们做了数据处理，分成三份：**训练集（train）**、**开发集（dev）** 和 **测试集（test）**。
+
+MLP 的结构和之前实现的一样，不过我把之前代码里的一些“魔法数字（magic numbers）”拿掉了，
+比如字符的嵌入维度（embedding size）和隐藏层的隐藏单元数（hidden units），
+这些参数我统一放到前面来定义，后面就不用到处改数字了，
+这样结构更清晰，调参也方便。
+
+整体上，神经网络的参数量大概 11,000 个，
+我们优化 200,000 个步骤，batch size = 32。
+我对代码做了一些重构，增加了一些变量、注释，去掉魔法数字，**功能上没变化**，只是更整洁了。
+
+训练过程中，我们之前看到训练集和验证集的 loss 大概在 2.16 左右。
+
+我还稍微整理了评估不同数据集（train/val/test）的时候用的代码，
+现在可以传入一个字符串参数，指定要评估哪个数据集，
+代码内部会自动选对应的数据，forward 一次网络，计算 loss 并打印。
+
+还有一个细节：
+你会注意到我用了 `@torch.no_grad()` 这个 **装饰器**，
+它的作用是告诉 torch：**这个函数里的操作不需要计算梯度**，
+这样 torch 不会在后台记录用于反向传播的计算图，能节省内存和计算资源。
+其实和把所有 tensor 的 `requires_grad=False` 效果差不多。
+当然也可以用 `with torch.no_grad():` 这个 **上下文管理器**，作用是一样的。
+
+最后，采样代码（sample）还是和之前一样：
+从神经网络里拿到分布，更新上下文窗口，循环直到遇到结束符号 `.`，
+现在采样出来的单词，**比之前 Bigram 模型好很多**，虽然还不能算是真正像“名字”的单词，但效果明显提升了。
+
+所以目前的起点是这样，接下来我们要先仔细分析一下 **初始化（initialization）**，
+我可以告诉你，我们当前的初始化……
+
+---
+
+如果需要我还可以帮你整理 **这一段代码的关键改动点**，或者帮你写一份**中文注释版 starter code**，要不要？ 🚀
+
+
 # fixing the initial loss
 
 network is very improperly configured at initialization and there's multiple things wrong with it but let's just
