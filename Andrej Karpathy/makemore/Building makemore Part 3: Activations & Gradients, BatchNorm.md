@@ -3346,6 +3346,94 @@ going on where as you go into deeper and deeper layers the activation CS are cha
 and in this case we saw that without the use of batro as we are going through right now we had to very carefully set
 those gains to get nice activations in both the forward pass and the backward pass now before we move on to bat
 
+当然可以！这段 "**viz #2: backward pass gradient statistics**"，是可视化「反向传播中的梯度分布」，我帮你总结成中文，逻辑更清楚些：
+
+---
+
+### 🟢 这一段在做什么？
+
+👉 画出每一层（tanh 层）的 **梯度分布直方图**
+👉 观察 **反向传播时，梯度是不是正常的**
+
+---
+
+### 🟢 为什么要看梯度？
+
+✅ 梯度如果「爆炸」或者「消失」：
+
+* 会导致训练不稳定 / 失败
+* 有些层几乎没法学（梯度太小）
+* 有些层参数震荡（梯度太大）
+
+---
+
+### 🟢 怎么画？
+
+✅ 和「forward pass activations」步骤类似
+
+1️⃣ 遍历每一层
+2️⃣ 如果是 tanh 层
+3️⃣ 取 `.out.grad` 里的梯度值
+4️⃣ 计算：
+
+* mean（梯度均值）
+* std（梯度标准差）
+* 画出直方图
+
+---
+
+### 🟢 观察结果（经验总结）
+
+1️⃣ **正常情况（gain=5/3）**：
+
+✅ 各层梯度 **大致均匀**
+✅ 不会出现越深梯度越小，或者越大
+
+---
+
+2️⃣ 如果 gain 太小（比如 0.5）：
+
+✅ 激活收缩 → 梯度分布混乱
+✅ 梯度可能会「反向膨胀」，出现异常现象
+
+---
+
+3️⃣ 如果 gain 太大（比如 3）：
+
+✅ 激活过大 → 梯度分布也会偏移
+✅ 深层越往下，梯度越来越畸形
+
+---
+
+### 🟢 为什么关注这个？
+
+✅ **理想的网络**：
+
+```
+forward：激活分布均匀  
+backward：梯度分布也要均匀
+```
+
+✅ 如果有层梯度特别小 → 学不到东西
+✅ 如果有层梯度太大 → 参数震荡，训练不稳定
+
+---
+
+### 🟢 小结
+
+👉 这一步就是 **看反向传播的梯度是否正常，配合前向激活分布一起观察**，
+👉 确保整个网络 **forward/backward 都是健康的**。
+
+---
+
+如果你需要，我还可以帮你画一张：
+
+✅ 梯度分布「正常 vs 爆炸 vs 消失」对比图
+✅ forward/backward 配套观察 checklist
+
+要不要？ 🚀✨
+
+
 # the fully linear case of no non-linearities
 
 normalization I would also like to take a look at what happens when we have no 10h units here so erasing all the 10
