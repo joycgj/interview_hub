@@ -2385,6 +2385,76 @@ have to reestimate the mean stand deviation all the time and in addition that al
 individual examples at test time so that's the bash normalization layer it's a fairly complicated layer um but this
 is what it's doing internally now I wanted to show you a little bit of a real example so you can search resnet
 
+当然可以，来帮你总结这一段 **Batch Normalization: summary**，中文解释如下：
+
+---
+
+### 🟢 BatchNorm 的作用
+
+✅ **控制神经网络内部激活值的分布**
+✅ 让激活保持「标准正态分布」 → 均值 0，标准差 1
+
+---
+
+### 🟢 BatchNorm 通常放在哪里？
+
+✅ 通常放在 **带乘法的层后面**，比如：
+
+* Linear 层（全连接层）
+* Conv 层（卷积层）
+* 以后会讲 Residual、Conv
+
+---
+
+### 🟢 BatchNorm 里有哪些参数？
+
+1️⃣ **可训练参数**（会反向传播学习）：
+
+* gain（缩放因子，通常初始化为 1）
+* bias（偏移量，通常初始化为 0）
+
+---
+
+2️⃣ **非训练参数**（不会反向传播）：
+
+* running mean
+* running std（标准差）
+
+→ 用「滑动平均」动态更新（running mean update）
+
+---
+
+### 🟢 BatchNorm 做了什么操作？
+
+* 对输入 activations 计算 batch 内 mean/std
+* 把输入 **减去 mean，除以 std** → 变成标准正态分布
+* 然后 **乘 gain，加 bias** → 让网络有自由调整空间
+
+---
+
+### 🟢 为什么保存 running mean/std？
+
+✅ 推理时（inference）不希望每次动态算 mean/std
+
+✅ 可以用 **running mean/std**，保证推理时：
+
+```
+- 可以单样本 forward
+- 不受 batch 影响
+- 结果稳定
+```
+
+---
+
+### 🟢 总结一句话
+
+👉 **BatchNorm 层的作用是标准化隐藏层激活，提升训练稳定性，帮助训练深层网络，并且通过 running mean/std 让推理过程稳定**。
+
+---
+
+如果你需要，我还可以整理一个「BatchNorm 内部计算流程图」或者「BatchNorm 参数和 buffer 列表」，要不要？ 🚀✨
+
+
 # real example: resnet50 walkthrough
 
 which is a residual neural network and these are common types of neural networks used for image
