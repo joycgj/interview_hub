@@ -3476,6 +3476,105 @@ linearities allow us to um turn this sandwich from just a
 linear uh function into uh a neural network that can in principle um
 approximate any arbitrary function okay so now I've reset the code to use the linear tanh sandwich like before and I
 
+当然可以，这段是 "**the fully linear case of no non-linearities**" —— 看「全线性网络」的表现，我帮你翻译整理成中文，逻辑更清楚些：
+
+---
+
+### 🟢 这段在讲什么？
+
+👉 作者做了一个实验：**如果网络里没有 tanh（非线性激活），只有 Linear 层**，会发生什么？
+
+👉 然后观察：
+
+✅ 前向激活分布
+✅ 反向梯度分布
+✅ 网络是否能正常训练？
+
+---
+
+### 🟢 结果如何？
+
+---
+
+#### 1️⃣ 保持原来的 gain = 5/3
+
+（但现在没有 tanh 层了）
+
+* 发现 **激活越来越发散**（变得非常大）
+* 梯度也出现异常，层越深变化越大
+
+→ 因为 5/3 的 gain 是为了 **抵消 tanh 的 squash 效果**
+→ 没有 tanh，就不该用这个 gain！
+
+---
+
+#### 2️⃣ 如果用 gain=1（也就是标准初始化）
+
+✅ 激活分布正常
+✅ 梯度分布也正常
+
+→ 因为 **线性层的标准初始化就够用了**
+
+---
+
+### 🟢 为什么「全线性」不好？
+
+👉 纯 Linear 层其实是「无用的堆叠」：
+
+```
+Linear → Linear → Linear → ... → 归一 Linear
+```
+
+✅ 叠再多层，本质还是一个 Linear：
+
+```
+整体效果 = W1 * W2 * W3 ... * x + b  
+          → 还是 Linear
+```
+
+---
+
+### 🟢 那为什么要加 tanh（非线性）？
+
+✅ **非线性激活（tanh、ReLU）**
+✅ 才能让网络有「逼近任意函数」的能力
+✅ 否则就只能拟合一个线性关系，表达能力非常弱
+
+---
+
+### 🟢 这个实验的意义
+
+👉 以前没有 BatchNorm，没有 Adam 优化器，也没有 Residual connection：
+
+* 训练深网络非常「脆弱」，容易失败
+* 需要「小心翼翼地」调整初始化
+* 训练前都得疯狂调参数
+
+---
+
+👉 BatchNorm、Adam、Residual 等技术发明出来之后：
+
+✅ 网络训练「稳多了」
+✅ 不用天天担心发散 / 梯度消失
+✅ 可以放心堆更深的网络
+
+---
+
+### 🟢 总结一句话
+
+👉 **全 Linear 层的网络虽然 forward 看起来没问题，但表达能力有限（仍是线性），
+训练稳定性也差，必须依靠非线性激活 + 合理初始化 + 归一化，才能训练好深层网络！**
+
+---
+
+如果你需要，我还可以帮你：
+
+✅ 画一张「Linear 层 vs Linear+非线性」对比图
+✅ 整理一张「为什么深度网络需要非线性激活」知识卡片
+
+要不要？ 🚀✨
+
+
 # viz #3: parameter activation and gradient statistics
 
 reset everything so the gain is 5 over three uh we can run a single step of optimization and we can look at the
