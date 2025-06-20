@@ -2550,6 +2550,155 @@ the data type should be uh half Precision single Precision double precision and 
 otherwise they link to the paper is the same formula we've implemented and everything is the same exactly as we've
 done here okay so that's everything that I wanted to cover for this lecture really
 
+当然可以！我帮你把这一段 **real example: resnet50 walkthrough** 中文总结一下，逻辑更清楚：
+
+---
+
+### 🟢 背景
+
+* ResNet50 是一种「**残差网络（Residual Network）**」
+* 用来做图像分类，非常常用
+* 里面用到了 **BatchNorm、卷积层、残差连接** 等技术
+* 这段是讲：**ResNet50 怎么用 BatchNorm**，跟我们前面讲的 MLP 是一样的套路
+
+---
+
+### 🟢 ResNet50 的结构
+
+* 图片输入 → ResNet → 很多层结构重复堆叠
+* 重复的基本单元叫 **bottleneck block**
+
+---
+
+### 🟢 bottleneck block 里面包含：
+
+✅ 卷积层（Conv layer）
+✅ BatchNorm 层
+✅ 非线性层（ReLU）
+✅ 残差连接（Residual connection）
+
+---
+
+### 🟢 卷积层 vs Linear 层
+
+* Conv 层其实和 Linear 层（全连接层）本质一样
+  → 只是作用在「局部 patch」上，不是作用在整个输入上
+
+```
+Conv 层 = patch 上做 W * X + b
+```
+
+---
+
+### 🟢 BatchNorm 的放置
+
+通常放在：
+
+```
+Conv/Linear → BatchNorm → 非线性（ReLU 或 Tanh）
+```
+
+跟我们前面在 MLP 里讲的一模一样：
+
+```
+Linear → BatchNorm → Tanh
+```
+
+---
+
+### 🟢 为什么 Conv 层 bias=False？
+
+```
+Conv2d(..., bias=False)
+```
+
+→ 因为：
+
+* BatchNorm 会「减掉均值，加上 bias」
+* Conv 层如果加 bias → 被 BatchNorm 减掉 → 没用
+
+---
+
+### 🟢 PyTorch 里 Linear 层的初始化
+
+```
+weight ~ U(-sqrt(1/fan_in), sqrt(1/fan_in))
+```
+
+✅ 和我们自己算的 `1 / sqrt(fan_in)` 是同一个意思
+✅ 只是 PyTorch 默认用 **均匀分布**，而不是高斯分布
+
+---
+
+### 🟢 BatchNorm 层的参数
+
+```
+nn.BatchNorm1d(特征数, eps=1e-5, momentum=0.1)
+```
+
+* eps：防止除 0
+* momentum：更新 running mean/std 的速度
+
+---
+
+### 🟢 为什么小 batch size 要改 momentum？
+
+✅ 如果 batch 很大（比如 512）：
+
+* 每 batch 算出来的 mean/std 很稳定 → momentum 可以用 0.1
+
+✅ 如果 batch 很小（比如 32）：
+
+* 每 batch 的 mean/std 抖动大 → momentum 小一点更稳
+  → 比如用 0.001
+
+---
+
+### 🟢 BatchNorm 的 learnable 参数
+
+```
+affine=True
+```
+
+→ 表示 BatchNorm 有可学参数：
+
+✅ gain
+✅ bias
+
+默认 affine=True
+
+---
+
+### 🟢 track\_running\_stats
+
+```
+track_running_stats=True
+```
+
+→ 表示要不要 **自动更新 running mean/std**
+→ 否则就要自己训练完后再单独跑一遍训练集去算 mean/std
+
+---
+
+### 🟢 总结一句话
+
+👉 ResNet50 里面的 BatchNorm 用法，跟我们 MLP 的用法是一样的套路：
+
+✅ Conv/Linear → BatchNorm → 激活
+✅ Conv 不用 bias（因为 BatchNorm 负责 bias）
+✅ BatchNorm 自动维护 running mean/std
+✅ 小 batch size 记得调小 momentum
+
+---
+
+如果你需要，我还可以帮你画一张：
+
+✅ **ResNet block 流程图**
+✅ **Conv/BN/激活的标准模块结构**
+
+要不要？ 🚀✨
+
+
 # summary of the lecture
 
 what I wanted to talk about is the importance of understanding the activations and the gradients and their statistics in neural networks and this
