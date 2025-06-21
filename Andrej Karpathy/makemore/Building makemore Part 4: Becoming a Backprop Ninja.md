@@ -1218,6 +1218,147 @@ let's copy it here let's uncomment this and cross our
 fingers hey so that's it we've back propagated through
 this entire Beast so there we go totally makes sense
 
+这段代码讲解了 **反向传播（backpropagation）** 在一个多层感知机（MLP）模型中的详细实现。下面我将逐步解释每个部分的操作，特别是针对反向传播过程的细节。
+
+---
+
+### 1️⃣ **目标：**
+
+我们要通过反向传播计算各个层的梯度，最终更新模型的参数。在这里，重点是 **log-probs**（log 概率）相关的梯度计算和与其他张量（如 `probs`, `counts` 等）的反向传播。
+
+---
+
+### 2️⃣ **log-probs 到 loss 的反向传播**
+
+首先，计算 **log-probs**（log 概率）对 **loss**（损失）的影响：
+
+```python
+# loss 是通过 log-probs 计算的
+logprobs[range(n), Yb] = -logprobs  # 取出真实标签对应的 log 概率
+```
+
+* 损失是 `logprobs` 对真实标签的 log 概率的平均值。
+* 对于损失函数的反向传播，首先需要计算 `d_logprobs`，这实际上是 **损失对 log-probs 的梯度**，它是均匀分布的，因此每个位置的梯度是 `-1 / n`。
+
+```python
+d_logprobs = torch.zeros_like(logprobs)
+d_logprobs[range(n), Yb] = -1.0 / n
+```
+
+* **梯度的大小** 是 `-1/n`，只有那些实际参与计算的 `logprobs` 被赋值为非零值，其它未参与的元素的梯度为 0。
+
+---
+
+### 3️⃣ **从 log-probs 到 probs 的反向传播**
+
+接下来，我们要计算从 **log-probs** 到 **probs** 的梯度，`probs` 是通过对 `log-probs` 进行指数运算得到的。
+
+```python
+probs = torch.exp(logits - logit_maxes) / counts_sum_inv
+```
+
+* 计算反向传播时，logit 的梯度是通过对 **log** 的局部导数（`1 / probs`）来得到的，因此需要按链式法则传递梯度：
+
+```python
+d_probs = d_logprobs / probs
+```
+
+---
+
+### 4️⃣ **从 probs 到 counts 和 counts\_sum 的反向传播**
+
+接着，我们计算从 **probs** 到 **counts** 和 **counts\_sum** 的梯度。
+
+#### 4.1 从 **counts** 到 **counts\_sum\_inv**：
+
+```python
+counts_sum_inv = 1.0 / counts_sum
+```
+
+* `counts_sum` 是所有 `counts` 的和，反向传播时使用 **链式法则** 计算梯度。
+
+#### 4.2 计算 `counts` 和 `counts_sum_inv` 的梯度：
+
+```python
+d_counts_sum_inv = -counts_sum_inv ** 2 * d_counts_sum
+```
+
+* 通过对 `counts_sum_inv` 进行反向传播，得到 `counts_sum` 和 `counts_sum_inv` 的梯度。
+
+---
+
+### 5️⃣ **从 counts\_sum 到 logits 的反向传播**
+
+`counts_sum` 是从 `logits`（即输出层的结果）通过 `softmax` 计算得来的，因此需要对 `logits` 进行反向传播。
+
+#### 5.1 从 **logits** 到 **norm\_logits**（归一化后的 logits）：
+
+```python
+norm_logits = logits - logit_maxes
+```
+
+* 通过减去最大值（`logit_maxes`）来避免数值稳定性问题。反向传播时的梯度计算可以直接使用 **广播**。
+
+#### 5.2 从 **logit\_maxes** 到 **logits**：
+
+* 在反向传播过程中，由于 `logit_maxes` 的梯度是 `0`，它不会影响 **logits**。
+
+---
+
+### 6️⃣ **从 logits 到 W2 和 b2 的反向传播**
+
+反向传播时，我们还需要计算从 **logits** 到权重 **W2** 和偏置 **b2** 的梯度。
+
+* **W2** 和 **b2** 的梯度通过矩阵乘法和 **链式法则** 计算：
+
+```python
+dW2 = H.T @ d_logits
+db2 = d_logits.sum(0)
+```
+
+* `dW2` 是通过 `H` 的转置与 `d_logits` 的乘积得到的。
+* `db2` 是 `d_logits` 在第一个维度上求和，得到偏置项的梯度。
+
+---
+
+### 7️⃣ **从 H 到 dH 的反向传播**
+
+* 计算隐藏层的梯度时，使用 **tanh** 函数的反向传播公式 `1 - H^2`：
+
+```python
+dH = d_logits @ W2.T * (1 - H**2)
+```
+
+---
+
+### 8️⃣ **批归一化层的反向传播（BatchNorm）**
+
+批归一化层涉及到 **均值（mean）** 和 **方差（variance）**，以及两个参数 **gamma** 和 **beta**：
+
+```python
+d_gamma = dH * bnraw
+d_beta = dH.sum(0)
+```
+
+* `d_gamma` 和 `d_beta` 是批归一化层的 **gamma** 和 **beta** 的梯度。
+
+---
+
+### 9️⃣ **Bessel 校正（Bessel’s correction）**
+
+* 在批归一化中，使用 **`n-1`** 而不是 **`n`** 来计算方差，这是 **Bessel 校正**，有助于在小样本情况下得到更准确的方差估计。
+* 这对于小批量训练特别重要，因为使用 `n-1` 可以防止方差的偏差估计。
+
+---
+
+### 10️⃣ **总结**
+
+* 通过一系列的梯度计算，我们手动实现了反向传播的每一步，覆盖了 **log-probs**、**probs**、**counts**、**logits** 等多个计算图节点的梯度。
+* 这个过程不仅帮助我们更好地理解每个层次的梯度如何传递，还确保了手写实现与 PyTorch autograd 的一致性。
+
+如果你有具体的疑问或者需要更进一步的帮助，随时告诉我！
+
+
 # exercise 2: cross entropy loss backward pass
 
 so now we come to exercise two it basically turns out that in this first exercise we were doing way too much work
