@@ -443,6 +443,82 @@ Karpathy 建议大家这样学效果最好：
 
 如果你想，我还可以帮你 **画一个 forward → backward 计算图**，更方便你理解要怎么一步步“传回去”。需要的话告诉我！ 🌟
 
+```python
+# utility function we will use later when comparing manual gradients to PyTorch gradients
+def cmp(s, dt, t):
+  ex = torch.all(dt == t.grad).item()
+  app = torch.allclose(dt, t.grad)
+  maxdiff = (dt - t.grad).abs().max().item()
+  print(f'{s:15s} | exact: {str(ex):5s} | approximate: {str(app):5s} | maxdiff: {maxdiff}')
+```
+
+解释一下
+
+当然可以！这段代码是一个 **小工具函数**，名字叫 `cmp`，它的作用是：
+👉 **对比你手动计算的梯度 和 PyTorch autograd 自动算出来的梯度，检查你自己算的对不对。**
+
+我来帮你详细拆解一下：
+
+```python
+# 工具函数：以后用来对比手动算的梯度 和 PyTorch autograd 算的梯度
+def cmp(s, dt, t):
+  # s: 一个字符串，给结果加个名字，方便打印出来
+  # dt: 你手动计算出来的梯度（Tensor）
+  # t: PyTorch 里的参数 t（t.grad 就是 autograd 算出来的梯度）
+  
+  # ex: 判断 dt 和 t.grad 是否完全相等（严格一样，所有元素一样）
+  ex = torch.all(dt == t.grad).item()
+  
+  # app: 判断 dt 和 t.grad 是否“近似相等”（小数点误差允许，常用的判断）
+  app = torch.allclose(dt, t.grad)
+  
+  # maxdiff: dt 和 t.grad 每个元素差的绝对值，取出最大值，看看误差有多大
+  maxdiff = (dt - t.grad).abs().max().item()
+  
+  # 打印出来，格式化显示：
+  # s: 名字
+  # exact: 是否完全相等
+  # approximate: 是否近似相等
+  # maxdiff: 最大误差是多少
+  print(f'{s:15s} | exact: {str(ex):5s} | approximate: {str(app):5s} | maxdiff: {maxdiff}')
+```
+
+---
+
+### 总结一句话：
+
+以后你写手动 backward pass，比如：
+
+```python
+dW1 = ...
+cmp('W1', dW1, W1)
+```
+
+它就会帮你对比：
+
+✅ 手动算的梯度 `dW1`
+✅ PyTorch 自动算的梯度 `W1.grad`
+
+然后告诉你：
+
+* 是否完全一样
+* 是否“接近”
+* 最大误差是多少
+
+---
+
+如果你需要，我还可以帮你写一组“示例用法”代码，方便以后理解用在哪一步，需不需要？ 🌟
+
+```python
+# Note: I am initializating many of these parameters in non-standard ways
+# because sometimes initializating with e.g. all zeros could mask an incorrect
+# implementation of the backward pass.
+```
+
+翻译一下
+
+注意：我对很多参数的初始化用了非标准的方式，
+因为如果像通常那样用全 0 初始化，反向传播里的某些错误可能会被掩盖掉，不容易发现。
 
 # exercise 1: backproping the atomic compute graph
 
