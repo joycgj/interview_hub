@@ -309,6 +309,141 @@ collab and you can try to implement these derivatives or gradients yourself and 
 my video and see me do it and so work in Tandem and try it first yourself and then see me give away the answer and I
 think that'll be most valuable to you and that's how I recommend you go through this lecture so we are starting here with d-log props
 
+当然可以！这段是视频的第二部分，讲解了本节课“手写反向传播”的 **starter code 起始代码** 是怎么组织的，目的是什么。
+我来帮你用中文详细解释：
+
+---
+
+### 1️⃣ 这节课的目标
+
+* 这节课的目标是：我们要练习成为一个 “backprop ninja” —— 也就是自己手动写完整的反向传播！
+* Notebook 的前面几格代码是我们之前习惯的内容，和之前一样，做一些：
+
+  * import（导入包）
+  * 读取、处理数据集
+    这些部分没有变化。
+
+---
+
+### 2️⃣ 新增一个小工具函数
+
+* 这里新增了一个 **工具函数**，用来比较梯度是否正确。
+* 因为这次我们是“手动写”反向传播，所以会有两个版本的梯度：
+
+  * 我们手动算出来的
+  * PyTorch autograd 自动算的
+* 工具函数会帮我们对比这两个结果，检查我们写的是否正确。（默认假设 pytorch 是对的）
+
+---
+
+### 3️⃣ 网络参数初始化
+
+* 网络初始化部分和之前一样：
+
+  * embedding 表
+  * 第一层、第二层 Linear 层
+  * 中间有 BatchNorm 层
+* **小变化**：
+
+  * 这次 bias 偏置项我没有全设为 0，而是设成了很小的随机数。
+  * 为什么？如果 bias 是 0，有时候会“掩盖”我们实现里的一些小错误，让梯度公式变得太简单。
+  * 设成小随机数，可以帮助我们暴露出可能存在的 bug。
+* 此外，即使用了 BatchNorm，第一层我还是加了 bias（虽然实际上不需要），目的是让我们有更多变量可以求梯度，测试我们的反向传播是否正确。
+
+---
+
+### 4️⃣ Forward Pass（前向传播）改了啥？
+
+* 这次的 forward pass（前向传播）代码比之前长很多。
+* 有两个原因：
+
+  1. 之前的 loss 用的是 `F.cross_entropy()`，现在改成 **手动实现的 loss 函数**。
+  2. 把 forward pass 分成了很多小块，有很多中间变量（tensors）一步一步来。
+     这样做是因为我们马上要做 backward pass，需要这些中间变量的值。
+
+举例：
+
+* 之前的 forward 是：
+
+  ```
+  logits = model(x)
+  loss = F.cross_entropy(logits, y)
+  ```
+
+* 现在会拆成：
+
+  ```
+  emb = ...
+  hidden_pre = ...
+  hidden_post = ...
+  bn = ...
+  logits = ...
+  log_probs = ...
+  loss = ...
+  ```
+
+为什么？
+
+* 因为 backward pass 的时候，我们要一步一步计算：
+
+  ```
+  d_log_probs -> d_logits -> d_bn -> d_hidden_post -> d_hidden_pre -> d_emb -> d_embedding_table
+  ```
+
+---
+
+### 5️⃣ Exercise 1 要做的事情
+
+* 在 Exercise 1 里，我们要手动写 backward pass，计算这些 D 变量（即对中间变量求导）：
+
+  ```
+  d_log_probs
+  d_logits
+  d_bn
+  d_hidden_post
+  ...
+  ```
+
+* 我们会用上面那个工具函数，和 pytorch autograd 算出的梯度做对比，确认自己写的正确。
+
+---
+
+### 6️⃣ 预告后面几个 Exercise
+
+* **Exercise 2**:
+
+  * cross entropy loss 手动推导公式（用数学推导，不分块逐步传播），直接实现 gradient，比一步步传播快很多。
+* **Exercise 3**:
+
+  * BatchNorm 也用数学推导出更高效的反向传播公式，不用分步骤慢慢传。
+* **Exercise 4**:
+
+  * 全部串起来，训练整个 2 层 MLP，**完全不用 `loss.backward()`**，全程手动实现反向传播。
+  * 到时候你会发现，自己写出来的和 pytorch autograd 算的效果是一样的。
+
+---
+
+### 7️⃣ 推荐的学习方式
+
+Karpathy 建议大家这样学效果最好：
+
+1. 打开视频下面的链接，Notebook 有 GitHub 版和 Google Colab 版，直接用 Colab 最方便，免安装。
+2. 自己先尝试写 backward pass。
+3. 如果卡住了，再回来对照视频讲解答案。
+4. 这样效果会比只看视频要好很多！
+
+---
+
+### 8️⃣ 这节课的起点
+
+* 我们现在代码已经写到 forward pass 结束了。
+* 接下来我们就要从 **d\_log\_probs** 开始，手动写 backward pass，从 output 反向一步步传回去。
+
+---
+
+如果你想，我还可以帮你 **画一个 forward → backward 计算图**，更方便你理解要怎么一步步“传回去”。需要的话告诉我！ 🌟
+
+
 # exercise 1: backproping the atomic compute graph
 
 now d-lock props will hold the derivative of the loss with respect to
