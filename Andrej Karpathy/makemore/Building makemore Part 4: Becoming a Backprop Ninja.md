@@ -1358,6 +1358,153 @@ d_beta = dH.sum(0)
 
 如果你有具体的疑问或者需要更进一步的帮助，随时告诉我！
 
+```python
+emb = C[Xb] # embed the characters into vectors
+embcat = emb.view(emb.shape[0], -1) # concatenate the vectors
+```
+
+解释一下
+
+当然可以！这两行代码是 **前向传播（forward pass）** 的第一步，作用是把输入的字符编码成向量，拼接起来，作为输入送入神经网络。
+
+我们一行一行解释：
+
+---
+
+### 1️⃣ `emb = C[Xb]`
+
+* `C` 是 **embedding 表**，形状大概是 `(vocab_size, embedding_dim)`，也就是一个“查表”矩阵。
+
+  * 假设：总共有 27 个字符（vocab\_size = 27），embedding\_dim = 10。
+  * 所以 `C.shape == (27, 10)`，每一行是一个字符的向量表示。
+
+* `Xb` 是这个 batch 的输入数据，形状是 `(batch_size, context_length)`。
+
+  * 假设 batch\_size = 32，context\_length = 3（上下文有 3 个字符）。
+  * 所以 `Xb.shape == (32, 3)`，里面存的都是字符的编号（0 到 26）。
+
+#### 那 `C[Xb]` 是什么意思？
+
+👉 用 `Xb` 里的编号，**查表**取出对应的 embedding 向量。
+
+结果 `emb.shape == (32, 3, 10)`：
+
+* 32 个样本
+* 每个样本 3 个字符
+* 每个字符 10 维向量
+
+---
+
+### 2️⃣ `embcat = emb.view(emb.shape[0], -1)`
+
+* `.view()` 是 reshape 的操作，把 Tensor 改成新的形状。
+
+```python
+embcat = emb.view(32, 3 * 10) = emb.view(32, 30)
+```
+
+也就是说，把 `(32, 3, 10)` 改成 `(32, 30)`：
+
+👉 **把 3 个字符的向量，拼接成一个 30 维的向量**，作为后面 MLP 输入层的特征。
+
+---
+
+### 3️⃣ 小结
+
+一句话总结这两行代码作用：
+
+👉 **把 32 个样本的字符索引，查 embedding 表转成向量，拼接后，作为输入送入神经网络**。
+
+---
+
+如果你还想，我可以画一张小图，帮你形象理解“Xb → C\[Xb] → emb → embcat”的整个过程，要不要？ 🌟
+
+
+C[Xb]是如何查表的，给个例子
+
+当然可以！我来举个简单的例子，帮你看懂 `C[Xb]` 是怎么“查表”的。
+
+---
+
+### 假设：
+
+* `C` 是一个 embedding 表（矩阵），shape 是 `(vocab_size, embedding_dim)`。
+  假设：
+
+```text
+vocab_size = 5  # 一共 5 个字符，编号 0-4
+embedding_dim = 3  # 每个字符 embedding 是 3 维向量
+```
+
+那 C 长这样：
+
+```python
+C = torch.tensor([
+  [0.1, 0.2, 0.3],  # 第 0 个字符的 embedding
+  [0.4, 0.5, 0.6],  # 第 1 个字符的 embedding
+  [0.7, 0.8, 0.9],  # 第 2 个字符的 embedding
+  [1.0, 1.1, 1.2],  # 第 3 个字符的 embedding
+  [1.3, 1.4, 1.5],  # 第 4 个字符的 embedding
+])
+```
+
+---
+
+### 输入 batch: Xb
+
+假设这个 batch 里，有 2 个样本，每个样本有 3 个字符（context\_length = 3）：
+
+```python
+Xb = torch.tensor([
+  [2, 3, 0],  # 第一个样本：字符 2，3，0
+  [1, 4, 2],  # 第二个样本：字符 1，4，2
+])
+```
+
+---
+
+### `C[Xb]` 怎么查表？
+
+你可以把它理解成：
+**Xb 里每个数字，就是要查 C 这个表的“行号”**，取出对应的 embedding。
+
+所以：
+
+```text
+C[Xb] = [
+  [C[2], C[3], C[0]],
+  [C[1], C[4], C[2]],
+]
+```
+
+展开后，C\[Xb] 结果的 shape 是 `(2, 3, 3)`：
+
+```python
+tensor([
+  [ [0.7, 0.8, 0.9],  # C[2]
+    [1.0, 1.1, 1.2],  # C[3]
+    [0.1, 0.2, 0.3] ],# C[0]
+
+  [ [0.4, 0.5, 0.6],  # C[1]
+    [1.3, 1.4, 1.5],  # C[4]
+    [0.7, 0.8, 0.9] ] # C[2]
+])
+```
+
+---
+
+### 小结：
+
+```python
+C[Xb] 其实就是用 Xb 里的数字去“查表”，  
+每个数字查 C 里的对应行，得到对应的 embedding 向量。
+```
+
+---
+
+如果你还想，我也可以帮你画一个表格，或者写一段完整例子代码跑给你看（你可以复制到 notebook 里试），要不要？ 🌟
+
+
 
 # exercise 2: cross entropy loss backward pass
 
