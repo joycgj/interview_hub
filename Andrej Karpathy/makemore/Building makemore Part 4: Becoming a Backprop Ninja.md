@@ -454,60 +454,110 @@ def cmp(s, dt, t):
 
 解释一下
 
-当然可以！这段代码是一个 **小工具函数**，名字叫 `cmp`，它的作用是：
-👉 **对比你手动计算的梯度 和 PyTorch autograd 自动算出来的梯度，检查你自己算的对不对。**
+这段代码定义了一个 **比较函数（`cmp`）**，用于 **比较手动计算的梯度（`dt`）** 和 **PyTorch 自动计算的梯度（`t.grad`）** 是否一致。主要用于验证手动实现的反向传播是否正确。
 
-我来帮你详细拆解一下：
+下面我逐步解释每个部分：
+
+---
+
+### 1️⃣ **函数定义**
 
 ```python
-# 工具函数：以后用来对比手动算的梯度 和 PyTorch autograd 算的梯度
 def cmp(s, dt, t):
-  # s: 一个字符串，给结果加个名字，方便打印出来
-  # dt: 你手动计算出来的梯度（Tensor）
-  # t: PyTorch 里的参数 t（t.grad 就是 autograd 算出来的梯度）
-  
-  # ex: 判断 dt 和 t.grad 是否完全相等（严格一样，所有元素一样）
-  ex = torch.all(dt == t.grad).item()
-  
-  # app: 判断 dt 和 t.grad 是否“近似相等”（小数点误差允许，常用的判断）
-  app = torch.allclose(dt, t.grad)
-  
-  # maxdiff: dt 和 t.grad 每个元素差的绝对值，取出最大值，看看误差有多大
-  maxdiff = (dt - t.grad).abs().max().item()
-  
-  # 打印出来，格式化显示：
-  # s: 名字
-  # exact: 是否完全相等
-  # approximate: 是否近似相等
-  # maxdiff: 最大误差是多少
-  print(f'{s:15s} | exact: {str(ex):5s} | approximate: {str(app):5s} | maxdiff: {maxdiff}')
+```
+
+* `s`：一个 **字符串**，用于打印输出时标识当前正在比较的梯度名称。
+* `dt`：**手动计算的梯度**，形状与 `t.grad` 相同，是一个 tensor。
+* `t`：一个 PyTorch 的 **tensor**，包含了模型的计算图，`t.grad` 是 **PyTorch 自动计算的梯度**。
+
+---
+
+### 2️⃣ **`ex = torch.all(dt == t.grad).item()`**
+
+* **`dt == t.grad`**：逐元素比较手动计算的梯度 `dt` 和 PyTorch 自动计算的梯度 `t.grad` 是否相等。返回的是一个布尔型的 tensor。
+* **`torch.all(dt == t.grad)`**：检查 `dt == t.grad` 中所有元素是否都为 `True`，即所有元素是否都相等。如果全部相等，返回 `True`；否则，返回 `False`。
+* **`.item()`**：将布尔值转换为 Python 标量（`True` 为 1，`False` 为 0）。
+
+**例子：**
+
+```text
+dt = [1.0, 2.0]
+t.grad = [1.0, 2.0]
+```
+
+`dt == t.grad` 结果是 `[True, True]`，所以 `torch.all(dt == t.grad)` 结果是 `True`，`ex = 1`。
+
+---
+
+### 3️⃣ **`app = torch.allclose(dt, t.grad)`**
+
+* **`torch.allclose(dt, t.grad)`**：判断 `dt` 和 `t.grad` 中的元素是否 **近似相等**（考虑浮动误差）。这是一个非常常用的方法来比较浮点数是否接近，因为在计算机中，浮点数的计算可能存在精度误差。
+
+返回值是一个布尔值（`True` 或 `False`），表示两者是否足够接近。
+
+---
+
+### 4️⃣ **`maxdiff = (dt - t.grad).abs().max().item()`**
+
+* **`(dt - t.grad)`**：计算 `dt` 和 `t.grad` 之间的 **元素差异**。
+* **`.abs()`**：取差异的 **绝对值**。
+* **`.max()`**：找到差异的最大值，表示最大误差。
+* **`.item()`**：将最大误差的 tensor 转换为 Python 标量，便于打印输出。
+
+**例子：**
+
+```text
+dt = [1.0, 2.0]
+t.grad = [1.1, 2.2]
+```
+
+差异是 `[0.1, 0.2]`，所以最大差异是 `0.2`。
+
+---
+
+### 5️⃣ **`print(f'{s:15s} | exact: {str(ex):5s} | approximate: {str(app):5s} | maxdiff: {maxdiff}')`**
+
+这行代码的作用是 **格式化输出** 比较结果。
+
+* `f'{s:15s}'`：将 `s` 字符串打印为 15 个字符宽，不足时填充空格。
+* `exact`：打印 `ex`，表示梯度是否完全相等。
+* `approximate`：打印 `app`，表示梯度是否近似相等。
+* `maxdiff`：打印两者之间的最大差异。
+
+**例子：**
+
+```text
+s = "gradient_w1"
+ex = 1
+app = True
+maxdiff = 0.1
+```
+
+输出：
+
+```text
+gradient_w1    | exact: True   | approximate: True   | maxdiff: 0.1
 ```
 
 ---
 
-### 总结一句话：
+### 6️⃣ **总结**
 
-以后你写手动 backward pass，比如：
+这段代码的作用是：
 
-```python
-dW1 = ...
-cmp('W1', dW1, W1)
-```
+* 比较 **手动计算的梯度** 和 **PyTorch 自动计算的梯度**。
+* 通过三种方式验证：
 
-它就会帮你对比：
+  1. `exact`：判断两者是否完全相等。
+  2. `approximate`：判断两者是否近似相等（考虑浮动误差）。
+  3. `maxdiff`：计算两者之间的 **最大差异**。
 
-✅ 手动算的梯度 `dW1`
-✅ PyTorch 自动算的梯度 `W1.grad`
-
-然后告诉你：
-
-* 是否完全一样
-* 是否“接近”
-* 最大误差是多少
+它用于 **调试和验证手动实现的反向传播** 是否与 PyTorch 的自动梯度计算一致。
 
 ---
 
-如果你需要，我还可以帮你写一组“示例用法”代码，方便以后理解用在哪一步，需不需要？ 🌟
+如果你有任何问题，或者想让我给你举个实际的例子，验证一下梯度的比较方法，随时告诉我！ 🌟
+
 
 ```python
 # Note: I am initializating many of these parameters in non-standard ways
