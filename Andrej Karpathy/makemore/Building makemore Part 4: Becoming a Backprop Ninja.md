@@ -20,14 +20,16 @@ Supplementary links:
 - Bengio et al. 2003 MLP LM https://www.jmlr.org/papers/volume3/b... 
 
 Chapters:
-- 00:00:00 intro: why you should care & fun history
-- 00:07:26 starter code
-- 00:13:01 exercise 1: backproping the atomic compute graph
-- 01:05:17 brief digression: bessel’s correction in batchnorm
-- 01:26:31 exercise 2: cross entropy loss backward pass
-- 01:36:37 exercise 3: batch norm layer backward pass
-- 01:50:02 exercise 4: putting it all together
-- 01:54:24 outro
+```
+00:00:00 intro: why you should care & fun history
+00:07:26 starter code
+00:13:01 exercise 1: backproping the atomic compute graph
+01:05:17 brief digression: bessel’s correction in batchnorm
+01:26:31 exercise 2: cross entropy loss backward pass
+01:36:37 exercise 3: batch norm layer backward pass
+01:50:02 exercise 4: putting it all together
+01:54:24 outro
+```
 
 
 当然可以，下面是这段视频说明的 **中文翻译版**：
