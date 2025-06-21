@@ -1019,205 +1019,6 @@ times the global derivative to create the chain rule this is just times the BM b
 so this is our candidate let me bring this down and uncommon to the check
 and we see that we have the correct result now before we propagate through the next line I want to briefly talk about the
 
-# brief digression: bessel’s correction in batchnorm
-
-note here where I'm using the bezels correction dividing by n minus 1 instead of dividing by n when I normalize here
-the sum of squares now you'll notice that this is departure from the paper which uses one over n
-instead not one over n minus one their m is RN and
-um so it turns out that there are two ways of estimating variance of an array one is the biased estimate which is one
-over n and the other one is the unbiased estimate which is one over n minus one now confusingly in the paper this is uh
-not very clearly described and also it's a detail that kind of matters I think um they are using the biased version
-training time but later when they are talking about the inference they are mentioning that when they do the
-inference they are using the unbiased estimate which is the n minus one version in
-um basically for inference and to calibrate the running mean and
-the running variance basically and so they they actually introduce a trained test mismatch where in training they use
-the biased version and in the in test time they use the unbiased version I find this extremely confusing you can
-read more about the bezels correction and why uh dividing by n minus one gives you a better estimate of the variance in
-a case where you have population size or samples for the population that are very small and that is indeed
-the case for us because we are dealing with many patches and these mini matches are a small sample of a larger
-population which is the entire training set and so it just turns out that if you just estimate it using one over n that
-actually almost always underestimates the variance and it is a biased estimator and it is advised that you use
-the unbiased version and divide by n minus one and you can go through this article here that I liked that actually
-describes the full reasoning and I'll link it in the video description now when you calculate the torture
-variance you'll notice that they take the unbiased flag whether or not you want to divide by n or n minus one confusingly
-they do not mention what the default is for unbiased but I believe unbiased by
-default is true I'm not sure why the docs here don't cite that now in The Bachelor
-1D the documentation again is kind of wrong and confusing it says that the standard deviation is calculated via the
-biased estimator but this is actually not exactly right and people have pointed out that it is not right in a number of issues since
-then because actually the rabbit hole is deeper and they follow the paper exactly
-and they use the biased version for training but when they're estimating the running standard deviation we are using
-the unbiased version so again there's the train test mismatch so long story short I'm not a fan of trained test
-discrepancies I basically kind of consider the fact that we use the bias version
-the training time and the unbiased test time I basically consider this to be a bug and I don't think that there's a
-good reason for that it's not really they don't really go into the detail of the reasoning behind it in this paper so
-that's why I basically prefer to use the bestless correction in my own work unfortunately Bastion does not take a
-keyword argument that tells you whether or not you want to use the unbiased version of the bias version in both
-train and test and so therefore anyone using batch normalization basically in my view has a bit of a bug in the code
-um and this turns out to be much less of a problem if your batch mini batch sizes
-are a bit larger but still I just might kind of uh unpardable so maybe someone can explain why this is okay but for now
-I prefer to use the unbiased version consistently both during training and at this time and that's why I'm using one
-over n minus one here okay so let's now actually back propagate through this line
-so the first thing that I always like to do is I like to scrutinize the shapes first so in particular here looking at the
-shapes of what's involved I see that b and VAR shape is 1 by 64. so it's a row
-vector and BND if two dot shape is 32 by 64. so clearly here we're doing a sum over
-the zeroth axis to squash the first dimension of of the shapes here using a
-sum so that right away actually hints to me that there will be some kind of a replication or broadcasting in the
-backward pass and maybe you're noticing the pattern here but basically anytime you have a sum in the forward pass that
-turns into a replication or broadcasting in the backward pass along the same Dimension and conversely when we have a
-replication or a broadcasting in the forward pass that indicates a variable reuse and so in the backward pass that
-turns into a sum over the exact same dimension and so hopefully you're noticing that Duality that those two are kind of like
-the opposite of each other in the forward and backward pass now once we understand the shapes the
-next thing I like to do always is I like to look at a toy example in my head to sort of just like understand roughly how
-uh the variable the variable dependencies go in the mathematical formula so here we have a two-dimensional array
-of the end of two which we are scaling by a constant and then we are summing uh
-vertically over the columns so if we have a two by two Matrix a and then we sum over the columns and scale we would
-get a row Vector B1 B2 and B1 depends on a in this way whereas just sum they're
-scaled of a and B2 in this way where it's the second column sump and scale
-and so looking at this basically what we want to do now is we have the derivatives on B1 and B2 and we want to
-back propagate them into Ace and so it's clear that just differentiating in your head the local derivative here is one
-over n minus 1 times uh one uh for each one of these A's and um
-basically the derivative of B1 has to flow through The Columns of a scaled by one over n minus one
-and that's roughly What's Happening Here so intuitively the derivative flow tells us that DB and diff2
-will be the local derivative of this operation and there are many ways to do this by the way but I like to do
-something like this torch dot once like of bndf2 so I'll create a large array
-two-dimensional of ones and then I will scale it so 1.0 divided by n minus 1.
-so this is a array of um one over n minus one and that's sort of like the local derivative
-and now for the chain rule I will simply just multiply it by dbm bar
-and notice here what's going to happen this is 32 by 64 and this is just 1 by 64. so I'm letting the broadcasting do
-the replication because internally in pytorch basically dbnbar which is 1 by
-64 row vector well in this multiplication get um copied vertically until the two are
-of the same shape and then there will be an element wise multiply and so that uh so that the broadcasting is basically
-doing the replication and I will end up with the derivatives of DB and diff2 here
-so this is the candidate solution let's bring it down here let's uncomment this line where we check
-it and let's hope for the best and indeed we see that this is the correct formula next up let's
-differentiate here and to be in this so here we have that b and diff is element y squared to create B and F2
-so this is a relatively simple derivative because it's a simple element wise operation so it's kind of like the
-scalar case and we have that DB and div should be if this is x squared then the
-derivative of this is 2x right so it's simply 2 times B and if that's the local
-derivative and then times chain Rule and the shape of these is the same they are of the
-same shape so times this so that's the backward pass for this variable let me bring that down here
-and now we have to be careful because we already calculated dbm depth right so this is just the end of the other uh you
-know other Branch coming back to B and diff because B and diff was already back propagated to way over here
-from being raw so we now completed the second branch and so that's why I have to do plus equals and if you recall we
-had an incorrect derivative for being diff before and I'm hoping that once we append this last missing piece we have
-the exact correctness so let's run ambient to be in div now actually shows
-the exact correct derivative um so that's comforting okay so let's now back propagate through this line
-here um the first thing we do of course is we check the shapes and I wrote them out
-here and basically the shape of this is 32 by 64. hpbn is the same shape
-but B and mean I is a row Vector 1 by 64. so this minus here will actually do
-broadcasting and so we have to be careful with that and as a hint to us again because of The Duality a
-broadcasting and the forward pass means a variable reuse and therefore there will be a sum in the backward pass
-so let's write out the backward pass here now um back propagate into the hpbn
-because this is these are the same shape then the local derivative for each one of the elements here is just one for the
-corresponding element in here so basically what this means is that the gradient just simply copies it's just a
-variable assignment it's quality so I'm just going to clone this tensor just for safety to create an exact copy of DB and
-div and then here to back propagate into this one what I'm inclined to do here is
-will basically be uh what is the local derivative well
-it's negative torch.1's like of the shape of uh B and diff
-right and then times
-the um the derivative here dbf
-and this here is the back propagation for the replicated B and mean I so I still have to back propagate
-through the uh replication in the broadcasting and I do that by doing a sum so I'm going to take this whole
-thing and I'm going to do a sum over the zeroth dimension which was the replication
-so if you scrutinize this by the way you'll notice that this is the same shape as that and so what I'm doing uh
-what I'm doing here doesn't actually make that much sense because it's just a array of ones multiplying DP and diff so
-in fact I can just do this um and that is equivalent
-so this is the candidate backward pass let me copy it here and then let me
-comment out this one and this one enter
-and it's wrong damn
-actually sorry this is supposed to be wrong and it's supposed to be wrong because
-we are back propagating from a b and diff into hpbn and but we're not done
-because B and mean I depends on hpbn and there will be a second portion of that
-derivative coming from this second Branch so we're not done yet and we expect it to be incorrect so there you
-go uh so let's now back propagate from uh B and mean I into hpbn
-um and so here again we have to be careful because there's a broadcasting along
-um or there's a Sum along the zeroth dimension so this will turn into broadcasting in the backward pass now
-and I'm going to go a little bit faster on this line because it is very similar to the line that we had before and
-multiplies in the past in fact so the hpbn
-will be the gradient will be scaled by 1 over n and then basically this gradient here on
-dbn mean I is going to be scaled by 1 over n and then it's going to flow across all the
-columns and deposit itself into the hpvn so what we want is this thing scaled by
-1 over n only put the constant up front here
-um so scale down the gradient and now we need to replicate it across all the um
-across all the rows here so we I like to do that by torch.lunslike of basically
-um hpbn and I will let the broadcasting do the work of replication
-so
-like that so this is uh the hppn and hopefully
-we can plus equals that
-so this here is broadcasting um and then this is the scaling so this
-should be current okay so that completes the back propagation of the bathroom layer and we are now
-here let's back propagate through the linear layer one here now because everything is getting a little
-vertically crazy I copy pasted the line here and let's just back properly through this one line
-so first of course we inspect the shapes and we see that this is 32 by 64. MCAT
-is 32 by 30. W1 is 30 30 by 64 and B1 is just 64. so
-as I mentioned back propagating through linear layers is fairly easy just by matching the shapes so let's do that we
-have that dmcat should be um some matrix multiplication of dhbn
-with uh W1 and one transpose thrown in there so to make uh MCAT be 32 by 30
-I need to take dhpn 32 by 64 and multiply it by w1.
-transpose to get the only one I need to end up
-with 30 by 64. so to get that I need to take uh MCAT
-transpose and multiply that by uh dhpion
-and finally to get DB1 this is a addition and we saw that
-basically I need to just sum the elements in dhpbn along some Dimension and to make the dimensions work out I
-need to Sum along the zeroth axis here to eliminate this Dimension and we do
-not keep dims uh so that we want to just get a single one-dimensional lecture of 64.
-so these are the claimed derivatives let me put that here and let me
-uncomment three lines and cross our fingers everything is great okay so we now
-continue almost there we have the derivative of MCAT and we want to derivative we want to back propagate
-into m so I again copied this line over here so this is the forward pass and then
-this is the shapes so remember that the shape here was 32 by 30 and the original shape of M plus 32 by 3 by 10. so this
-layer in the forward pass as you recall did the concatenation of these three 10-dimensional character vectors
-and so now we just want to undo that so this is actually relatively straightforward operation because uh the
-backward pass of the what is the view view is just a representation of the array it's just a logical form of how
-you interpret the array so let's just reinterpret it to be what it was before so in other words the end is not uh 32
-by 30. it is basically dmcat but if you view it as the original shape
-so just m dot shape uh you can you can pass in tuples into
-view and so this should just be okay
-we just re-represent that view and then we uncomment this line here and
-hopefully yeah so the derivative of M is correct
-so in this case we just have to re-represent the shape of those derivatives into the original View so now we are at the final line and the
-only thing that's left to back propagate through is this indexing operation here MSC at xB so as I did before I copy
-pasted this line here and let's look at the shapes of everything that's involved and remind ourselves how this worked
-so m.shape was 32 by 3 by 10. it says 32 examples and then we have
-three characters each one of them has a 10 dimensional embedding and this was achieved by taking the
-lookup table C which have 27 possible characters each of them 10 dimensional and we
-looked up at the rows that were specified inside this tensor xB
-so XB is 32 by 3 and it's basically giving us for each example the Identity or the index of which character is part
-of that example and so here I'm showing the first five rows of three of this tensor xB
-and so we can see that for example here it was the first example in this batch is that the first character and the
-first character and the fourth character comes into the neural net and then we want to predict the next
-character in a sequence after the character is one one four so basically What's Happening Here is
-there are integers inside XB and each one of these integers is specifying which row of C we want to pluck out
-right and then we arrange those rows that we've plucked out into 32 by 3 by
-10 tensor and we just package them in we just package them into the sensor and now what's happening is that we have
-D amp so for every one of these uh basically plucked out rows we have their gradients
-now but they're arranged inside this 32 by 3 by 10 tensor so all we have to do now is
-we just need to Route this gradient backwards through this assignment so we need to find which row of C that every
-one of these um 10 dimensional embeddings come from and then we need to deposit them into DC
-so we just need to undo the indexing and of course if any of these rows of C was
-used multiple times which almost certainly is the case like the row one and one was used multiple times then we
-have to remember that the gradients that arrive there have to add so for each occurrence we have to have
-an addition so let's now write this out and I don't actually know if like a much better way
-to do this than a for Loop unfortunately in Python um so maybe someone can come up with a vectorized efficient operation but for
-now let's just use for loops so let me create a torch.zeros like C to initialize uh just uh 27 by 10
-tensor of all zeros and then honestly 4K in range XB dot
-shape at zero maybe someone has a better way to do this but for J and range
-be that shape at one this is going to iterate over all the
-um all the elements of XB all these integers and then let's get the index at this
-position so the index is basically x b at KJ
-so that an example of that like is 11 or 14 and so on and now in the forward pass we took
-and we basically took um the row of C at index and we deposited
-it into M at K of J that's what happened that's where they are packaged so now we need to go
-backwards and we just need to route DM at the position KJ
-we now have these derivatives for each position and it's 10 dimensional
-and you just need to go into the correct row of C so DC rather at IX is this but plus
-equals because there could be multiple occurrences uh like the same row could have been used many many times and so
-all of those derivatives will just go backwards through the indexing and they
-will add so this is my candidate solution
-let's copy it here let's uncomment this and cross our
-fingers hey so that's it we've back propagated through
-this entire Beast so there we go totally makes sense
-
 这段代码讲解了 **反向传播（backpropagation）** 在一个多层感知机（MLP）模型中的详细实现。下面我将逐步解释每个部分的操作，特别是针对反向传播过程的细节。
 
 ---
@@ -1503,6 +1304,207 @@ C[Xb] 其实就是用 Xb 里的数字去“查表”，
 ---
 
 如果你还想，我也可以帮你画一个表格，或者写一段完整例子代码跑给你看（你可以复制到 notebook 里试），要不要？ 🌟
+
+
+# brief digression: bessel’s correction in batchnorm
+
+note here where I'm using the bezels correction dividing by n minus 1 instead of dividing by n when I normalize here
+the sum of squares now you'll notice that this is departure from the paper which uses one over n
+instead not one over n minus one their m is RN and
+um so it turns out that there are two ways of estimating variance of an array one is the biased estimate which is one
+over n and the other one is the unbiased estimate which is one over n minus one now confusingly in the paper this is uh
+not very clearly described and also it's a detail that kind of matters I think um they are using the biased version
+training time but later when they are talking about the inference they are mentioning that when they do the
+inference they are using the unbiased estimate which is the n minus one version in
+um basically for inference and to calibrate the running mean and
+the running variance basically and so they they actually introduce a trained test mismatch where in training they use
+the biased version and in the in test time they use the unbiased version I find this extremely confusing you can
+read more about the bezels correction and why uh dividing by n minus one gives you a better estimate of the variance in
+a case where you have population size or samples for the population that are very small and that is indeed
+the case for us because we are dealing with many patches and these mini matches are a small sample of a larger
+population which is the entire training set and so it just turns out that if you just estimate it using one over n that
+actually almost always underestimates the variance and it is a biased estimator and it is advised that you use
+the unbiased version and divide by n minus one and you can go through this article here that I liked that actually
+describes the full reasoning and I'll link it in the video description now when you calculate the torture
+variance you'll notice that they take the unbiased flag whether or not you want to divide by n or n minus one confusingly
+they do not mention what the default is for unbiased but I believe unbiased by
+default is true I'm not sure why the docs here don't cite that now in The Bachelor
+1D the documentation again is kind of wrong and confusing it says that the standard deviation is calculated via the
+biased estimator but this is actually not exactly right and people have pointed out that it is not right in a number of issues since
+then because actually the rabbit hole is deeper and they follow the paper exactly
+and they use the biased version for training but when they're estimating the running standard deviation we are using
+the unbiased version so again there's the train test mismatch so long story short I'm not a fan of trained test
+discrepancies I basically kind of consider the fact that we use the bias version
+the training time and the unbiased test time I basically consider this to be a bug and I don't think that there's a
+good reason for that it's not really they don't really go into the detail of the reasoning behind it in this paper so
+that's why I basically prefer to use the bestless correction in my own work unfortunately Bastion does not take a
+keyword argument that tells you whether or not you want to use the unbiased version of the bias version in both
+train and test and so therefore anyone using batch normalization basically in my view has a bit of a bug in the code
+um and this turns out to be much less of a problem if your batch mini batch sizes
+are a bit larger but still I just might kind of uh unpardable so maybe someone can explain why this is okay but for now
+I prefer to use the unbiased version consistently both during training and at this time and that's why I'm using one
+over n minus one here okay so let's now actually back propagate through this line
+so the first thing that I always like to do is I like to scrutinize the shapes first so in particular here looking at the
+shapes of what's involved I see that b and VAR shape is 1 by 64. so it's a row
+vector and BND if two dot shape is 32 by 64. so clearly here we're doing a sum over
+the zeroth axis to squash the first dimension of of the shapes here using a
+sum so that right away actually hints to me that there will be some kind of a replication or broadcasting in the
+backward pass and maybe you're noticing the pattern here but basically anytime you have a sum in the forward pass that
+turns into a replication or broadcasting in the backward pass along the same Dimension and conversely when we have a
+replication or a broadcasting in the forward pass that indicates a variable reuse and so in the backward pass that
+turns into a sum over the exact same dimension and so hopefully you're noticing that Duality that those two are kind of like
+the opposite of each other in the forward and backward pass now once we understand the shapes the
+next thing I like to do always is I like to look at a toy example in my head to sort of just like understand roughly how
+uh the variable the variable dependencies go in the mathematical formula so here we have a two-dimensional array
+of the end of two which we are scaling by a constant and then we are summing uh
+vertically over the columns so if we have a two by two Matrix a and then we sum over the columns and scale we would
+get a row Vector B1 B2 and B1 depends on a in this way whereas just sum they're
+scaled of a and B2 in this way where it's the second column sump and scale
+and so looking at this basically what we want to do now is we have the derivatives on B1 and B2 and we want to
+back propagate them into Ace and so it's clear that just differentiating in your head the local derivative here is one
+over n minus 1 times uh one uh for each one of these A's and um
+basically the derivative of B1 has to flow through The Columns of a scaled by one over n minus one
+and that's roughly What's Happening Here so intuitively the derivative flow tells us that DB and diff2
+will be the local derivative of this operation and there are many ways to do this by the way but I like to do
+something like this torch dot once like of bndf2 so I'll create a large array
+two-dimensional of ones and then I will scale it so 1.0 divided by n minus 1.
+so this is a array of um one over n minus one and that's sort of like the local derivative
+and now for the chain rule I will simply just multiply it by dbm bar
+and notice here what's going to happen this is 32 by 64 and this is just 1 by 64. so I'm letting the broadcasting do
+the replication because internally in pytorch basically dbnbar which is 1 by
+64 row vector well in this multiplication get um copied vertically until the two are
+of the same shape and then there will be an element wise multiply and so that uh so that the broadcasting is basically
+doing the replication and I will end up with the derivatives of DB and diff2 here
+so this is the candidate solution let's bring it down here let's uncomment this line where we check
+it and let's hope for the best and indeed we see that this is the correct formula next up let's
+differentiate here and to be in this so here we have that b and diff is element y squared to create B and F2
+so this is a relatively simple derivative because it's a simple element wise operation so it's kind of like the
+scalar case and we have that DB and div should be if this is x squared then the
+derivative of this is 2x right so it's simply 2 times B and if that's the local
+derivative and then times chain Rule and the shape of these is the same they are of the
+same shape so times this so that's the backward pass for this variable let me bring that down here
+and now we have to be careful because we already calculated dbm depth right so this is just the end of the other uh you
+know other Branch coming back to B and diff because B and diff was already back propagated to way over here
+from being raw so we now completed the second branch and so that's why I have to do plus equals and if you recall we
+had an incorrect derivative for being diff before and I'm hoping that once we append this last missing piece we have
+the exact correctness so let's run ambient to be in div now actually shows
+the exact correct derivative um so that's comforting okay so let's now back propagate through this line
+here um the first thing we do of course is we check the shapes and I wrote them out
+here and basically the shape of this is 32 by 64. hpbn is the same shape
+but B and mean I is a row Vector 1 by 64. so this minus here will actually do
+broadcasting and so we have to be careful with that and as a hint to us again because of The Duality a
+broadcasting and the forward pass means a variable reuse and therefore there will be a sum in the backward pass
+so let's write out the backward pass here now um back propagate into the hpbn
+because this is these are the same shape then the local derivative for each one of the elements here is just one for the
+corresponding element in here so basically what this means is that the gradient just simply copies it's just a
+variable assignment it's quality so I'm just going to clone this tensor just for safety to create an exact copy of DB and
+div and then here to back propagate into this one what I'm inclined to do here is
+will basically be uh what is the local derivative well
+it's negative torch.1's like of the shape of uh B and diff
+right and then times
+the um the derivative here dbf
+and this here is the back propagation for the replicated B and mean I so I still have to back propagate
+through the uh replication in the broadcasting and I do that by doing a sum so I'm going to take this whole
+thing and I'm going to do a sum over the zeroth dimension which was the replication
+so if you scrutinize this by the way you'll notice that this is the same shape as that and so what I'm doing uh
+what I'm doing here doesn't actually make that much sense because it's just a array of ones multiplying DP and diff so
+in fact I can just do this um and that is equivalent
+so this is the candidate backward pass let me copy it here and then let me
+comment out this one and this one enter
+and it's wrong damn
+actually sorry this is supposed to be wrong and it's supposed to be wrong because
+we are back propagating from a b and diff into hpbn and but we're not done
+because B and mean I depends on hpbn and there will be a second portion of that
+derivative coming from this second Branch so we're not done yet and we expect it to be incorrect so there you
+go uh so let's now back propagate from uh B and mean I into hpbn
+um and so here again we have to be careful because there's a broadcasting along
+um or there's a Sum along the zeroth dimension so this will turn into broadcasting in the backward pass now
+and I'm going to go a little bit faster on this line because it is very similar to the line that we had before and
+multiplies in the past in fact so the hpbn
+will be the gradient will be scaled by 1 over n and then basically this gradient here on
+dbn mean I is going to be scaled by 1 over n and then it's going to flow across all the
+columns and deposit itself into the hpvn so what we want is this thing scaled by
+1 over n only put the constant up front here
+um so scale down the gradient and now we need to replicate it across all the um
+across all the rows here so we I like to do that by torch.lunslike of basically
+um hpbn and I will let the broadcasting do the work of replication
+so
+like that so this is uh the hppn and hopefully
+we can plus equals that
+so this here is broadcasting um and then this is the scaling so this
+should be current okay so that completes the back propagation of the bathroom layer and we are now
+here let's back propagate through the linear layer one here now because everything is getting a little
+vertically crazy I copy pasted the line here and let's just back properly through this one line
+so first of course we inspect the shapes and we see that this is 32 by 64. MCAT
+is 32 by 30. W1 is 30 30 by 64 and B1 is just 64. so
+as I mentioned back propagating through linear layers is fairly easy just by matching the shapes so let's do that we
+have that dmcat should be um some matrix multiplication of dhbn
+with uh W1 and one transpose thrown in there so to make uh MCAT be 32 by 30
+I need to take dhpn 32 by 64 and multiply it by w1.
+transpose to get the only one I need to end up
+with 30 by 64. so to get that I need to take uh MCAT
+transpose and multiply that by uh dhpion
+and finally to get DB1 this is a addition and we saw that
+basically I need to just sum the elements in dhpbn along some Dimension and to make the dimensions work out I
+need to Sum along the zeroth axis here to eliminate this Dimension and we do
+not keep dims uh so that we want to just get a single one-dimensional lecture of 64.
+so these are the claimed derivatives let me put that here and let me
+uncomment three lines and cross our fingers everything is great okay so we now
+continue almost there we have the derivative of MCAT and we want to derivative we want to back propagate
+into m so I again copied this line over here so this is the forward pass and then
+this is the shapes so remember that the shape here was 32 by 30 and the original shape of M plus 32 by 3 by 10. so this
+layer in the forward pass as you recall did the concatenation of these three 10-dimensional character vectors
+and so now we just want to undo that so this is actually relatively straightforward operation because uh the
+backward pass of the what is the view view is just a representation of the array it's just a logical form of how
+you interpret the array so let's just reinterpret it to be what it was before so in other words the end is not uh 32
+by 30. it is basically dmcat but if you view it as the original shape
+so just m dot shape uh you can you can pass in tuples into
+view and so this should just be okay
+we just re-represent that view and then we uncomment this line here and
+hopefully yeah so the derivative of M is correct
+so in this case we just have to re-represent the shape of those derivatives into the original View so now we are at the final line and the
+only thing that's left to back propagate through is this indexing operation here MSC at xB so as I did before I copy
+pasted this line here and let's look at the shapes of everything that's involved and remind ourselves how this worked
+so m.shape was 32 by 3 by 10. it says 32 examples and then we have
+three characters each one of them has a 10 dimensional embedding and this was achieved by taking the
+lookup table C which have 27 possible characters each of them 10 dimensional and we
+looked up at the rows that were specified inside this tensor xB
+so XB is 32 by 3 and it's basically giving us for each example the Identity or the index of which character is part
+of that example and so here I'm showing the first five rows of three of this tensor xB
+and so we can see that for example here it was the first example in this batch is that the first character and the
+first character and the fourth character comes into the neural net and then we want to predict the next
+character in a sequence after the character is one one four so basically What's Happening Here is
+there are integers inside XB and each one of these integers is specifying which row of C we want to pluck out
+right and then we arrange those rows that we've plucked out into 32 by 3 by
+10 tensor and we just package them in we just package them into the sensor and now what's happening is that we have
+D amp so for every one of these uh basically plucked out rows we have their gradients
+now but they're arranged inside this 32 by 3 by 10 tensor so all we have to do now is
+we just need to Route this gradient backwards through this assignment so we need to find which row of C that every
+one of these um 10 dimensional embeddings come from and then we need to deposit them into DC
+so we just need to undo the indexing and of course if any of these rows of C was
+used multiple times which almost certainly is the case like the row one and one was used multiple times then we
+have to remember that the gradients that arrive there have to add so for each occurrence we have to have
+an addition so let's now write this out and I don't actually know if like a much better way
+to do this than a for Loop unfortunately in Python um so maybe someone can come up with a vectorized efficient operation but for
+now let's just use for loops so let me create a torch.zeros like C to initialize uh just uh 27 by 10
+tensor of all zeros and then honestly 4K in range XB dot
+shape at zero maybe someone has a better way to do this but for J and range
+be that shape at one this is going to iterate over all the
+um all the elements of XB all these integers and then let's get the index at this
+position so the index is basically x b at KJ
+so that an example of that like is 11 or 14 and so on and now in the forward pass we took
+and we basically took um the row of C at index and we deposited
+it into M at K of J that's what happened that's where they are packaged so now we need to go
+backwards and we just need to route DM at the position KJ
+we now have these derivatives for each position and it's 10 dimensional
+and you just need to go into the correct row of C so DC rather at IX is this but plus
+equals because there could be multiple occurrences uh like the same row could have been used many many times and so
+all of those derivatives will just go backwards through the indexing and they
+will add so this is my candidate solution
+let's copy it here let's uncomment this and cross our
+fingers hey so that's it we've back propagated through
+this entire Beast so there we go totally makes sense
+
 
 
 
