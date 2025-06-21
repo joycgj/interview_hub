@@ -3840,7 +3840,6 @@ plt.title('weights gradient distribution');
 如果你需要，我还可以帮你画个小示意图，解释「如果梯度分布太大/太小/不均匀会出现什么问题」，要不要？ 🚀✨
 
 
-
 # viz #4: update:data ratio over time
 
 like to show you one more plot that I usually look at when I train neural networks and basically the gradient to
@@ -3902,6 +3901,140 @@ there's a lot of uh discrepancy in how fast these layers are learning and some o
 about that um so this is how miscalibrations of your neuron nuts are going to manifest and these kinds of
 plots here are a good way of um sort of bringing um those miscalibrations sort
 of uh to your attention and so you can address them okay so so far we've seen
+
+当然可以！这段 "**viz #4: update\:data ratio over time**" 讲的是 **update/data ratio 随时间的变化图**，我帮你总结成中文，逻辑更清楚些：
+
+---
+
+### 🟢 这段在做什么？
+
+👉 作者再加一个「观察图」：
+
+✅ **参数更新量 / 参数值的比例**（update\:data ratio）
+✅ 看 **随着训练迭代，这个比例是否合理，是否稳定**
+
+---
+
+### 🟢 为什么要看 update\:data ratio？
+
+* 前面看「梯度/数据比（grad\:data ratio）」不够准确
+* 真正影响模型的是「**实际更新量**」：
+
+```
+update = learning_rate × grad
+```
+
+* 所以更关心：
+
+```
+update.std() / param.std()
+```
+
+---
+
+### 🟢 怎么计算？
+
+1️⃣ 每次 iteration 训练时：
+
+```
+update = lr × grad  
+ratio = update.std() / param.std()
+```
+
+2️⃣ 再取 log10（对数）画图
+👉 方便观察
+
+---
+
+### 🟢 理想区间？
+
+✅ 通常：
+
+```
+update / data ratio ≈ 1/1000
+```
+
+👉 也就是 log10 ≈ -3
+👉 表示更新不会「动太大」，也不会「动太慢」
+👉 一般画条参考线（y=-3）帮助观察
+
+---
+
+### 🟢 观察结果
+
+---
+
+1️⃣ **正常学习率**：
+
+✅ 大部分层 update/data ratio ≈ -3 左右
+✅ 训练过程 update ratio 趋于稳定
+
+---
+
+2️⃣ **最后一层（softmax 输出层）**：
+
+❗️ ratio 偏高（> -3），一开始动得快
+👉 因为初始化时 softmax 的权重乘了 0.1 → 权重值很小 → ratio 会偏大
+👉 训练一段时间后，这层也会慢慢收敛下来
+
+---
+
+3️⃣ **如果学习率太小（lr=0.001）**：
+
+❌ 所有 update ratio 都偏低，log ≈ -4、-5
+👉 训练太慢，几乎没变化
+
+---
+
+4️⃣ **如果忘了 fan\_in init（初始化不对）**：
+
+❌ 各层 update ratio 乱七八糟
+❌ 有的 layer 动太快（log ≈ -1）
+❌ 有的 layer 动太慢 → 不平衡
+
+---
+
+### 🟢 这个图的作用
+
+✅ 可以「一眼看出」模型训练是不是健康：
+
+* 如果 update ratio 偏低 → 学习率太小 or 参数初始化太小
+* 如果 update ratio 偏高 → 学习率太大 or 参数初始化太大
+
+✅ 如果不同层 update ratio 差很多 → 训练不平衡
+
+---
+
+### 🟢 总结一句话
+
+👉 这个图可以帮我们：
+
+✅ 选合适的学习率
+✅ 选合适的初始化
+✅ 发现训练不平衡的问题
+
+---
+
+### 🟢 通俗比喻
+
+你可以把「update\:data ratio」理解成：
+
+* 参数是小水池
+* update 是每次加水的勺子
+* 如果勺子太大 → 一下就把池子打翻（爆炸）
+* 如果勺子太小 → 加一万次都不见涨（学不动）
+
+理想状态是「一勺水，慢慢加，稳定加」
+
+---
+
+如果你需要，我还可以帮你：
+
+✅ 做一个「update ratio 理想 vs 异常」对比图
+✅ 整理「调学习率 / 初始化」的简单 checklist
+
+要不要？ 🚀✨
+
 
 # bringing back batchnorm, looking at the visualizations
 
