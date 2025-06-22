@@ -3329,3 +3329,47 @@ and if you have a sense of that then you can count yourself as one of these buff
 those on the right here now in the next lecture we're actually going to go to recurrent neural nuts lstms and all the
 other variants of RNs and we're going to start to complexify the architecture and start to achieve better uh log
 likelihoods and so I'm really looking forward to that and I'll see you then
+
+当然可以，下面是这段 **outro** 的中文解释：
+
+---
+
+好了，这节课的内容就全部讲完啦，
+希望你觉得这些内容有意思！😊
+
+我自己最喜欢的一点是：
+
+👉 这一节课的推导过程中，**我们经历了非常多样的层（layers）**
+👉 每一层我们都手动实现了反向传播（backward pass）
+
+通过这些练习，你应该对 **反向传播的实现原理**、**梯度是怎么流动的** 有了全面的理解。
+你应该已经掌握了，怎么自己去推导这些梯度，虽然在实际项目里我们通常会直接用 PyTorch 的 autograd 自动微分系统。
+
+---
+
+不过如果你理解了：
+
+✅ 梯度是如何从 Loss 出发，沿着计算图一路向后流过所有变量
+✅ 每一个中间变量是怎么影响最终梯度计算的
+
+那就可以自豪地说，**你已经成为了「健壮肌肉版的 Doge」那一派（左边）**，
+而不是右边那种「懵懂瘦弱版 Doge」🤣
+
+---
+
+接下来的一节课，我们会继续进阶：
+
+👉 开始学习 **循环神经网络 RNN**、**LSTM** 和其它 RNN 变体
+👉 网络结构会更加复杂，性能（log likelihood）也会更好
+
+我也非常期待和你一起学习下一节内容，到时候见咯！✌️
+
+---
+
+如果你还需要，我也可以帮你总结这节课的：
+
+1️⃣ 学习重点
+2️⃣ 手写 backward 模板套路
+3️⃣ 以后遇到新层，怎么快速推 backward
+
+要不要帮你整理？🌟
