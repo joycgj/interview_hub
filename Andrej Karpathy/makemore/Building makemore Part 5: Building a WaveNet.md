@@ -1,16 +1,16 @@
 We take the 2-layer MLP from previous video and make it deeper with a tree-like structure, arriving at a convolutional neural network architecture similar to the WaveNet (2016) from DeepMind. In the WaveNet paper, the same hierarchical architecture is implemented more efficiently using causal dilated convolutions (not yet covered). Along the way we get a better sense of torch.nn and what it is and how it works under the hood, and what a typical deep learning development process looks like (a lot of reading of documentation, keeping track of multidimensional tensor shapes, moving between jupyter notebooks and repository code, ...).
 
 Links:
-makemore on github: https://github.com/karpathy/makemore
-jupyter notebook I built in this video: https://github.com/karpathy/nn-zero-t...
-collab notebook: https://colab.research.google.com/dri...
-my website: https://karpathy.ai
-my twitter:   / karpathy  
-our Discord channel:   / discord  
+- makemore on github: https://github.com/karpathy/makemore
+- jupyter notebook I built in this video: https://github.com/karpathy/nn-zero-t...
+- collab notebook: https://colab.research.google.com/dri...
+- my website: https://karpathy.ai
+- my twitter:   / karpathy  
+- our Discord channel:   / discord  
 
 Supplementary links:
-WaveNet 2016 from DeepMind https://arxiv.org/abs/1609.03499
-Bengio et al. 2003 MLP LM https://www.jmlr.org/papers/volume3/b... 
+- WaveNet 2016 from DeepMind https://arxiv.org/abs/1609.03499
+- Bengio et al. 2003 MLP LM https://www.jmlr.org/papers/volume3/b... 
 
 ```
 Chapters:
@@ -57,6 +57,7 @@ conclusions
 * DeepMind 2016 年 WaveNet 论文: [https://arxiv.org/abs/1609.03499](https://arxiv.org/abs/1609.03499)
 * Bengio 等人 2003 年的 MLP 语言模型论文: [https://www.jmlr.org/papers/volume3/b](https://www.jmlr.org/papers/volume3/b)...
 
+```
 **视频章节：**
 **intro**
 00:00:00 介绍
@@ -81,6 +82,7 @@ conclusions
 00:52:28 构建深度神经网络的开发过程
 00:54:17 展望未来
 00:55:26 改进 loss！看看我们能把 WaveNet 在这个数据集上优化到什么程度？
+```
 
 ---
 
