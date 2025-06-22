@@ -2721,6 +2721,168 @@ independently in all the dimensions of this of this tensor and it's sort of very
 through and that's basically the magic of the cross-entropy loss and what it's doing dynamically in the backward pass
 of the neural net so now we get to exercise number three which is a very fun exercise
 
+
+当然可以，这段是「exercise 2: cross entropy loss backward pass」的讲解，我来帮你 **总结成中文**，并且拆解每个重点：
+
+---
+
+### 🌟 大意总结
+
+* 第一节练习（exercise 1）虽然我们手动一步步反向传播（backprop）了整个计算图，很有练习价值；
+* 但是对于 **cross entropy loss** 这一块，其实没必要拆成那么多小步骤，手算一遍数学表达式后，发现可以直接写成一个简洁的梯度表达式 —— 速度快，代码简单，实际训练也更高效！
+
+---
+
+### 📖 什么是 cross entropy loss？
+
+大致流程：
+
+```text
+logits → softmax → probs → logprobs → 取正确类别 logprob → 平均后求 loss
+```
+
+即：
+
+```text
+loss = -log(p_y) = -log(softmax(logits)[y])
+```
+
+---
+
+### ✏️ 目标
+
+我们想求：
+
+```text
+d(loss) / d(logits)
+```
+
+---
+
+### 📕 数学推导过程
+
+作者给出提示：
+
+* logits 先经过 softmax 得到 probs；
+* 取出正确类别 y 位置的概率；
+* 取负对数作为 loss；
+* 这就是 classic 的「softmax + cross entropy」组合。
+
+通过 **链式法则** 计算：
+
+```text
+∂loss / ∂logits[i]
+```
+
+分两种情况：
+
+1️⃣ 当 i == y（正确类别位置）：
+
+```text
+∂loss / ∂logits[i] = p_i - 1
+```
+
+2️⃣ 当 i ≠ y（其他类别）：
+
+```text
+∂loss / ∂logits[i] = p_i
+```
+
+非常简单！核心就是「softmax - one hot」。
+
+---
+
+### 🚀 代码实现
+
+直接写出 logits 的梯度：
+
+```python
+dlogits = F.softmax(logits, dim=1)
+dlogits[range(n), Yb] -= 1
+dlogits /= n
+```
+
+---
+
+### 🧮 举例
+
+假设 logits 是 1 行：
+
+```text
+logits = [3, 1, -2] → softmax → probs ≈ [0.90, 0.09, 0.01]
+```
+
+假设 Yb = 0（正确类别是第 0 个）：
+
+```text
+dlogits = [0.90 - 1, 0.09, 0.01] = [-0.10, 0.09, 0.01]
+```
+
+---
+
+### 💡 为什么这么写更高效？
+
+* 因为之前我们一步步拆开：
+
+```text
+logits → norm_logits → counts → counts_sum → probs → logprobs → loss
+```
+
+* 现在直接一步到位，避免不必要的中间变量。
+
+---
+
+### 🎈 直觉理解（非常棒的讲解！）
+
+作者用了「**力（force）拉扯**」的类比：
+
+* 每一行的 logits，对应一个样本的 27 个类别概率；
+* backward 时：
+
+```text
+正确类别那一项「往上拉」(push up, +1)
+错误类别那一项「往下拉」(pull down, -p_i)
+```
+
+而且整行的「总拉力」是 0，因为：
+
+```text
+sum(dlogits[i]) = 0
+```
+
+---
+
+### 📐 举例理解
+
+假设：
+
+```text
+softmax → probs = [0.6, 0.3, 0.1]
+Yb = 1
+```
+
+那么：
+
+```text
+dlogits = [0.6, 0.3 - 1, 0.1] = [0.6, -0.7, 0.1]
+```
+
+---
+
+### 🎁 总结一句话
+
+* 这一节的目的是：
+
+```text
+通过数学推导，直接写出 cross entropy loss 对 logits 的梯度公式，提升计算效率，代码更简单。
+```
+
+---
+
+如果你需要的话，我还可以帮你把「整个 cross entropy backward」画个 **小计算图**，更容易记住～要不要？ 🌟
+
+
+
 # exercise 3: batch norm layer backward pass
 
 um depending on your definition of fun and we are going to do for batch normalization exactly what we did for cross entropy loss in exercise number
