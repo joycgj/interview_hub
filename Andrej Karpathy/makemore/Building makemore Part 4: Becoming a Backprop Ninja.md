@@ -3218,6 +3218,105 @@ the backward pass of this neural net and you're thinking to yourself actually th
 um each one of these layers is like three lines of code or something like that and most of it is fairly straightforward
 potentially with the notable exception of the batch normalization backward pass otherwise it's pretty good okay and
 
+当然可以，以下是 **Exercise 4: putting it all together** 的中文解释：
+
+---
+
+### 🎯 这一节的目标
+
+> 练习把前面所有的手工推导的 **反向传播代码（backward pass）**，整合成一个完整的神经网络训练循环，彻底不用 `loss.backward()` 了！
+
+---
+
+### 📝 做法步骤
+
+1️⃣ **重新初始化模型**
+
+* 重新创建模型的所有参数（Embedding、Linear层、BatchNorm参数）
+
+2️⃣ **实现手写反向传播**
+
+* 把前面推导好的代码（exercise 2: cross entropy backward，exercise 3: batch norm backward，linear layer backward）都 copy 到训练循环里
+
+3️⃣ **完整训练循环**
+
+* 用我们自己手写的 gradients（梯度）来更新参数（参数 -= 学习率 \* 梯度）
+* 整个过程中 **不再调用 loss.backward()**
+
+4️⃣ **BatchNorm 特别处理**
+
+* 因为 BatchNorm 有 running mean / variance，需要单独做 “calibrate” 一步（校准）
+
+---
+
+### 🔍 细节解释
+
+#### 为什么这样做？
+
+* 之前 Exercise 1 是把每一小步都拆开（慢，但练习用）
+* 真实训练时，肯定要像 Exercise 4 这样，**把所有 backward 公式写成 20 行以内的代码**，效率快，代码简洁
+* 练习的目的就是让你彻底理解各层的 backward 是怎么回事，自己写出 backward
+
+---
+
+#### 训练循环怎么改？
+
+```python
+for iter in range(max_iters):
+    # forward pass
+    
+    # 手写 backward pass
+    dlogits = ... 
+    dW2 = ...
+    ...
+    dC = ...
+    
+    # 更新参数（不用 .grad 了）
+    for p, dp in zip(parameters, grads):
+        p += -lr * dp
+```
+
+关键是这里不再有：
+
+```python
+loss.backward()
+p.grad
+```
+
+而是 **全部用我们自己推导出来的梯度更新参数**。
+
+---
+
+#### BatchNorm 小坑
+
+* 因为 PyTorch 版 BatchNorm 会维护 running mean 和 running var
+* 我们手写的反向传播时没有动态更新它
+* 训练完后，需要 **手动 calibrate** 一下（跑一遍全量数据，重新计算均值方差）
+
+---
+
+### 🏁 训练效果如何？
+
+* 手写 backward + 手写更新，最后得到的 loss 和之前用 `loss.backward()` 是 **差不多的**
+* 说明我们推导的 backward 是对的，效果没问题
+* 最后 sampling 出来的 "名字" 也能生成得不错
+
+---
+
+### 🚀 总结一句话
+
+> Exercise 4 是把手写 backward pass 整合成一个完整的训练循环，跑出和自动微分一样的效果，证明我们对 backward 真正掌握了，过程全透明，理解更深了！
+
+---
+
+如果你需要，我可以帮你：
+
+1️⃣ 画一张图，说明 **forward + backward 全流程**
+2️⃣ 帮你整理一份「手写 backward 模板代码」，以后可以直接用
+
+你要不要我继续帮你整理？🌟
+
+
 # outro
 
 that's everything I wanted to cover for this lecture so hopefully you found this interesting and what I liked about it
