@@ -191,6 +191,68 @@ Alaia Etc so certainly not reasonable not unreasonable I would say
 but not amazing and we can still push this validation loss even lower and get much better samples that are even more
 name-like so let's improve this model okay first let's fix this graph because
 
+当然，这一段我给你详细翻译一下：
+
+---
+
+**# starter code walkthrough（起始代码讲解）**
+
+我们现在回到了**第三部分**结束时的代码（注意：**第四部分**是一次“手动反向传播”练习，算是个番外篇），所以这节课是从第三部分的代码中**复制部分代码**作为新的起点（starter code）开始的，整体变化不大。
+如果你之前看过第三部分的内容，这些代码你应该会很熟悉。
+
+大致流程是这样的：
+
+* 先做 **import**，然后读取数据集（words），并把它们拆解成单个的训练样本（examples），这部分的数据处理逻辑没有变化。
+* 数据量也挺大，总共生成了 **182,000** 个小样本，每个小样本是“给定 3 个字符，预测第 4 个字符”。
+* 这个数据集就是我们希望用神经网络去学习的目标：**预测下一个字符**。
+
+在 **第三部分**，我们引入了 “layer module” 这种设计方式：
+
+* 例如写了一个 `class Linear`，因为我们想把这些模块（modules）像\*\*乐高积木（lego blocks）\*\*一样拼装起来，搭建成完整的神经网络，数据可以在不同层之间传递，形成一个计算图（graph）。
+* 同时，我们写这些模块时，尽量让它们的 API 和 **PyTorch 的 torch.nn** 接口保持一致，这样以后可以无缝切换、学习 PyTorch 也更顺手。
+* 举例来说，我们写的 `Linear` 层，其实功能和 `torch.nn.Linear` 差不多，接口签名（signature）也尽量对齐。
+
+回顾之前开发的几种 layer：
+
+* **Linear** 层：就是一层矩阵乘法（forward 过程就是 matmul）
+* **BatchNorm1d** 层：这是之前开发过程中一个“神奇”的层，因为：
+
+  1. 它内部维护了**均值（mean）和方差（variance）**，并且这些是通过\*\*指数滑动平均（EMA）\*\*来更新的，不是直接用反向传播学到的；
+  2. 训练阶段（training）和评估阶段（evaluation）的行为不同，所以需要手动切换 `training=True/False`，否则容易出 bug；
+  3. 这个层的计算是**跨 batch 的**，也就是不同 batch 元素之间会互相影响（因为需要计算整体的均值方差），不像普通的 Linear 层是独立计算的。
+
+BatchNorm1d 是一个有“状态（state）”的层，这种 state 很容易引入 bug，比如需要等待均值方差收敛（settle），而且训练和推理阶段切换容易忘记。
+
+以前我们把 `torch.Generator` 放到每层里，现在简化了，改成只在外面统一初始化 RNG（随机数生成器），整体代码更干净。
+
+接下来我们搭建神经网络的“前半部分”：
+
+* 有一个 **embedding table C**，
+* 然后一层 `Linear` -> `BatchNorm1d` -> `Tanh` -> 输出层 `Linear`，
+* 初始化时特意把输出层的权重缩小，防止一开始就预测得“信心过高但错误”（confidently wrong）。
+* 目前模型大概有 **12,000 个参数**，我们告诉 PyTorch 这些参数需要 `requires_grad=True`，这样可以参与反向传播。
+
+优化器部分（optimizer）和以前一样，没变。
+
+**损失曲线（loss function）** 现在看起来很“跳”很“乱”，因为 batch size 太小（只有 32 个样本），容易出现 batch 的结果太好/太坏，导致 loss 曲线很厚重，不平滑，这个马上会调整。
+
+训练完模型后，要做评估（evaluate）时要注意：
+
+* 因为有 BatchNorm 层，评估前一定要把所有层设成 `training=False`，否则结果会不稳定。
+
+当前模型的 **验证集 loss 大概是 2.10**，还可以继续优化。
+尽管 loss 还不是很低，但已经能生成一些“像名字的”字符序列（虽然训练集中不存在），比如：
+`Yvonne kilo Pros`
+`Alaia` 等等。
+
+目前来说，效果还不错，但也不是特别惊艳，我们希望继续把 loss 拉低，提升生成效果。
+下一步，我们先来调整一下 loss 曲线的绘图逻辑——现在它太乱了。
+
+---
+
+如果你需要，我还可以帮你整理一下这个“starter code 讲解”的**核心重点**，方便你复习～要不要？ 🚀
+
+
 # let’s fix the learning rate plot
 
 it is daggers in my eyes and I just can't take it anymore um so last I if you recall is a python
