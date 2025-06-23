@@ -458,6 +458,107 @@ Shakespeare like uh text and so it should be fairly likely for it to produce the
 true Shakespeare text um and so we're going to use this to uh get a sense of
 the overfitting okay so now we would like to start plugging these text sequences or integer sequences into the
 
+当然可以，下面是这一段的中文解释：
+
+---
+
+### 【分词（tokenization）和训练/验证集划分】
+
+首先，**“tokenization（分词）”** 的意思是：
+把原始的**字符串**（text）转换成一串**整数序列**（sequence of integers）。
+整数序列是根据某个“词表”来映射的，每个字符（或者词）对应一个整数。
+
+---
+
+### 【字符级语言模型的 tokenization】
+
+在这个项目里，我们是做**字符级语言模型**，所以我们的“词表”就是前面统计出来的 65 个字符：
+每个字符 → 一个整数（编号）
+
+我们要做两个函数：
+
+* `encode(text)` ：把一段字符串转成一串整数序列
+* `decode(int_seq)` ：把一串整数序列转回原始字符串
+
+比如：
+字符串 `"Hi there"` → \[46, 47, ...] → 还能 decode 回 `"Hi there"`。
+
+具体做法是：
+
+* 遍历 65 个字符，做一个查表（lookup table），字符 → 整数；反向表，整数 → 字符。
+* encode 的时候，就是查表编码；decode 的时候，是查表还原。
+
+---
+
+### 【其他常用 tokenizer 的对比】
+
+其实 tokenizer 不止一种，现实中大模型通常不用字符级 tokenizer，而是用更复杂的：
+
+* Google 常用 **sentencepiece**：一种子词级（subword） tokenizer
+* OpenAI 用 **tiktoken** 库，里面用的是 BPE（Byte Pair Encoding） tokenizer，GPT 就是用的这个
+
+子词级 tokenizer 的特点是：
+
+* 编码粒度比字符大（不是一个字符一个 token）
+* 也不是整个词作为 token，而是词的一部分（subword）
+* 通常词表会有几万种 token，比如 GPT-2 用了 50,000 个 token
+
+比如同样一句话："Hi there"：
+
+* 用子词 tokenizer 编码后，可能只需要 3 个整数
+* 用字符 tokenizer 编码，可能要 8 个整数（每个字符一个）
+
+子词 tokenizer 的优点是序列更短，模型效率更高，实际工程里基本都是用这个。
+
+不过为了简单起见，这个视频里我们用的是最简单的**字符 tokenizer**，
+编码函数、解码函数都很简单，词表小，缺点是序列比较长。
+
+---
+
+### 【tokenize 全部数据】
+
+有了 encoder 和 decoder 之后，我们就可以 tokenize 整个 tiny Shakespeare 数据集了。
+做法是：
+
+1. 把整个文本 encode 成一个整数序列
+2. 用 pytorch 里的 `torch.tensor` 把这个整数序列包装成 tensor，供后面模型训练用
+
+打印出来可以看到，这个 tensor 其实就是一个**巨大的整数序列**，和原文是一一对应的：
+比如第 0 号整数对应换行符、第 1 号整数可能对应空格等等。
+
+---
+
+### 【划分训练集 / 验证集】
+
+在正式训练前，还需要做一步：
+
+* 把数据集分成 90% 训练集，10% 验证集。
+
+为什么要分？
+
+* **训练集**用来让模型学习。
+* **验证集**是留出来不让模型看到的，用来测试模型的泛化能力（有没有过拟合）。
+
+因为我们不希望模型只是**死记硬背** tiny Shakespeare，
+而是希望它学会**生成“类似莎士比亚风格”的新文本**，
+所以需要用验证集来衡量模型是不是学到泛化能力了。
+
+---
+
+### 【下一步】
+
+接下来，作者会开始把这些整数序列喂到 Transformer 里，正式开始训练语言模型了 🚀。
+
+---
+
+如果你需要，我也可以顺便帮你总结一下：
+👉 为什么“字符 tokenizer” vs “子词 tokenizer”
+👉 为什么一定要 train/val split
+👉 pytorch 里 tensor 为什么要用 long 类型（因为做 embedding）
+
+要不要我再补充？ 🌟
+
+
 # data loader: batches of chunks of data
 
 Transformer so that it can train and learn those patterns now the important thing to realize is we're never going to
