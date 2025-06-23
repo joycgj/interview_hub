@@ -279,6 +279,47 @@ learning rate Decay so here we see that the learning rate Decay subtracted a ton
 us to settle into sort of the local minimum in this optimization so this is a much nicer plot let me come
 up and delete the monster and we're going to be using this going forward now next up what I'm bothered by is that you
 
+当然，这段我来帮你翻译解释一下：
+
+---
+
+**# 修正学习率曲线**
+
+“这条曲线看得我眼睛都疼了，实在受不了了”，所以我们来修一下。
+
+之前记录 loss 的变量 `lossi` 是一个 **Python 的 list**，里面存的是每次训练 step 的浮点数（float）。
+比如前 10 个元素看起来像这样 `[2.3, 2.1, 2.05, ...]`。
+
+现在我们希望对这些 loss 值**进行平滑处理**，也就是对它们做一下**平均**，让曲线更有代表性，不要太乱。
+
+可以怎么做呢？
+举例来说，在 PyTorch 里我可以把这个 list 转换成一个 tensor，变成一维的数组（1D array）。
+然后，tensor 是可以\*\*reshape（重塑形状）\*\*的，比如我可以把它 reshape 成 2 行 5 列的二维 tensor（2x5），
+PyTorch 会自动把前 5 个元素放到第一行，接下来的 5 个元素放到第二行。
+
+还可以 reshape 成 5x2，当然，只要元素个数对得上就可以。
+而且，PyTorch 的 reshape 里，shape 参数可以写 `-1`，这样 PyTorch 会自动帮你计算这一维的大小。
+比如 `.view(-1, 1000)`，就会自动根据总元素个数算出行数。
+
+这个特性很有用：
+我们现在要把 `lossi` 这个 list 变成一个 PyTorch tensor，然后 reshape 成 “每行 1000 个元素”，
+这样每行就代表**连续的 1000 个训练 step**。
+比如 reshape 成 `200 x 1000`，表示总共有 200 组，每组 1000 个 loss 数据。
+
+接下来就可以对每一行求平均（mean），也就是**每 1000 个 step 求一个平均 loss**，
+这样画出来的曲线就不会那么乱了，变得平滑很多。
+
+* 用 `plt.plot` 画出这个平滑后的曲线，效果就好多了！
+* 曲线左侧部分是 loss 下降的过程，右侧你可以看到 learning rate 开始 decay（衰减），系统里的能量下降，优化器收敛到一个 local minimum。
+* 这样画出来的 loss 曲线更清楚，整体趋势一目了然。
+
+最后作者说：“我要把原来那条乱七八糟的曲线删掉，我们今后就用这种更好看的版本”。
+
+---
+
+如果你想要，我还可以帮你写一段**对应的 PyTorch 代码示例**，这样你可以直接参考或者用在你自己的 notebook 里，要不要？ 🌟
+
+
 # pytorchifying our code: layers, containers, torch.nn, fun bugs
 
 see our forward pass is a little bit gnarly and takes way too many lines of code
