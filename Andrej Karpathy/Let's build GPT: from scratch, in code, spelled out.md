@@ -347,6 +347,66 @@ characters there's 65 of them in total there's a space character and then all ki
 capitals and lowercase letters so that's our vocabulary and that's the sort of like possible uh characters that the
 model can see or emit okay so next we will would like to develop some strategy
 
+当然可以，下面是这一段内容的中文解释：
+
+---
+
+### 【读取和探索数据】
+
+作者说，之所以在 Colab 里写代码，是方便把代码分享出来，大家可以一起跟着学习，视频发布后会把代码链接放在视频描述里。
+
+接下来，作者做了一些准备工作：
+
+1. **下载数据集**
+   下载了 **tiny Shakespeare** 数据集，网址会在视频描述里贴出。这个数据集文件大概 **1MB** 大小，名字叫 `input.txt`。
+
+2. **读取数据**
+   读入这个 `input.txt` 文件的全部内容，放到一个字符串里。
+   这个字符串总共有大约 **100 万个字符**（characters）。
+
+3. **打印前 1000 个字符**
+   打印了数据开头的前 1000 个字符，内容就是莎士比亚的原文，非常正常。
+
+---
+
+### 【统计字符集】
+
+接下来，作者用 Python 处理这段文本，思路是：
+
+* 文本在 Python 里本质上就是一个**字符序列**（sequence of characters）。
+* 用 Python 的 `set()` 函数，可以得到文本中**出现过的所有不同字符**（去重了）。
+* 然后用 `list()` 把 set 转成列表，这样可以保证有一个确定的顺序。
+* 再用 `sorted()` 排序，这样就得到了**有序的字符表**。
+
+最终，得到的数据是：**整个数据集中一共出现了 65 个不同的字符**，这 65 个字符就是我们的“词表（vocabulary）”。
+
+词表里包括：
+
+* 空格（space）
+* 标点符号
+* 大写字母 A-Z
+* 小写字母 a-z
+* 其他一些特殊字符
+
+---
+
+### 【为什么要做这个？】
+
+这些 65 个字符就是**模型可以看到的、也可以输出的“基础元素”**。
+
+* 模型看到的是一串字符序列
+* 模型的任务就是学会“给定前面的字符，预测下一个字符”
+* 这 65 个字符就是模型能预测的“选项空间”
+
+---
+
+接下来，作者会继续讲如何把这些字符编码成模型能理解的数字，然后做成训练数据。
+
+---
+
+如果你需要的话，我还可以帮你画一个**整个数据处理流程图**，更方便你理解！要不要我整理一下？ 🌟
+
+
 # tokenization, train/val split
 
 to tokenize the input text now when people say tokenize they mean convert
