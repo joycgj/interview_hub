@@ -138,3 +138,37 @@ Corrections:
 ---
 
 如果你还需要，我也可以帮你**总结一下这个视频的学习重点**，或者**列出一个适合初学者的学习路线**，要不要我顺便整理一下？ 🚀
+
+
+nanogpt-lecture
+Code created in the Neural Networks: Zero To Hero video lecture series, specifically on the first lecture on nanoGPT. Publishing here as a Github repo so people can easily hack it, walk through the git log history of it, etc.
+
+NOTE: sadly I did not go too much into model initialization in the video lecture, but it is quite important for good performance. The current code will train and work fine, but its convergence is slower because it starts off in a not great spot in the weight space. Please see nanoGPT model.py for # init all weights comment, and especially how it calls the _init_weights function. Even more sadly, the code in this repo is a bit different in how it names and stores the various modules, so it's not possible to directly copy paste this code here. My current plan is to publish a supplementary video lecture and cover these parts, then I will also push the exact code changes to this repo. For now I'm keeping it as is so it is almost exactly what we actually covered in the video.
+
+License
+MIT
+
+当然可以，我来帮你翻译解释一下：
+
+---
+
+这是 **《神经网络：从零到高手》视频教程系列**中，关于 nanoGPT 的**第一节课**里创建的代码。
+之所以发布成这个 GitHub 仓库，主要是方便大家可以修改代码、查看 git 历史记录、学习代码演变过程等等。
+
+⚠️ **注意**：
+在视频课里，我没有详细讲解模型初始化部分，但其实这是**非常重要**的，初始化会直接影响模型性能。
+当前的代码是可以正常训练、正常工作的，但因为权重初始位置选得不是很好，**收敛速度会偏慢**。
+
+如果你去看 nanoGPT 仓库里的 `model.py`，里面有 `# init all weights` 相关的注释，重点是看看 `_init_weights` 函数是怎么调用的。
+
+不过有点可惜，这里视频课用的代码和 nanoGPT 正式仓库的代码在命名和模块存储方式上有些差异，**不能直接复制粘贴** nanoGPT 仓库里的代码到这个 repo 来用。
+
+我计划之后录一个**补充视频**，专门讲解这部分内容，到时候也会把修改后的代码 push 到这个 repo。
+目前我先保持这个 repo 和视频里的代码版本**完全一致**，便于大家对照视频学习。
+
+📜 **License 许可协议**：MIT（自由开源，可以自由修改和使用）
+
+---
+
+如果你还想了解，**nanoGPT 和视频教程版的 GPT 有哪些主要区别**，我也可以帮你总结一下～要不要？ 🌟
+
