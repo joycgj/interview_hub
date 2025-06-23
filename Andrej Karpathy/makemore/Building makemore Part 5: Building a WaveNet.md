@@ -399,6 +399,100 @@ just the wrong result because it's using the uh sample statistics of the batch w
 and running variants inside the bachelor and so again an example of introducing a bug
 inline because we did not properly maintain the state of what is training or not okay so I Rewritten everything
 
+当然，这段内容我来帮你详细翻译和解释：
+
+---
+
+**# Pytorch化代码：层、容器、torch.nn、遇到的小 bug**
+
+现在我们神经网络的 forward 过程（前向传播）写得太啰嗦了，代码行数太多、结构不清晰。
+目前有一部分 layer 被放在 `layers` 列表里管理，但还有一些没有放进去，比如：
+
+* **embedding table C** 是单独写在外面的，
+* **view（reshape）操作** 也是写在外面的，
+  这其实是没有必要的。
+
+所以现在的改进目标就是：
+把这些“特例”操作也封装成 layer，然后统一管理，便于后面维护和扩展。
+
+具体来说，当前需要处理的两个操作：
+
+1. **embedding lookup**，也就是从 embedding table 查表，这个是通过 `C[xB]` 做的索引；
+2. **view 操作**，也就是把 embedding 结果展平（flatten）成一行，相当于是“拼接”操作，不过 view 是“零成本”的（不复制内存，只是换一个 tensor 视图）。
+
+于是作者提前写好两个模块：
+
+* `Embedding` 模块：封装了 embedding lookup 的操作；
+* `Flatten` 模块：封装了 flatten 操作。
+
+PyTorch 里其实本来也有对应的模块：
+
+* `torch.nn.Embedding`
+* `torch.nn.Flatten`
+  只不过 PyTorch 版本功能更丰富，参数更多，我们目前先实现一个简版的够用即可。
+
+有了这两个模块之后，之前代码里单独处理 `C` 和 `view` 的地方就可以删掉，直接放入 layers 统一管理：
+
+* `Embedding` -> `Flatten` -> 其他层，形成一个更干净的 forward 流程。
+
+这样 forward 过程就变得更简单了，数据（xB）直接输入第一层 layer，后面层层传递。
+
+---
+
+接下来进一步“PyTorch 化”：
+目前我们的 `layers` 还是裸 list，这样不好。
+PyTorch 提供了“容器（containers）”，可以更好地管理 layer，比如：
+
+* `torch.nn.Sequential` 就是一个常用的容器，内部是一个 layer 列表，forward 过程会**自动按顺序调用所有 layer**。
+
+所以我们也写了一个简版的 `Sequential` 容器：
+
+* 初始化时传入一个 layer list；
+* forward 时依次调用这些 layer，最后返回结果；
+* 同时可以很方便地收集所有的 parameters（模型参数）。
+
+然后模型就升级为：
+
+```
+model = Sequential([...layers...])  
+```
+
+* 这样就不用单独管理 `layers`，也不用手动 forward 了，直接 `model(xB)` 就可以跑 forward，代码大大简化。
+
+---
+
+然后作者改写了 loss 计算和 sample 部分：
+
+* logits = model(xB)
+* loss = cross\_entropy(logits, yB)
+
+评估（evaluate）和 sample 的流程也简化了，直接调用 model 即可，不用处理 layers 细节。
+
+---
+
+这里遇到了一个小 bug：
+改完以后，跑 sample 结果出现问题，原因是：
+
+* 改完 `model = Sequential(layers)` 后，没 rerun 这个 cell，导致 BatchNorm layer 还处于 training 模式；
+* 结果在用单个 example 做 sample 时，BatchNorm 试图用一个 batch 的 statistics（均值方差），但是 batch size=1，方差无法计算（variance of single number = NaN）；
+* 这就污染了后续计算，结果错误。
+
+正确做法是 sample 时要把 model 设成 `eval()` 模式（training=False），BatchNorm 才会用 running mean/variance，结果才会正常。
+
+---
+
+总结：
+
+1. 把 embedding / flatten 封装成 layer，forward 更干净；
+2. 引入 Sequential 容器，自动管理 layer 列表和 forward 流程；
+3. 遇到了 BatchNorm 训练/推理模式切换的小坑，要小心 state 的管理；
+4. 整体代码 PyTorch 化程度更高，更接近实际工程写法了。
+
+---
+
+如果你需要的话，我也可以帮你写出这部分的 **关键代码示例**，方便你参考和自己练习～ 要不要？🌟
+
+
 # overview: WaveNet
 
 and here's where we are as a reminder we have the training loss of 2.05 and validation 2.10
