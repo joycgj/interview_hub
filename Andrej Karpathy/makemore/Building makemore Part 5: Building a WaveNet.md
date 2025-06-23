@@ -956,6 +956,150 @@ Embedding
 
 如果你需要，我还可以帮你总结一个“**WaveNet 层级实现模板代码**”，你可以直接套用！要不要？🌟
 
+```python
+class FlattenConsecutive:
+
+  def __init__(self, n):
+    self.n = n
+
+  def __call__(self, x):
+    B, T, C = x.shape
+    x = x.view(B, T//self.n, C*self.n)
+    if x.shape[1] == 1:
+      x = x.squeeze(1)
+    self.out = x
+    return self.out
+
+  def parameters(self):
+    return []
+```
+
+解释一下
+
+当然！这段是 `FlattenConsecutive` 的类定义，我们来一行一行讲解：
+
+---
+
+```python
+class FlattenConsecutive:
+```
+
+定义一个**自定义的 PyTorch layer**，名字叫 `FlattenConsecutive`，
+这个层的作用是：
+
+✅ 把 **相邻 n 个 token 的 embedding 向量拼接**，
+✅ 把 T 个 token → 拼成 T//n 个 token，
+✅ 每个拼接后的 token 维度是 `C * n`。
+
+---
+
+```python
+def __init__(self, n):
+    self.n = n
+```
+
+* 初始化时传入参数 `n`：表示**多少个连续 token 拼成 1 个**。
+  比如 `n=2`，就是 **2 个 token 拼成 1 个 bigram**。
+
+---
+
+```python
+def __call__(self, x):
+```
+
+* 这里定义了 `__call__` 方法，
+* 也就是说：**调用这个类实例的时候，就直接触发这个 forward 操作**，
+  很像 PyTorch 的 forward 方法。
+
+---
+
+```python
+B, T, C = x.shape
+```
+
+* 把输入张量 `x` 的 shape 解包成：
+
+  * `B`: batch size
+  * `T`: sequence length（token 数）
+  * `C`: 每个 token 的 embedding 维度
+
+---
+
+```python
+x = x.view(B, T//self.n, C*self.n)
+```
+
+* 关键操作！
+
+* 通过 `.view()` 重塑 shape：
+
+  * 原本有 `T` 个 token，每个是 `C` 维，
+  * 现在变成 `T//n` 个 token，每个 token 是 `C*n` 维（拼接了 n 个原始 token）！
+
+* 举例：
+
+```
+原 shape:  (B, 8, 10)    → 8 个 10 维 token
+拼接 2 个: → (B, 4, 20)  → 4 个 20 维 token
+```
+
+---
+
+```python
+if x.shape[1] == 1:
+    x = x.squeeze(1)
+```
+
+* 如果拼接完后，`T//n == 1`，
+  也就是说 **只剩 1 个 token**，就多出来一个维度是 1，
+  用 `.squeeze(1)` 去掉这一维，让输出 shape 更干净。
+
+---
+
+```python
+self.out = x
+return self.out
+```
+
+* 保存结果 `self.out`，同时返回输出。
+
+---
+
+```python
+def parameters(self):
+    return []
+```
+
+* 这是为了和其它 PyTorch layer 的接口保持一致：
+  这个 layer **不包含参数**，所以 `parameters()` 返回空列表。
+
+---
+
+### 总结：
+
+`FlattenConsecutive(n)` 的作用是：
+
+✅ 输入形状 `(B, T, C)`
+✅ 输出形状 `(B, T//n, C * n)`
+✅ 把 **相邻 n 个 token 拼接成一个新的 token**，embedding 维度增加
+
+---
+
+### 举例：
+
+```python
+e = torch.randn(4, 8, 10)
+flatten = FlattenConsecutive(2)
+out = flatten(e)
+
+# out.shape == (4, 4, 20)
+```
+
+---
+
+如果你还想，我也可以帮你整理一份“FlattenConsecutive 在 WaveNet 结构中怎么用”的小例子代码，要不要？🌟
+
+
 
 # training the WaveNet: first pass
 
@@ -1094,6 +1238,153 @@ that things are actually working as we want them to now is that when we look at 
 shape is now one by one by 68. so we're only maintaining 68 means for every one
 of our channels and we're treating both the zeroth and the First Dimension as a batch Dimension which is exactly what we
 want so let me retrain the neural lot now okay so I retrained the neural net with the bug fix we get a nice curve and
+
+当然！这一段是讲 **BatchNorm1D 层的 bug 修复**，内容很多，我帮你细细翻译讲解：
+
+---
+
+### 背景问题：
+
+在改成 WaveNet 的树状网络后，中间层的张量 shape 变成了 **3 维**：
+
+```
+当前 BatchNorm 收到的输入是：(32, 4, 68)
+```
+
+解释：
+
+* 32：batch size
+* 4：一层里每个样本的 token 数（比如 bigram 后变成 4 个 token）
+* 68：每个 token 的 channel 数（hidden dim）
+
+---
+
+而我们原来的 BatchNorm 层是手写的，默认只处理 **2D** 的输入：
+
+```
+(N, D) —> (batch_size, channel_dim)
+```
+
+原代码只对第 0 维（batch 维）求 mean 和 var：
+
+```python
+mean = x.mean(dim=0)
+var  = x.var(dim=0)
+```
+
+---
+
+但是现在 x 是 3 维的 `(32, 4, 68)`，
+**BatchNorm 应该对 batch 维和 token 维（前两维）一起求 mean/var**！
+
+---
+
+### 目前发生了什么？
+
+现在代码还能“跑”，是因为：
+
+* PyTorch 广播机制自动帮忙扩展维度，代码不报错；
+* 但是实际上，**计算出来的 running\_mean / running\_var 是错误的**！
+
+比如：
+
+```python
+running_mean.shape → (1, 4, 68)   ❌
+```
+
+实际上我们只希望有：
+
+```python
+running_mean.shape → (1, 1, 68)   ✅
+```
+
+也就是说：
+
+✅ 只对每个 channel 统计 68 个 mean/var，
+不应该区分 token 位置（4），**位置不应该影响统计**，
+应该把 batch 维和 token 维都当成 “batch 维度” 求平均。
+
+---
+
+### 如何修？
+
+PyTorch `mean()` 支持多维同时 reduce，可以传 tuple：
+
+```python
+mean = x.mean(dim=(0,1))  # 对 batch 维 和 token 维 同时求 mean
+```
+
+同理：
+
+```python
+var = x.var(dim=(0,1))
+```
+
+这样 running\_mean / running\_var 就会是：
+
+```python
+shape → (1, 1, 68)
+```
+
+---
+
+### 代码修正逻辑
+
+```python
+if x.ndim == 2:
+    dim = 0
+elif x.ndim == 3:
+    dim = (0, 1)
+else:
+    raise Error
+```
+
+然后统一传 `dim` 给 mean/var 计算即可。
+
+---
+
+### PyTorch 官方 BatchNorm1D 差异：
+
+PyTorch 的官方 BatchNorm1D 接受：
+
+```
+(N, C) 或 (N, C, L)
+```
+
+也就是说，**C 这个维度必须放在中间**，
+我们自定义的版本，是：
+
+```
+(N, L, C)
+```
+
+也就是 **C 在最后一维**，这是 WaveNet 网络里更方便的格式，
+虽然和官方 API 不一样，**但为了好用，继续用这个版本就好**！
+
+---
+
+### 结果验证：
+
+重新定义 BatchNorm 层 → 重新初始化模型 → 只跑 1 个 step，检查：
+
+```python
+running_mean.shape == (1, 1, 68)  ✅
+```
+
+说明 bug 修好了，BatchNorm 层现在对 batch 和 token 维做了正确的归一化，
+不会把 token 位置 (4) 也统计进去。
+
+---
+
+### 总结一句话：
+
+**原先 BatchNorm1D 假定输入 2D，现在输入是 3D，必须改成同时对 (batch\_dim, token\_dim) 归一化，修完 bug 后就正常了。**
+
+---
+
+如果你需要，我也可以帮你写一份“**手写 BatchNorm1D 兼容 2D / 3D 版本**”的完整代码模板，
+你以后可以直接套用！要不要？🌟
+
 
 # re-training WaveNet with bug fix
 
