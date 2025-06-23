@@ -89,10 +89,10 @@ Corrections:
 * 如果喜欢用 notebook，Google Colab 是目前最简单的入门方式。
 
 💻 推荐练习题：
-**EX1**：掌握 N 维张量，挑战题：把 `Head` 和 `MultiHeadAttention` 合并成一个类，让多个头并行处理，把“head”作为额外 batch 维度处理（答案见 nanoGPT）
-**EX2**：用你喜欢的数据集训练 GPT！可以训练 GPT 来做加法，例如 a+b=c，建议让模型预测 c 的数字，按逆序预测（因为加法通常是从低位开始的），数据 loader 需要调整，不用生成 train.bin 和 val.bin，输入 a+b 这部分的 loss 可以用 `y=-1` 屏蔽（参考 CrossEntropyLoss 的 ignore\_index）。能学会加法吗？如果能，进一步挑战：做一个 GPT 计算器，支持 + - \* /。这是高阶挑战，可能需要 Chain of Thought 技术。
-**EX3**：找一个超大数据集，让 train 和 val loss 之间看不出差距，先用这个大数据集预训练 Transformer，然后用这个模型初始化，finetune 在 tiny shakespeare 数据集上，看看能不能通过预训练获得更低的 val loss。
-**EX4**：读 transformer 的论文，自己实现一个额外的改进，看能否提升 GPT 性能。
+- **EX1**：掌握 N 维张量，挑战题：把 `Head` 和 `MultiHeadAttention` 合并成一个类，让多个头并行处理，把“head”作为额外 batch 维度处理（答案见 nanoGPT）
+- **EX2**：用你喜欢的数据集训练 GPT！可以训练 GPT 来做加法，例如 a+b=c，建议让模型预测 c 的数字，按逆序预测（因为加法通常是从低位开始的），数据 loader 需要调整，不用生成 train.bin 和 val.bin，输入 a+b 这部分的 loss 可以用 `y=-1` 屏蔽（参考 CrossEntropyLoss 的 ignore\_index）。能学会加法吗？如果能，进一步挑战：做一个 GPT 计算器，支持 + - \* /。这是高阶挑战，可能需要 Chain of Thought 技术。
+- **EX3**：找一个超大数据集，让 train 和 val loss 之间看不出差距，先用这个大数据集预训练 Transformer，然后用这个模型初始化，finetune 在 tiny shakespeare 数据集上，看看能不能通过预训练获得更低的 val loss。
+- **EX4**：读 transformer 的论文，自己实现一个额外的改进，看能否提升 GPT 性能。
 
 ```
 📅 视频章节时间轴：
