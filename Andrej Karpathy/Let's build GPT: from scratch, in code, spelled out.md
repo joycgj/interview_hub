@@ -741,6 +741,145 @@ one of these positions in the tensor y okay so now that we have our batch of inp
 
 如果你需要的话，我还可以帮你画个**数据流示意图**，或者整理一个 **batch + chunk + context** 的总结表，帮助你更好记住！要不要我整理一下？ 🌟
 
+```python
+def get_batch(split):
+    # generate a small batch of data of inputs x and targets y
+    data = train_data if split == 'train' else val_data
+    ix = torch.randint(len(data) - block_size, (batch_size,))
+    x = torch.stack([data[i:i+block_size] for i in ix])
+    y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+    return x, y
+```
+
+解释一下
+
+
+当然可以，下面我帮你详细解释一下这一段代码 `get_batch(split)`：
+
+---
+
+### 📌 函数功能：
+
+**生成一个 batch 的输入数据 (x) 和对应的目标数据 (y)**，供模型训练用。
+
+---
+
+### 📌 输入参数：
+
+`split` —— 字符串，决定是用训练集（'train'）还是验证集（'val'）
+
+---
+
+### 📌 具体步骤：
+
+#### ① 选数据集
+
+```python
+data = train_data if split == 'train' else val_data
+```
+
+如果参数是 'train'，就用 `train_data`；
+如果是 'val'，就用 `val_data`。
+
+---
+
+#### ② 生成 batch\_size 个随机起始位置
+
+```python
+ix = torch.randint(len(data) - block_size, (batch_size,))
+```
+
+* `torch.randint` 生成 batch\_size 个随机整数，范围是 \[0, len(data) - block\_size)。
+* 这些整数是**chunk 的起始位置**。
+* 为什么减掉 block\_size？因为后面要取出长度为 block\_size + 1 的片段，不能越界。
+
+---
+
+#### ③ 构建输入序列 x
+
+```python
+x = torch.stack([data[i:i+block_size] for i in ix])
+```
+
+* 对每个随机位置 i，取出从 `i` 到 `i+block_size` 的片段。
+* 用 list comprehension 处理 batch\_size 个位置。
+* 用 `torch.stack` 把它们堆叠成一个 batch，shape 是 `(batch_size, block_size)`。
+* 这个 `x` 就是 Transformer 的输入（每行是一个 chunk）。
+
+---
+
+#### ④ 构建目标序列 y
+
+```python
+y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+```
+
+* 和 `x` 类似，不过偏移 1 个字符，表示\*\*“正确答案”\*\*：
+
+  * 对于 x 里的每一个 token，y 里对应位置存的是**下一个 token**。
+* 这样模型训练时，就是学会**预测下一个 token**。
+
+---
+
+#### ⑤ 返回 x, y
+
+```python
+return x, y
+```
+
+* 返回值 x, y，shape 都是 `(batch_size, block_size)`
+* 可以直接喂进 Transformer 训练，计算 loss。
+
+---
+
+### 📌 举个简单例子：
+
+假设：
+
+```
+batch_size = 2  
+block_size = 4  
+data = [1,2,3,4,5,6,7,8,9,10]  
+```
+
+假设采样出两个位置：
+
+```
+ix = [2, 5]  
+```
+
+那对应的 batch 就是：
+
+**x：**
+
+```
+[ data[2:6] ] -> [3,4,5,6]  
+[ data[5:9] ] -> [6,7,8,9]  
+```
+
+**y：**
+
+```
+[ data[3:7] ] -> [4,5,6,7]  
+[ data[6:10] ] -> [7,8,9,10]  
+```
+
+---
+
+### 📌 总结一句话：
+
+这个 `get_batch()` 函数就是：
+**随机选 batch\_size 个位置，取出 block\_size 长度的 x 和对应的 y，作为一个 batch 输入模型训练。**
+
+---
+
+如果你想，我也可以补充一下：
+✅ 为什么要用 offset 1 作为 y？
+✅ batch\_size 和 block\_size 设置成多少合适？
+✅ 训练过程中 get\_batch 怎么配合 optimizer 用？
+
+要不要我再详细讲讲？ 🌟
+
 
 # simplest baseline: bigram language model, loss, generation
 
