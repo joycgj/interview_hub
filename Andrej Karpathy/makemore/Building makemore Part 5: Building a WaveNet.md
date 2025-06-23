@@ -1396,6 +1396,52 @@ variances that are only estimated using using 32 numbers effectively now we are 
 so you just have a lot more numbers that go into any one estimate of the mean and variance and it allows things to be a
 bit more stable and less Wiggly inside those estimates of those statistics so
 
+当然，这一段我帮你翻译讲解：
+
+---
+
+**# 修好 BatchNorm bug 后重新训练 WaveNet**
+
+修复了 BatchNorm 的 bug 之后，重新训练了一轮 WaveNet，
+观察验证集的性能，确实看到了一点点提升：
+
+✅ 验证 loss 从 **2.029 → 2.022**，有一个小幅度的改进。
+
+---
+
+说明：
+
+* 之前的 bug 在 BatchNorm 层，**mean / var 统计不准确**，有一点影响性能；
+* 修复后，效果略有提升，但目前还不确定这个提升是不是“统计显著的”——也有可能是随机波动。
+
+---
+
+为什么理论上**期望会有提升**？
+
+✅ 修复前：
+
+* BatchNorm 里在 `(32, 4, 68)` 这个张量上，
+* 每个 token 位置单独维护 mean/var，
+* 每组 mean/var 只有 32 个样本参与统计（每次只有 batch size 个数）
+
+✅ 修复后：
+
+* 现在把 `(batch 维 + token 维)` 一起当成 batch，
+* 每个 channel 的 mean/var 是在 `32 * 4 = 128` 个样本上统计的，
+* 数据量更大，估计更稳定，不容易抖动（less wiggly）。
+
+---
+
+### 总结一句话：
+
+修好 BatchNorm 后，loss 有小幅度改善，
+因为现在 mean/var 的估计更稳定，网络学得更扎实一点了！
+
+---
+
+如果你需要，我也可以帮你画个对比小图，**修复前后 loss 曲线对比**，要不要？🌟
+
+
 # scaling up our WaveNet
 
 pretty nice with this more General architecture in place we are now set up to push the performance further by
@@ -1407,6 +1453,60 @@ territory and right about 1.99 but we are starting to have to wait quite a bit
 longer and we're a little bit in the dark with respect to the correct setting of the hyper parameters here and the
 learning rates and so on because the experiments are starting to take longer to train and so we are missing sort of like an experimental harness on which we
 could run a number of experiments and really tune this architecture very well so I'd like to conclude now with a few
+
+当然，这段我来帮你翻译讲解：
+
+---
+
+**# 扩大 WaveNet 规模**
+
+现在我们已经实现了这个**更通用的 WaveNet 架构**，
+接下来就可以通过**扩大网络规模**，继续提升模型性能。
+
+---
+
+举例来说：
+
+* 我把 embedding 维度从 10 提高到了 **24**，
+* 同时增加了 hidden 层的通道数（hidden units），
+* 但是整体架构**保持不变**。
+
+---
+
+调整后：
+
+* 模型参数总数变成了 **76,000** 个（原来只有 22,000）。
+* 训练时间明显变长了，
+* 但得到了一条不错的 loss 曲线。
+
+---
+
+性能提升：
+
+✅ 验证集 loss 现在达到了 **1.993**，
+✅ 也就是说 loss 已经突破了 “2.0” 这个区间，达到 **1.99**，
+✅ 网络规模变大确实能带来效果提升。
+
+---
+
+不过：
+
+* 训练时间越来越长，
+* 超参数（hyperparameters）、learning rate 等**还没有细调**，
+* 训练一个实验结果需要时间，调参效率低，
+* 现在**缺乏一个更好的实验框架**（experimental harness）来管理多个实验，自动调参会更高效。
+
+---
+
+### 总结一句话：
+
+**扩大 WaveNet 规模 → loss 明显下降 → 但是训练慢 + 调参困难，需要更好的实验框架来优化整体效果**。
+
+---
+
+如果你需要，我也可以帮你整理一份**WaveNet 扩大规模时，超参数调整建议表**，
+方便你以后练习时知道该调哪些参数，要不要？🌟
+
 
 # experimental harness
 
