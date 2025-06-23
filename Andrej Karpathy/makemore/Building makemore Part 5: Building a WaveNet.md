@@ -519,6 +519,61 @@ see that later but for now let's just keep the basic idea of it which is this Pr
 the network deeper and at each level we want to fuse only two consecutive elements two characters then two bigrams
 then two four grams and so on so let's unplant this okay so first up let me scroll to where we built the data set
 
+当然，这段我帮你翻译解释一下：
+
+---
+
+**# 概述：WaveNet**
+
+我们现在的训练 loss 是 **2.05**，验证集 loss 是 **2.10**。
+这两个 loss 很接近，说明目前模型**没有严重 overfitting（过拟合）**，可以通过扩大模型规模（加大网络深度、宽度）进一步提升性能。
+
+目前用的模型结构是这样的：
+
+* 输入一串字符（某个 context size）
+* 进到一个隐藏层
+* 然后输出下一个字符的预测
+
+但是这个架构有一个问题：
+
+* 虽然可以简单通过加层、加神经元来“做大”模型，
+* 但是它的本质是：**一开始就把所有输入字符直接“压缩”成一层的表示**，信息融合得太快了！
+* 就算加大 hidden layer，信息的融合速度还是太快，这样其实不太合理，网络难以有效建模“长距离依赖”。
+
+我们希望的架构是像 WaveNet 这样的，思路是：
+
+* 预测下一个字符的时候，是所有前面字符的函数，
+* 但这些字符不是一下子全“压”到一个层里，
+* 而是通过**逐步融合（Progressive Fusion）**，信息逐步流入更深层。
+
+举例来说，WaveNet 是这样做的：
+
+1. 先把相邻两个字符融合成 bigram 的表示；
+2. 然后把 bigram 融合成四个字符的表示（4-gram）；
+3. 再继续融合... 形成一种**树状的层次结构**（tree-like hierarchical manner），
+4. 每一层融合的是更大粒度的信息，直到最终做出预测。
+
+WaveNet 论文图示是一个**堆叠的 dilated causal convolution layers（扩张型因果卷积层）**，
+听起来很吓人，但其实核心思想很简单，就是为了**加快实现**，底层用了扩张卷积（dilated conv）这种技巧。
+我们暂时不用管实现细节，重点是这个“信息逐层融合”的架构思想。
+
+目标：
+
+* 做一个**更深**的网络，
+* 每一层只融合相邻两个元素（字符，bigram，4-gram，...），
+* 逐层传递，逐层融合，最终做出下一个字符的预测。
+
+---
+
+作者说：“那我们来开始实现这个架构吧！”
+首先要回去看看之前怎么构建的数据集，然后再往下改进模型。
+
+---
+
+如果你需要，我还可以帮你画一个简单的图，**MLP vs. WaveNet 的结构对比**，
+这样你理解这个“逐步融合”思想会更直观～ 要不要？ 🚀
+
+
 # dataset bump the context size to 8
 
 and let's change the block size from 3 to 8. so we're going to be taking eight characters of context to predict the
