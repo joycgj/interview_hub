@@ -2290,6 +2290,164 @@ then multiplying it with any given Matrix we can do these averages in this
 incremental fashion because we just get um and we can manipulate that based on
 the elements of a okay so that's very convenient so let's let's swing back up here and see how we can vectorize this
 
+当然可以，我来详细解释这一段的内容，这段非常关键，关系到 self-attention 的核心技巧：
+
+---
+
+### 📌 这一段讲什么？
+
+👉 **self-attention 其实就是“加权求和”，而加权求和可以用矩阵乘法非常高效地实现**。
+👉 这个例子是为了帮你理解，**矩阵乘法怎么就能做“累加、平均”这种操作？**
+
+---
+
+### 📌 小例子设置
+
+```python
+A = 3x3 矩阵，全是 1  
+B = 3x2 矩阵，随机值  
+C = A @ B → 结果是 3x2 矩阵
+```
+
+---
+
+### 📌 普通矩阵乘法
+
+```
+C = A @ B
+```
+
+每个 C\[i,j] 是：
+
+```
+A[i,:]（第 i 行） 和 B[:,j]（第 j 列） 的点积
+```
+
+---
+
+### 📌 为什么 C 里是“累加”的效果？
+
+因为 A 的行是全 1：
+
+```
+[1,1,1]
+```
+
+点积就变成 “B 某一列的所有值求和”：
+
+```
+[2,6,6] → 和 = 14
+[7,4,5] → 和 = 16
+```
+
+所以：
+
+```
+C[0,0] = 14
+C[0,1] = 16
+```
+
+---
+
+### 📌 改用下三角矩阵（tril）
+
+```python
+A = torch.tril(torch.ones(3,3))
+```
+
+意思是：
+
+```
+A = 下三角矩阵  
+[[1,0,0],
+ [1,1,0],
+ [1,1,1]]
+```
+
+---
+
+### 📌 为什么要用 tril？
+
+👉 因为：
+
+* 语言模型不能看未来 token
+* 只能聚合自己 + 之前的 token 信息
+
+**下三角矩阵正好就实现了这种 mask，未来 token 权重=0**！
+
+---
+
+### 📌 矩阵乘法后效果
+
+```
+C = A @ B
+```
+
+* 第一行：只取 token1，直接复制到 C\[0,:]
+* 第二行：前 2 个 token 求和 → 存到 C\[1,:]
+* 第三行：前 3 个 token 求和 → 存到 C\[2,:]
+
+---
+
+### 📌 改成“平均”
+
+可以用：
+
+```python
+A /= A.sum(dim=1, keepdim=True)
+```
+
+* 把 A 每一行 normalize，行和=1
+* 矩阵乘法就变成 “**加权平均**”
+
+---
+
+### 📌 小结这一 trick
+
+👉 **矩阵乘法 A @ B 可以高效实现：**
+
+* 前 t 个 token 累加
+* 或者 前 t 个 token 平均
+* A 的 tril + normalize 就能控制这种行为
+
+---
+
+### 📌 self-attention 的关系
+
+Transformer 里的 self-attention 本质上是：
+
+```
+C = softmax(scores) @ V
+```
+
+* softmax(scores) → 就是一个 A 矩阵，表示 token 间的注意力（加权系数）
+* V → 就是 token 的 embedding 矩阵
+* 矩阵乘法 → 就是“按注意力加权求和”
+
+---
+
+### 📌 这段的核心思想
+
+👉 “通过设计一个 mask（下三角矩阵 tril），再 normalize，配合矩阵乘法，就能高效实现 token 之间的加权求和（信息交流）。”
+
+---
+
+### 📌 总结一句话
+
+👉 **self-attention 里的信息流动，其实就是矩阵乘法实现的“加权平均”，
+而这个 toy 例子帮你先理解“为啥矩阵乘法就能做到”！**
+
+---
+
+如果你想，我可以继续补充讲讲：
+
+✅ self-attention 中 softmax 是怎么起作用的？
+✅ 为什么 mask 必须用 tril？
+✅ 这个矩阵乘法和 for 循环相比有多快？
+
+要不要我再帮你展开讲讲？🌟
+
+
 # version 2: using matrix multiply
 
 and make it much more efficient using what we've learned so in particular we are going to produce an
