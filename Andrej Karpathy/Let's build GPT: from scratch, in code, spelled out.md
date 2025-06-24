@@ -1123,6 +1123,158 @@ targets = targets.view(batch_size * block_size)
 
 要不要我再详细讲讲？ 🌟
 
+print(decode(m.generate(idx = torch.zeros((1, 1), dtype=torch.long), max_new_tokens=100)[0].tolist()))
+
+解释一下
+
+好，这句代码我帮你详细解释一下：
+
+```python
+print(decode(m.generate(idx = torch.zeros((1, 1), dtype=torch.long), max_new_tokens=100)[0].tolist()))
+```
+
+---
+
+### 📌 这一句整体在做什么？
+
+👉 **用 bigram 模型 m 生成 100 个 token，转成字符串，打印出来。**
+
+---
+
+### 📌 逐步拆解
+
+---
+
+#### 1️⃣ `torch.zeros((1, 1), dtype=torch.long)`
+
+```python
+idx = torch.zeros((1, 1), dtype=torch.long)
+```
+
+* 构造一个 `(1, 1)` 的 tensor，里面填 0，整数类型（long）。
+* 含义是：**batch size = 1，序列长度 = 1，初始 token = 0**。
+
+通常 0 是换行符 `\n`，作为“起始 token”很合理。
+
+---
+
+#### 2️⃣ 调用 generate()
+
+```python
+m.generate(idx, max_new_tokens=100)
+```
+
+* 调用模型的 `generate()` 函数，
+* 初始序列是 `[0]`，
+* **连续生成 100 个新的 token**，拼接在原序列后面。
+
+返回结果 shape 是：
+
+```python
+(idx.shape) → (1, 1 + 100) → (1, 101)
+```
+
+也就是：
+
+```
+[[ 0, 34, 5, 9, 18, 12, ..., 21 ]]  ← 一条生成出来的 token 序列
+```
+
+---
+
+#### 3️⃣ `[0]`
+
+```python
+... [0]
+```
+
+* 取出 batch 里的第一个序列（因为 batch\_size=1）
+* 得到 1 维 array，shape 是 `(101,)`，101 个 token id
+
+---
+
+#### 4️⃣ `.tolist()`
+
+```python
+.tolist()
+```
+
+* 把 PyTorch tensor 转成 python list，方便 decode。
+
+例如：
+
+```
+[0, 34, 5, 9, 18, 12, ..., 21]
+```
+
+---
+
+#### 5️⃣ `decode()`
+
+```python
+decode([...])
+```
+
+* 把 token id 列表 → 转换成字符串。
+* decode 过程是根据之前的 **token\_to\_char 映射表**，把 token id 还原成字符。
+
+---
+
+#### 6️⃣ print()
+
+```python
+print(...)
+```
+
+* 打印出生成的字符串。
+
+---
+
+### 📌 举个例子
+
+假设生成结果是：
+
+```
+[0, 34, 5, 9, 18, 12, 7, 22, ...]
+```
+
+decode 后得到字符串：
+
+```
+"\nABcdefGH..."
+```
+
+最终打印出来就是：
+
+```
+ABcdefGH...
+```
+
+---
+
+### 📌 总结一句话
+
+这一整句代码：
+
+```python
+print(decode(m.generate(torch.zeros((1,1), dtype=torch.long), max_new_tokens=100)[0].tolist()))
+```
+
+的作用是：
+
+👉 **“从 token 0 开始，调用 bigram 语言模型生成 100 个 token，转成字符，打印出来。”**
+
+---
+
+如果你还想，我可以继续讲讲：
+
+✅ 为什么需要 tolist()？
+✅ 为什么 batch size = 1？
+✅ 这个生成结果通常看起来像什么？ bigram 模型 vs Transformer 差别大吗？
+
+要不要我再详细讲一讲？🌟
+
+
 
 # training the bigram model
 
@@ -1156,6 +1308,128 @@ is obviously this is a very simple model because the tokens are not talking to e
 of whatever was generated we're only looking at the very last character to make the predictions about what comes next so now these uh now these tokens
 have to start talking to each other and figuring out what is in the context so that they can make better predictions
 for what comes next and this is how we're going to kick off the uh Transformer okay so next I took the code
+
+当然可以！我来帮你详细讲讲这一段【训练 bigram 语言模型】的内容：
+
+---
+
+### 📌 这一段在讲什么？
+
+👉 **如何用优化器（Optimizer）训练 bigram 语言模型**，让它的 loss 下降，模型“学会”更好地预测下一个 token。
+
+---
+
+### 📌 优化器选择
+
+* 在之前的 `makemore` 系列里，作者只用过最简单的优化器 **SGD（随机梯度下降）**：
+
+```python
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+```
+
+* 但这次作者用的是更高级的 **Adam** 优化器：
+
+```python
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+```
+
+**Adam 优化器**：
+
+* 是目前深度学习里非常常用的优化器，
+* 收敛更快，效果更稳定，
+* 不容易因为学习率选不好而震荡。
+
+---
+
+### 📌 学习率（learning rate）
+
+* 通常来说，learning rate 可以设成：
+
+```
+3e-4 = 0.0003  
+```
+
+* 但是 bigram 模型非常简单，网络规模很小，所以可以用更高的学习率，比如 `3` 甚至更高，训练更快收敛。
+
+---
+
+### 📌 batch size
+
+* 原来 batch\_size=4，太小了，作者改成了：
+
+```
+batch_size = 32
+```
+
+* 用大一些的 batch\_size，训练更稳定，梯度估计更准确。
+
+---
+
+### 📌 训练循环（Training loop）
+
+核心流程：
+
+```text
+循环 N 次：
+    1. 采样一个新的 batch
+    2. 计算 loss
+    3. 清零上一步的梯度
+    4. 反向传播（backpropagation），算出当前梯度
+    5. 用 Adam 优化器更新模型参数
+```
+
+---
+
+### 📌 训练效果
+
+* 刚开始 loss 大约是 4.7
+* 训练几百步后，下降到 4.5、4.0 …
+* 训练 10000 步以后，loss 大约降到 2.5
+
+---
+
+### 📌 生成效果
+
+* 开始时 bigram 模型生成的文本是垃圾（全随机）
+* 训练一段时间后，虽然还不是莎士比亚，但能生成“看起来稍微合理”的字符序列，loss 也在变小
+* 说明模型开始学习到了 tiny Shakespeare 数据集里的 **字符 co-occurrence 规律**（哪些字符经常跟哪些字符搭配）
+
+---
+
+### 📌 为什么 bigram 模型效果有限？
+
+* bigram 语言模型 **“只用当前 token”** 预测下一个 token
+* 不看前文上下文，预测能力有限
+* 所以生成的文本 **没有长距离的逻辑、语法、句法结构**
+* 作者说：“tokens 没有相互‘对话’，模型只看最后一个字符，无法捕捉上下文”
+
+---
+
+### 📌 下一步计划
+
+作者准备**引入 Transformer**：
+
+* 让 tokens 能互相“交流”，
+* Transformer 能利用更长的上下文，学到更复杂的结构 → 预测效果会更好
+
+---
+
+### 📌 总结一句话
+
+这一段是教你：
+
+👉 **如何用 Adam 优化器训练 bigram 语言模型，loss 逐步下降，生成效果越来越合理**，但受限于 bigram 本身只能看到当前 token，模型能力有限 → 下一步改用 Transformer。
+
+---
+
+如果你还想，我可以继续讲：
+
+✅ 为什么 bigram loss 大约可以降到 2.5？
+✅ 为什么 batch size 大会训练更稳定？
+✅ 为什么 bigram 不足以生成“像莎士比亚”的文本？
+
+要不要我再补充？🌟
+
 
 # port our code to a script
 
