@@ -1474,6 +1474,161 @@ giving me the train loss and Val loss and we see that we convert to somewhere ar
 the sample that we produced at the end and so we have everything packaged up in the script and we're in a good
 position now to iterate on this okay so we are almost ready to start writing our very first self attention block for
 
+当然可以，我来帮你详细解释这一段【把 bigram 训练代码转成脚本】的内容：
+
+---
+
+### 📌 主要内容
+
+👉 **把之前在 Jupyter Notebook 里写的代码，整理成一个 Python 脚本文件**（比如 `bigram.py`），方便以后复用、扩展、优化。
+
+---
+
+### 📌 为什么要转成脚本？
+
+* Notebook 里代码是一步一步写的，适合演示和调试
+* 脚本（.py 文件）更适合做**完整的训练流程**，可以方便在命令行跑、复现结果
+* 作为“阶段性版本”，把目前写好的 bigram 模型收拾干净，准备继续扩展（比如后面加 self-attention）
+
+---
+
+### 📌 脚本内容结构
+
+---
+
+#### 1️⃣ 超参数
+
+```python
+# 把超参数集中写在脚本最上方
+# 例如 batch_size, block_size, learning_rate, max_iters, etc.
+```
+
+---
+
+#### 2️⃣ 数据处理
+
+* 读数据
+* 生成 encode/decode 函数
+* 划分 train / val 数据
+* data\_loader：实现 get\_batch()，每次从数据里取 batch
+
+---
+
+#### 3️⃣ bigram 模型
+
+```python
+# 直接用我们之前写的 BigramLanguageModel
+# 包括 forward() 和 generate() 两个方法
+```
+
+---
+
+#### 4️⃣ 优化器
+
+```python
+# 选用 Adam 优化器
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+```
+
+---
+
+#### 5️⃣ 训练循环（training loop）
+
+```text
+for step in range(max_iters):
+    1. get_batch
+    2. forward pass
+    3. compute loss
+    4. backward pass
+    5. optimizer.step()
+```
+
+---
+
+#### 6️⃣ 新增内容：支持 GPU 训练
+
+```python
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+```
+
+* 自动检测有没有 GPU，有的话用 GPU，可以快很多
+* 需要把：
+
+  * 数据 tensor `.to(device)`
+  * 模型 `.to(device)`
+  * 生成的时候的 context tensor 也要 `.to(device)`
+
+---
+
+#### 7️⃣ 新增内容：estimate\_loss 函数
+
+* 原来训练 loop 里直接打印 loss，**太 noisy（波动大）**
+* 现在定义一个 `estimate_loss()` 函数，做多次 batch 求平均，结果更平滑、更准确
+* 每隔几步打印平均的 train\_loss 和 val\_loss
+
+---
+
+#### 8️⃣ 训练 / 推理模式切换
+
+```python
+model.eval()  # 评估模式
+model.train()  # 训练模式
+```
+
+* 目前 bigram 模型里用不到（没有 dropout / batchnorm）
+* 但是**养成好习惯**，因为后面 Transformer 里需要切换模式
+
+---
+
+#### 9️⃣ with torch.no\_grad()
+
+```python
+with torch.no_grad():
+```
+
+* 生成文本时不会用到反向传播
+* 用 `no_grad` 可以节省内存，加快推理速度
+* 也是良好的 PyTorch 习惯
+
+---
+
+### 📌 运行脚本的效果
+
+* 脚本大约 120 行左右
+* 运行后，控制台会看到：
+
+```text
+step 1000: train loss 3.2, val loss 3.1
+step 2000: train loss 2.7, val loss 2.6
+step 3000: train loss 2.5, val loss 2.5
+...
+```
+
+* 最终 loss 大约降到 2.5（bigram 模型极限）
+* 末尾会生成一段文本，明显比初始未训练时的“乱码”更合理
+
+---
+
+### 📌 最终总结
+
+这一段讲的是：
+
+👉 **把 bigram 训练过程封装成干净的 Python 脚本 bigram.py**
+👉 支持 GPU
+👉 支持平滑评估 loss
+👉 训练到 2.5 loss 左右，准备进入下一步 —— **实现 self-attention block，升级为 Transformer！**
+
+---
+
+如果你还想，我可以继续讲讲：
+
+✅ 为什么加了 estimate\_loss，效果更好？
+✅ 为什么模型 eval() / train() 很重要？
+✅ 为什么 bigram loss 极限大概在 2.5？
+
+要不要我再补充？🌟
+
+
 # version 1: averaging past context with for loops, the weakest form of aggregation
 
 processing these uh tokens now before we actually get there I want to get you
