@@ -2635,6 +2635,165 @@ Elements by having by using matrix multiplication of a lower triangular
 fashion and then the elements here in the lower triangular part are telling you how much of each element uh fuses
 into this position so we're going to use this trick now to develop the self attention block block so first let's get
 
+当然可以，这段是非常关键的内容，咱们仔细讲一下 version 3：**adding softmax**，这是理解 self-attention 的重点步骤。
+
+---
+
+### 📌 这一段讲什么？
+
+👉 刚才 version 2 用的是：
+
+```
+tril + 平均 = 矩阵乘法
+```
+
+👉 现在 version 3 引入了 **softmax**，
+就更接近 Transformer 里的 **self-attention** 真正做法了。
+
+---
+
+### 📌 操作步骤拆解
+
+---
+
+#### 1️⃣ 定义 mask (Tril)
+
+```python
+tril = torch.tril(torch.ones(T, T))
+```
+
+生成下三角矩阵：
+
+```
+[[1, 0, 0],
+ [1, 1, 0],
+ [1, 1, 1]]
+```
+
+→ 作用：防止 “看未来 token”，保证 “只能聚合自己和历史 token”。
+
+---
+
+#### 2️⃣ 定义 weights (way)
+
+```python
+way = torch.zeros(T, T)
+```
+
+先初始化为全 0，表示 **当前 token 对其他 token 的“注意力强度”**（affinity）。
+
+---
+
+#### 3️⃣ 做 masked\_fill
+
+```python
+way.masked_fill(tril == 0, float('-inf'))
+```
+
+👉 把 **未来 token（tril=0）对应位置设成 -∞**：
+
+```
+[[0, -inf, -inf],
+ [0,    0, -inf],
+ [0,    0,    0]]
+```
+
+---
+
+#### 4️⃣ softmax 归一化
+
+```python
+way = F.softmax(way, dim=-1)
+```
+
+👉 重点：
+
+* softmax( -∞ ) → 0
+* softmax( 0 ) → 1 / N
+
+结果就是：
+
+```
+[[1, 0, 0],
+ [0.5, 0.5, 0],
+ [1/3, 1/3, 1/3]]
+```
+
+---
+
+### 📌 为什么要 softmax？
+
+* softmax 会自动 **归一化权重**，变成 **加权平均**。
+* softmax 是可微分的，后面可以用网络 **学习注意力分数**！
+
+---
+
+### 📌 最重要的概念
+
+```
+这些 weights，不再是人为设定（tril + 平均），  
+而是可以用模型自动学出 token 间的“兴趣程度”。
+```
+
+比如：
+
+```
+某个 token 可能对前面某些 token 更“关注”，对其他 token 不太关注。  
+→ 权重就会偏高 / 偏低，softmax 自动归一化。
+```
+
+---
+
+### 📌 为什么要加 softmax，而不是直接用 tril？
+
+✅ softmax 归一化
+✅ softmax 可微，可以训练
+✅ softmax 输出的 “注意力分数” 更细腻
+✅ softmax 是 self-attention 的标准做法
+
+---
+
+### 📌 self-attention 预告
+
+* 在 Transformer 里，attention 权重不是全 1、不是固定 tril，
+* 而是：
+
+```
+attention_scores = Q @ K^T / sqrt(d_k)
+attention_weights = softmax(attention_scores + mask)
+attention_output = attention_weights @ V
+```
+
+这个 **attention\_weights** 就和 version 3 的 `way` 是同一个东西！
+
+---
+
+### 📌 总结一句话
+
+👉 这一段 version 3 教你：
+
+**“self-attention 其实就是用 softmax 归一化后的下三角矩阵，乘 embedding，
+实现 token 间的加权信息融合（aggregation）。”**
+
+---
+
+### 📌 为什么这一段很重要？
+
+✅ 这是 **Transformer self-attention 的数学核心**
+✅ 你理解了这个，马上就能理解 Transformer 的 Q、K、V 计算
+✅ 这就是 Transformer 比 RNN / Bigram 强大的地方：可以学出“兴趣关系”！
+
+---
+
+如果你还想，我还可以补充讲：
+
+✅ softmax 为什么选择 dim=-1？
+✅ self-attention 里的 QK^T 怎么来？
+✅ 为什么叫“加权求和”而不是“卷积”？
+
+要不要我再帮你详细讲讲？🌟
+
+
 # minor code cleanup
 
 some quick preliminaries out of the way first the thing I'm kind of bothered by is that you see how we're passing in
