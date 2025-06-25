@@ -2794,6 +2794,147 @@ attention_output = attention_weights @ V
 要不要我再帮你详细讲讲？🌟
 
 
+wei = F.softmax(wei, dim=-1) 中的 dim=-1 是什么意思
+
+这个问题问得特别好！我来详细解释：
+
+---
+
+### 📌 先看语句
+
+```python
+wei = F.softmax(wei, dim=-1)
+```
+
+---
+
+### 📌 什么是 `dim=-1` ？
+
+`dim` 参数的意思是：
+
+👉 **在哪一维上做 softmax 运算**。
+
+---
+
+### 📌 为什么叫 `-1` ？
+
+* 在 PyTorch 里，**维度可以用正数或负数表示**：
+
+  * 0 表示第 0 维（最外层）
+  * 1 表示第 1 维
+  * 2 表示第 2 维
+  * ...
+  * **-1 表示最后一维**
+
+也就是说：
+
+```
+dim = -1 <==> dim = wei.ndim - 1
+```
+
+---
+
+### 📌 为什么要在最后一维做 softmax？
+
+在这里，`wei` 的 shape 是 `(T, T)`，也就是：
+
+```
+行 → 当前 token（t）  
+列 → 对其他 token 的注意力权重
+```
+
+→ 每一行表示：
+
+**“当前 token 对其他 token 的注意力权重分布”**
+
+---
+
+我们希望：
+
+```
+softmax 每一行，归一化成 1  
+→ 每行 sum = 1，变成“概率分布”
+```
+
+---
+
+所以要：
+
+```python
+F.softmax(wei, dim=-1)
+```
+
+* dim=-1 → 对“每一行”的元素做 softmax
+* 结果就是：
+
+  * 每一行 sum=1
+  * 每一行是“当前 token 对其他 token 的加权系数”
+
+---
+
+### 📌 举例
+
+假设：
+
+```python
+wei = torch.tensor([[1, 2, 3],
+                    [4, 5, 6]])
+```
+
+* shape = (2, 3)
+
+如果写：
+
+```python
+F.softmax(wei, dim=-1)
+```
+
+效果是：
+
+* 对 **每一行** `[1,2,3]`、`[4,5,6]` 各自做 softmax
+* 归一化成：
+
+```
+[[softmax(1,2,3)],  
+ [softmax(4,5,6)]]
+```
+
+---
+
+### 📌 为什么不用 dim=0？
+
+如果你写：
+
+```python
+F.softmax(wei, dim=0)
+```
+
+那就会对 “每一列” 做 softmax，逻辑就错了。
+因为我们希望 **“每个 token 的注意力分布”** 是一行，归一化一行。
+
+---
+
+### 📌 总结一句话
+
+```python
+dim=-1
+```
+
+👉 就是“对最后一维做 softmax”
+👉 在 (T,T) 里，就是 **按行做 softmax**，
+👉 得到 “当前 token 对其他 token 的注意力分布”！
+
+---
+
+如果你还想，我还可以补充讲：
+
+✅ 为什么 softmax 行 sum=1 很关键？
+✅ 如果是 (B, T, T)，dim=-1 会怎样？
+✅ softmax 为什么选在 attention 用？
+
+要不要我继续帮你讲？🌟
+
+
 # minor code cleanup
 
 some quick preliminaries out of the way first the thing I'm kind of bothered by is that you see how we're passing in
@@ -2814,6 +2955,132 @@ C and this is vocap size so let's just say that n ined is equal to
 C and then this just creates one spous layer of interaction through a linear layer but uh this should basically
 run so we see that this runs and uh this currently looks kind of spous but uh
 we're going to build on top of this now next up so far we've taken these indices
+
+当然可以！我来帮你详细解释这一段 **minor code cleanup** 做了什么调整，为什么要改：
+
+---
+
+### 📌 这一段主要讲什么？
+
+👉 **小幅度代码清理 + 做一些准备工作**，
+👉 为了后面实现更复杂的模型（self-attention、Transformer block）打基础。
+
+---
+
+### 📌 主要做了哪些修改？
+
+---
+
+#### 1️⃣ 不再手动传 vocap\_size
+
+原来：
+
+```python
+class BigramLanguageModel(nn.Module):
+    def __init__(self, vocab_size):
+```
+
+但是：
+
+```python
+vocab_size 其实是全局变量，没必要重复传
+```
+
+---
+
+#### 2️⃣ 新增 n\_embed 参数
+
+```python
+n_embed = 32  # embedding 维度
+```
+
+* 之前 embedding 表是 `(vocab_size, vocab_size)`，
+  → 非常 “宽”，没必要，浪费参数
+* 现在改成：
+
+```python
+nn.Embedding(vocab_size, n_embed)
+```
+
+* 意思是：
+  每个 token 不再用 vocab\_size 维表示，
+  → 改成 n\_embed 维，**更紧凑**
+
+* 32 是一个经验值，适合 tiny Shakespeare 这种小数据集。
+
+---
+
+#### 3️⃣ 新增 “一层 Linear 层” 做 logits 映射
+
+原来：
+
+```python
+embedding → 直接输出 logits
+```
+
+改成：
+
+```python
+embedding → Linear 层 → logits
+```
+
+* 新增一层：
+
+```python
+self.lm_head = nn.Linear(n_embed, vocab_size)
+```
+
+* 作用：
+  把 embedding 空间映射回 logits 空间，
+  logits 维度 = vocab\_size
+
+---
+
+#### 4️⃣ 为什么这样改？
+
+**核心原因**：
+
+👉 以前的 bigram 模型 “直接查 embedding 表 → logits”
+👉 但是 self-attention/Transformer 是多层叠加的网络，**embedding → Transformer 层 → head → logits**
+👉 现在提前改好结构，**拆出 embedding 和 head**，为后续加复杂层打基础。
+
+---
+
+### 📌 结果
+
+改完之后，forward 流程变成：
+
+```text
+idx (B,T) → embedding (B,T,n_embed) → Linear 层 → logits (B,T,vocab_size)
+```
+
+---
+
+### 📌 这个改法好在哪里？
+
+✅ 以后 embedding 维度可以调大/小
+✅ 以后可以插入 self-attention、FFN 层
+✅ 整个模型结构更接近 GPT 风格
+✅ 代码更通用
+
+---
+
+### 📌 总结一句话
+
+👉 这一段其实是在 **把 bigram 模型结构升级成 Transformer-ready 结构**，
+👉 embedding → Linear → logits，
+👉 为后面加 self-attention 做准备。
+
+---
+
+如果你还想，我可以继续补充讲讲：
+
+✅ 为什么 embedding\_dim 不需要等于 vocab\_size？
+✅ 这个 Linear 层和 Transformer 最后一层 head 有什么关系？
+✅ 为什么 GPT2 也用 embedding + lm\_head 结构？
+
+要不要我再帮你详细讲讲？🌟
+
 
 # positional encoding
 
