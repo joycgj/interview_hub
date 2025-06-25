@@ -3985,6 +3985,87 @@ a directed graph we really have because the back size is four we really have fou
 those eight nodes only talk to each other but in total there's like 32 nodes that are being processed uh but there's
 um sort of four separate pools of eight you can look at it that way the next note is that here in the case of
 
+当然可以！这一段在讲 **batch 维度（batch dimension）和 attention 的关系**，我来帮你解释一下 👇：
+
+---
+
+### 📌 1️⃣ batch 维度里的例子是“独立的”
+
+* 在神经网络训练时，通常我们用 **batch 训练**：
+
+```
+batch_size = 4
+```
+
+* 意思是 **每次输入 4 个样本（序列）**，一起训练，效率更高。
+
+---
+
+### 📌 2️⃣ Self-Attention 里，batch 之间互不影响
+
+* 注意力机制 **不会跨 batch 通信**：
+
+```
+batch 0 的 token 们  
+batch 1 的 token 们  
+batch 2 的 token 们  
+batch 3 的 token 们
+```
+
+* 彼此之间 **完全独立**，它们的 Q/K/V 计算，softmax 计算，
+  全部只在各自 batch 内部进行。
+
+---
+
+### 📌 3️⃣ 矩阵乘法怎么做？
+
+```
+wei = q @ k.T  # 这里是 batched matrix multiply
+```
+
+意思是：
+
+* PyTorch 会对 **batch 里的每一条序列**
+* 分别做 attention 计算，**并行执行**，但互不影响
+
+---
+
+### 📌 4️⃣ 图的类比
+
+讲者打了个比方：
+
+* 这里 **batch\_size=4**，**block\_size=8**：
+
+就像 **4 个独立的小图**，每个小图里有 8 个节点：
+
+```
+图1：8个token  
+图2：8个token  
+图3：8个token  
+图4：8个token
+```
+
+→ 每个图内部 token 之间有 attention，
+→ 不同图之间完全没有通信。
+
+---
+
+### 📌 5️⃣ 总结一句话
+
+**batch 维度里的序列是独立计算 attention 的，**
+**batch 只是为了并行计算加速，互不通信。**
+
+---
+
+如果你想，我还可以帮你讲：
+
+✅ 为什么 batch 设计成这样？
+✅ 怎么理解 batched matrix multiply？
+✅ 有没有场景需要跨 batch attention？
+
+要不要我继续帮你讲？🌟
+
+
 # note 4: encoder blocks vs. decoder blocks
 
 language modeling uh we have this specific uh structure of directed graph where the future tokens will not
@@ -4001,6 +4082,107 @@ to the Past because they would give away the answer and so basically in encoder 
 would delete this allow all the noes to talk in decoder blocks this will always be present so that you have this
 triangular structure uh but both are allowed and attention doesn't care attention supports arbitrary connectivity between nodes the next
 
+当然可以！这一段在讲 **encoder block 和 decoder block 的区别**，我来帮你详细解释 👇：
+
+---
+
+### 📌 1️⃣ Language Model 里的图结构是“单向的”
+
+* 在语言模型（Language Modeling）任务里：
+
+```
+token 1 → token 1  
+token 2 → token 1,2  
+token 3 → token 1,2,3  
+...
+```
+
+👉 未来 token **不能看到未来**
+👉 只能看到“过去 + 当前”
+
+* 因为是 **自回归（autoregressive）**，一步步生成，不允许作弊。
+
+---
+
+### 📌 2️⃣ mask 就是实现“未来不能看”
+
+```python
+wei = wei.masked_fill(tril == 0, float('-inf'))
+```
+
+这个 tril 三角 mask 保证：
+
+```
+token_i 只看 <= i 的 token  
+不会看到 i+1 以后
+```
+
+---
+
+### 📌 3️⃣ Decoder Block 是什么？
+
+👉 这种加了 mask 的 block，叫：
+
+```
+Decoder Block
+```
+
+原因：
+
+* 它“解码语言”，一步步预测 token，必须阻止未来信息泄露。
+
+---
+
+### 📌 4️⃣ Encoder Block 是什么？
+
+如果做的是：
+
+✅ 情感分析
+✅ 文本分类
+✅ 机器翻译编码阶段
+✅ 图像处理
+
+👉 通常希望 **所有 token 互相都能看**，
+👉 就不用加 mask，直接让 token 之间全连接：
+
+```
+wei = q @ k.transpose(-2, -1)
+# 不需要 masked_fill
+```
+
+→ 这种叫：
+
+```
+Encoder Block
+```
+
+---
+
+### 📌 5️⃣ 核心区别
+
+| Block 类型      | 是否 Mask  | 通信结构       | 用途          |
+| ------------- | -------- | ---------- | ----------- |
+| Encoder Block | 不加 Mask  | 全 token 互看 | 情感分析、机器翻译编码 |
+| Decoder Block | 加三角 Mask | 只能看过去 + 当前 | 语言模型、文本生成   |
+
+---
+
+### 📌 6️⃣ 总结一句话
+
+👉 Encoder Block：所有 token 互看，不加 mask
+👉 Decoder Block：未来 token 不能看，加 mask，保持自回归
+
+---
+
+如果你想，我还可以帮你讲：
+
+✅ Transformer 里的 Encoder-Decoder 结构是啥？
+✅ GPT 是纯 Decoder，BERT 是纯 Encoder，为什么？
+✅ Encoder 和 Decoder 怎么组合用？
+
+要不要我继续展开讲？🌟
+
+
 # note 5: attention vs. self-attention vs. cross-attention
 
 thing I wanted to comment on is you keep me you keep hearing me say attention self attention Etc there's actually also
@@ -4016,6 +4198,102 @@ we're reading off information from the side so cross attention is used when ther
 like to pull information from into our nodes and it's self attention if we just have nodes that would like to look at
 each other and talk to each other so this attention here happens to be self
 attention but in principle um attention is a lot more General okay and the last
+
+当然可以！这一段讲的是 **attention / self-attention / cross-attention 有什么区别**，我来帮你详细解释 👇：
+
+---
+
+### 📌 1️⃣ Self-Attention 是什么？
+
+👉 当前例子中，我们实现的是 **Self-Attention**，
+👉 为什么叫 “Self”？
+
+因为：
+
+```
+Q / K / V 全部来自同一个输入 X
+```
+
+也就是说：
+
+```
+Q = Linear_Q(X)  
+K = Linear_K(X)  
+V = Linear_V(X)
+```
+
+也就是：
+
+👉 token 们自己看自己、彼此通信，**自我关注（self）**
+
+---
+
+### 📌 2️⃣ Cross-Attention 是什么？
+
+👉 “Cross” 意思是 “跨来源”
+
+具体来说：
+
+```
+Q 来自 X  
+K / V 来自 另一个 Y
+```
+
+---
+
+### 📌 3️⃣ 举例场景
+
+✅ **Encoder-Decoder Transformer**（比如机器翻译）：
+
+```
+- 编码器 encoder → 得到 Y（context） → K/V  
+- 解码器 decoder → 当前 X → Q  
+- Cross-Attention：decoder 当前 token 用 Q 去看 encoder 产生的 K/V
+```
+
+---
+
+### 📌 4️⃣ 通俗理解
+
+| 类型              | Q 来自哪里 | K/V 来自哪里 | 举例                               |
+| --------------- | ------ | -------- | -------------------------------- |
+| Self-Attention  | X      | X        | GPT / BERT                       |
+| Cross-Attention | X      | Y（别的来源）  | Encoder-Decoder Transformer 机器翻译 |
+
+---
+
+### 📌 5️⃣ 为什么需要 Cross-Attention？
+
+因为有些任务：
+
+✅ Decoder 需要 **参考外部信息**，比如：
+
+* Encoder 产生的上下文
+* 图像编码的结果
+* 其他 modality 信息（多模态）
+
+这时候，**Q 和 K/V 不同源**，就是 Cross-Attention。
+
+---
+
+### 📌 6️⃣ 总结一句话
+
+**Self-Attention**：
+👉 token 自己看自己，Q/K/V 同源
+
+**Cross-Attention**：
+👉 token 从“外部”提信息，Q ≠ K/V
+
+---
+
+如果你想，我还可以帮你继续讲：
+
+✅ 为什么 Transformer 大模型（GPT-4V 等）会用 Cross-Attention？
+✅ BERT 和 GPT 为什么只用 Self-Attention？
+✅ Cross-Attention 怎么用来做“图文结合”？
+
+要不要我继续展开讲？🌟
+
 
 # note 6: "scaled" self-attention. why divide by sqrt(head_size)
 
@@ -4040,6 +4318,123 @@ number here is the highest and so um basically we don't want these values to be 
 initialization otherwise softmax will be way too peaky and um you're basically aggregating um information from like a
 single node every node just agregates information from a single other node that's not what we want especially at
 initialization and so the scaling is used just to control the variance at initialization okay so having said all
+
+当然可以！这段在讲 **为什么 Self-Attention 要除以 √head\_size，叫做“scaled attention”**，我来帮你详细解释 👇：
+
+---
+
+### 📌 1️⃣ 原始 Attention 公式
+
+到目前为止我们实现的 attention 是：
+
+```
+wei = q @ k.T   → (B, T, T)  
+wei = softmax(wei)  
+out = wei @ v
+```
+
+---
+
+### 📌 2️⃣ 论文里多了一个除法：
+
+```
+wei = (q @ k.T) / sqrt(head_size)
+```
+
+这里的 **head\_size = d\_k**
+也就是 q 和 k 的维度（比如 16）
+
+---
+
+### 📌 3️⃣ 为什么要除？
+
+核心问题：
+
+👉 如果 **q / k** 向量是 “零均值，单位方差（unit Gaussian）”，
+👉 那么 **q @ k.T** 的输出，方差会是 **head\_size 大小**。
+
+因为：
+
+```
+Var(q ⋅ k) ~ head_size
+```
+
+---
+
+### 📌 4️⃣ 如果不除，softmax 会出什么问题？
+
+* softmax 对 wei 做指数运算：
+
+```
+softmax(x) = exp(x) / sum(exp(x))
+```
+
+* 如果 wei 很大（比如 mean=0，但 variance 很大）：
+
+👉 softmax 会变得非常“尖锐（peaky）”：
+
+```
+softmax ≈ one-hot  
+→ 只看一个 token，丢失其余信息
+```
+
+---
+
+### 📌 5️⃣ 为什么 variance 大？
+
+q @ k.T：
+
+```
+q.shape = (T, head_size)  
+k.shape = (T, head_size)
+```
+
+q\_i ⋅ k\_j 是 **head\_size 个数的乘积求和**，
+→ 方差 ≈ head\_size
+
+---
+
+### 📌 6️⃣ 除以 sqrt(head\_size) 有什么用？
+
+👉 这样可以把 variance 控制到 ≈ 1，
+👉 softmax 输出会“平滑、扩散”一些，不会一上来就变成 one-hot
+
+---
+
+### 📌 7️⃣ 举例说明
+
+假设：
+
+```
+wei = [0.1, 0.2, 0.3]
+softmax(wei) → 比较均匀
+```
+
+但如果：
+
+```
+wei = [10, 20, 30]
+softmax(wei) → 变得非常 one-hot
+```
+
+---
+
+### 📌 8️⃣ 总结一句话
+
+👉 除以 √head\_size 是为了 **控制 q⋅k.T 的方差**，
+👉 防止 softmax 输出过于尖锐，避免一开始就 over-confident，
+👉 这样模型初始化时更容易收敛、更稳定。
+
+---
+
+如果你想，我还可以帮你继续讲：
+
+✅ 为什么 head\_size 越大越要除？
+✅ 如果不用这个 scale 会发生什么？
+✅ 有没有别的方法来 normalize attention？
+
+要不要我继续展开讲？🌟
+
 
 # inserting a single self-attention block to our network
 
