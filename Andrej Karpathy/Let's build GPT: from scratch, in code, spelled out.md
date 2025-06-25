@@ -3101,6 +3101,143 @@ so it doesn't matter if you're in the fifth position the second position or wher
 currently wouldn't help uh but as we work on the self attention block we'll see that this starts to matter
 okay so now we get the Crux of self attention so this is probably the most important part of this video to
 
+当然可以，这一段讲的其实是 **“为什么要加 positional encoding，怎么加 positional embedding”**，我来详细解释一下：
+
+---
+
+### 📌 之前模型里，tokens 是怎么编码的？
+
+* 原来我们是：
+
+```text
+idx → token_embedding_table → 得到 token embedding
+```
+
+* 也就是说，**每个 token 是通过 token id → 查表 → 得到 embedding 向量**，
+* 这个 embedding 只编码了 **token 是什么字/词**，
+* 但是 **“它在句子里的位置”** 没有编码进去！
+
+---
+
+### 📌 为什么要加 positional encoding？
+
+👉 因为：
+
+* Transformer 是 “全并行” 计算的，它 **不关心 token 顺序**。
+* 如果不给模型额外信息，它“看不出”这个 token 是第1个、第2个、第5个……
+
+**而语言模型是“有顺序”的任务**：
+
+* "I love you" 和 "You love I" 是不一样的句子。
+
+👉 所以需要 **告诉模型：每个 token 处在哪个位置**。
+
+---
+
+### 📌 怎么加 positional embedding？
+
+```python
+self.position_embedding_table = nn.Embedding(block_size, n_embed)
+```
+
+* 新增一个 **position embedding 表**，shape 是：
+
+```
+(block_size, n_embed)
+```
+
+也就是说：
+
+* 位置 0 → 一个 n\_embed 维向量
+* 位置 1 → 一个 n\_embed 维向量
+* ...
+* 位置 block\_size-1 → 一个 n\_embed 维向量
+
+---
+
+### 📌 怎么取出 position embedding？
+
+```python
+pos_emb = self.position_embedding_table(torch.arange(T))
+```
+
+* `T` 是当前序列长度
+* 生成 0 \~ T-1 的整数序列 → 每个位置一个 id
+* 喂进 position\_embedding\_table，得到：
+
+```
+(T, n_embed)  → 每个位置的 embedding
+```
+
+---
+
+### 📌 怎么加到 token embedding 上？
+
+```python
+x = tok_emb + pos_emb  # broadcasting 自动处理
+```
+
+* tok\_emb 是：
+
+```
+(B, T, n_embed)
+```
+
+* pos\_emb 是：
+
+```
+(T, n_embed)
+```
+
+* **通过 broadcasting**，pos\_emb 会自动扩展到：
+
+```
+(B, T, n_embed)
+```
+
+* 然后 **逐元素相加**：
+
+```
+x[b, t, :] = tok_emb[b, t, :] + pos_emb[t, :]
+```
+
+---
+
+### 📌 加 positional embedding 有什么用？
+
+✅ 让模型知道 “当前 token 在句子中的位置”
+✅ Transformer 本身是 permutation-invariant（无序的），需要 positional embedding 才能建模顺序
+
+---
+
+### 📌 为什么 bigram 模型暂时还没用上？
+
+👉 现在模型还是 bigram 模型 → 只看当前 token，不看上下文
+👉 **位置信息暂时没用**（看不出效果）
+
+✅ 但是 **马上要加 self-attention**，self-attention 是全局看的 → 位置就很重要了！
+✅ 所以提前加好 position embedding，准备后面用！
+
+---
+
+### 📌 总结一句话
+
+👉 这一段讲的是：
+
+**“加 positional embedding，告诉模型 token 在句子里的位置，
+这样 Transformer 才能建模顺序！”**
+
+---
+
+如果你还想，我还可以帮你讲讲：
+
+✅ positional encoding 和 positional embedding 有什么区别？
+✅ 为什么用 nn.Embedding 而不是固定的 sin/cos？
+✅ GPT/Transformer 里实际是怎么加的？
+
+要不要我帮你详细讲一讲？🌟
+
+
 # THE CRUX OF THE VIDEO: version 4: self-attention
 
 understand we're going to implement a small self attention for a single individual head as they're called so we
