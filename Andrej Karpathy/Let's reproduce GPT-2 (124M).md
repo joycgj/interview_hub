@@ -123,3 +123,127 @@ I experimentally enabled them on my channel yesterday. Totally optional and only
 ---
 
 如果你想我进一步归纳视频重点或拆解某一部分内容（比如“参数共享”、“Flash Attention”、“分布式训练”等），也可以告诉我。
+
+# build nanoGPT
+
+This repo holds the from-scratch reproduction of nanoGPT. The git commits were specifically kept step by step and clean so that one can easily walk through the git commit history to see it built slowly. Additionally, there is an accompanying video lecture on YouTube where you can see me introduce each commit and explain the pieces along the way.
+
+We basically start from an empty file and work our way to a reproduction of the GPT-2 (124M) model. If you have more patience or money, the code can also reproduce the GPT-3 models. While the GPT-2 (124M) model probably trained for quite some time back in the day (2019, ~5 years ago), today, reproducing it is a matter of ~1hr and ~$10. You'll need a cloud GPU box if you don't have enough, for that I recommend Lambda.
+
+Note that GPT-2 and GPT-3 and both simple language models, trained on internet documents, and all they do is "dream" internet documents. So this repo/video this does not cover Chat finetuning, and you can't talk to it like you can talk to ChatGPT. The finetuning process (while quite simple conceptually - SFT is just about swapping out the dataset and continuing the training) comes after this part and will be covered at a later time. For now this is the kind of stuff that the 124M model says if you prompt it with "Hello, I'm a language model," after 10B tokens of training:
+
+```
+Hello, I'm a language model, and my goal is to make English as easy and fun as possible for everyone, and to find out the different grammar rules
+Hello, I'm a language model, so the next time I go, I'll just say, I like this stuff.
+Hello, I'm a language model, and the question is, what should I do if I want to be a teacher?
+Hello, I'm a language model, and I'm an English person. In languages, "speak" is really speaking. Because for most people, there's
+```
+
+And after 40B tokens of training:
+
+```
+Hello, I'm a language model, a model of computer science, and it's a way (in mathematics) to program computer programs to do things like write
+Hello, I'm a language model, not a human. This means that I believe in my language model, as I have no experience with it yet.
+Hello, I'm a language model, but I'm talking about data. You've got to create an array of data: you've got to create that.
+Hello, I'm a language model, and all of this is about modeling and learning Python. I'm very good in syntax, however I struggle with Python due
+```
+
+Lol. Anyway, once the video comes out, this will also be a place for FAQ, and a place for fixes and errata, of which I am sure there will be a number :)
+
+For discussions and questions, please use Discussions tab, and for faster communication, have a look at my Zero To Hero Discord, channel #nanoGPT:
+
+# Video
+
+Let's reproduce GPT-2 (124M) YouTube lecture
+
+# Errata
+
+Minor cleanup, we forgot to delete register_buffer of the bias once we switched to flash attention, fixed with a recent PR.
+
+Earlier version of PyTorch may have difficulty converting from uint16 to long. Inside load_tokens, we added npt = npt.astype(np.int32) to use numpy to convert uint16 to int32 before converting to torch tensor and then converting to long.
+
+The torch.autocast function takes an arg device_type, to which I tried to stubbornly just pass device hoping it works ok, but PyTorch actually really wants just the type and creates errors in some version of PyTorch. So we want e.g. the device cuda:3 to get stripped to cuda. Currently, device mps (Apple Silicon) would become device_type CPU, I'm not 100% sure this is the intended PyTorch way.
+
+Confusingly, model.require_backward_grad_sync is actually used by both the forward and backward pass. Moved up the line so that it also gets applied to the forward pass.
+
+# Prod
+
+For more production-grade runs that are very similar to nanoGPT, I recommend looking at the following repos:
+
+- litGPT
+- TinyLlama
+
+# FAQ
+
+# License
+
+MIT
+
+以下是你提供内容的中文翻译：
+
+---
+
+## build-nanoGPT
+
+这个仓库是对 **nanoGPT** 从零实现的复现。Git 提交历史被精心保留为一步步、干净整洁的记录，方便大家逐步查看整个构建过程。此外，我还在 YouTube 上录制了一段视频讲解，你可以看到我依次介绍每个提交，并解释其中的每个部分。
+
+我们基本上是从一个空文件开始，最终复现了 GPT-2（124M）模型。如果你有更多耐心或预算，也可以用这些代码复现 GPT-3 模型。虽然当年（2019 年，也就是大约 5 年前）训练 GPT-2（124M）可能需要很长时间，但如今复现它只需要大约 1 小时和约 10 美元的成本。如果你本地没有足够的 GPU，建议使用云端 GPU，比如 [Lambda](https://lambdalabs.com)。
+
+注意：GPT-2 和 GPT-3 都是简单的语言模型，它们的训练数据来自互联网文档，而它们的作用只是“梦想”互联网文档（即模拟互联网内容的生成）。因此，这个仓库/视频并不涉及 Chat 微调，所以你无法像使用 ChatGPT 一样“与它对话”。微调流程（虽然概念上很简单——比如监督式微调 SFT 就是更换数据集并继续训练）属于后续内容，将在以后讲解。
+
+目前，以下是我们用“Hello, I'm a language model”作为提示词，在训练了 **100 亿个 token** 后，模型的输出示例：
+
+> Hello, I'm a language model, and my goal is to make English as easy and fun as possible for everyone, and to find out the different grammar rules
+> Hello, I'm a language model, so the next time I go, I'll just say, I like this stuff.
+> Hello, I'm a language model, and the question is, what should I do if I want to be a teacher?
+> Hello, I'm a language model, and I'm an English person. In languages, "speak" is really speaking. Because for most people, there's
+
+而在训练了 **400 亿个 token** 后的输出是：
+
+> Hello, I'm a language model, a model of computer science, and it's a way (in mathematics) to program computer programs to do things like write
+> Hello, I'm a language model, not a human. This means that I believe in my language model, as I have no experience with it yet.
+> Hello, I'm a language model, but I'm talking about data. You've got to create an array of data: you've got to create that.
+> Hello, I'm a language model, and all of this is about modeling and learning Python. I'm very good in syntax, however I struggle with Python due
+
+哈哈，总之，视频发布后，这里也会成为 FAQ 的整理地，以及发布修复和勘误（应该会有不少 :)）。
+
+如有问题或讨论，请使用 GitHub 的 Discussions 页面。若想更快交流，也可以加入我在 Zero To Hero 系列中的 Discord，频道是 **#nanoGPT**。
+
+---
+
+### 🎬 视频
+
+* [Let's reproduce GPT-2 (124M)](https://www.youtube.com/watch?v=kCc8FmEb1nY) YouTube 讲解视频
+
+---
+
+### ⚠️ 勘误（Errata）
+
+* 有个小问题是我们在启用 flash attention 后，忘记删除 `bias` 的 `register_buffer`，已通过近期的 PR 修复。
+* 较旧版本的 PyTorch 在将 `uint16` 转为 `long` 时可能有问题，我们在 `load_tokens` 函数中增加了一行：
+  `npt = npt.astype(np.int32)`
+  先用 NumPy 转为 int32，再转为 torch tensor，最后转为 long。
+* `torch.autocast` 函数需要一个 `device_type` 参数，我最初直接传了 `device`，结果在某些 PyTorch 版本中报错。正确方式是将 `cuda:3` 这样的设备简化为 `cuda`。
+* Apple Silicon 上的 `mps` 设备会被识别为 CPU 的 `device_type`，我不太确定 PyTorch 是否就是这么设计的。
+* `model.require_backward_grad_sync` 实际上在正向和反向传播中都会用到，因此我们将这行代码上移，以确保在正向传播中也生效。
+
+---
+
+### 🚀 生产级建议
+
+如果你想进行更加“生产级”的训练，这些仓库与 nanoGPT 非常类似，推荐查看：
+
+* [litGPT](https://github.com/Lightning-AI/litgpt)
+* [TinyLlama](https://github.com/jzhang38/TinyLlama)
+
+---
+
+### 📄 License
+
+MIT 许可证
+
+---
+
+如果你需要我帮你归纳重点步骤，或者翻译相关代码结构，我也可以帮忙。
+
+
