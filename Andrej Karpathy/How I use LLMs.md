@@ -127,6 +127,21 @@ tasks so understand that the ecosystem is fairly rich but for now I'm going to s
 incumbent and is most feature Rich but I'm going to show you others over time as well so let's start with chachy PT
 what is this text box text box and what do we put in here okay so the most basic form of interaction with the language
 
+### 介绍：快速发展的LLM生态系统
+
+大家好，在这段视频中，我想继续我们的面向普通观众的大语言模型（LLM）系列，像是 **ChatGPT**。在之前的视频中，我深入探讨了LLM的底层原理，你可以在我的YouTube频道找到这个内容，我们讲解了这些模型是如何训练的，并且如何思考它们的认知和心理学。在这段视频中，我将讨论这些工具的更多实际应用，展示很多例子，带你走过各种设置，并且分享我如何在日常生活和工作中使用这些工具，以及你如何也能将它们应用到自己的生活中。
+
+首先，我打开了 **ChatGPT** 的网页，如你所知，ChatGPT 是由 OpenAI 开发并在 2022 年推出的。这是第一次人们可以通过文本接口直接与大型语言模型进行交流，这一现象迅速在互联网上传播开来，成为了一个轰动的大事件。自那时以来，LLM的生态系统增长了很多，所以今天我将展示许多 ChatGPT 的使用案例，但现在是2025年，已经有许多类似于 ChatGPT 的应用程序，并且这个生态系统变得更加庞大和丰富。
+
+特别是 **OpenAI 的 ChatGPT** 被认为是“原始大佬”型的存在，它不仅是最受欢迎的，功能也最为丰富，因为它存在的时间最长。不过，现在也有很多其他类似 ChatGPT 的工具，甚至有些工具提供了独特的体验，是 ChatGPT 所没有的，我们会看到这些例子。
+
+例如，大型科技公司也都推出了类似 ChatGPT 的产品，比如 Google 的 **Gemini**、Meta 的 **LLaMA**、Microsoft 的 **Copilot** 等。同时，也有很多初创公司推出了自己的工具，例如 **Anthropic** 推出的 **Claude**，**Elon Musk** 领导的公司 **xAI** 推出的 **Grok** 等，此外还有很多其他公司。这些公司基本上都来自美国，像是 **DeepSeek** 是中国的公司，**LChat** 则是法国的公司。
+
+那么我们在哪里能找到这些工具，并且如何追踪它们呢？首先，它们都可以在互联网上找到，另外也有一些排行榜。在之前的视频中，我提到过 **Chatbot Arena** 这个排行榜，它展示了不同模型的排名和它们的 ELO 分数，这是你可以追踪这些工具的一个地方。此外，还有 **Scale 的 Leaderboard**，这里你可以看到不同模型的表现，以及它们在各类任务中的排名。
+
+总体来说，LLM生态系统是相当丰富的，但目前我将从 OpenAI 开始，因为它是现阶段最成熟、功能最全的。我之后会逐步展示其他模型。让我们从 **ChatGPT** 开始，它的文本框是什么样的，它的输入方式又是什么？
+
+
 # ChatGPT interaction under the hood
 
 model is that we give it text and then we get some typ text back in response so as an example we can ask to get a ha cou
@@ -228,6 +243,46 @@ pre-training and this knowledge is a little bit out of date and it's a probabili
 the things that uh probably are mentioned very frequently on the internet I will have a lot better better recollection of than some of the things
 that are discussed very rarely very similar to what you might expect with a human so let's not talk about some of
 the repercussions of this entity and how we can talk to it and what kinds of things we can expect from it now I'd
+
+### ChatGPT的底层交互机制
+
+在这部分，我们讨论的是如何与 **ChatGPT** 进行交互，以及它背后发生的事情。首先，我们给模型输入文本，然后它会根据输入生成回复文本。比如说，我们可以请求它写一首关于“大型语言模型是什么感觉”的俳句。对于像这种要求，模型非常擅长生成文本，像是俳句、诗歌、求职信、简历或电子邮件回复等，都是它的强项。
+
+当我们请求模型写俳句时，它的回应可能像这样：
+
+> “文字如溪流般流动，
+> 无尽的回声，
+> 思想的幽灵，
+> 无形无见。”
+
+这个回答有些戏剧化，但它展示了与我们想象中的对话一样的“聊天气泡”样式。在 **ChatGPT** 中，实际上发生的过程是这样的：用户的查询和模型的响应都被拆解成小块文本单元，这些单元叫做 **token（标记）**。因此，用户输入的文本和模型生成的响应都在底层以一维的 token 序列呈现。
+
+我们可以通过像 **Tiktokenizer** 这样的工具查看这些 tokens。通过选择 GPT-4 模型并粘贴文本，我们可以看到模型实际上是如何接收输入的，文本被拆分成 15 个 token，这些是模型看到的文本片段。模型的词汇量大约有 20 万个可能的 tokens，每个 token 都有一个唯一的 ID。
+
+当用户输入的文本（例如我们的查询）变成 token 后，模型会返回一段相应的 token 序列，假设是 19 个 token，模型的回答就这样通过这些 token 构成了一个完整的回应。
+
+在实际的对话中，不只是单纯的查询和响应。为了保持对话的连续性和上下文，ChatGPT 使用一种 **对话格式**，其中每一轮交流都被划分为“用户消息”和“助手消息”。每个消息块都包含一些特殊的 token 标识，表示谁在说话。
+
+你可以把对话看作是在一个 **token 流** 上进行的，双方轮流输入 token。当你点击“新聊天”时，token 序列就会被重置，重新开始新的对话。
+
+我脑海中关于与模型交互的图示是这样的：当点击“新聊天”时，我们开始了一个新的 token 序列，用户输入 token 后，模型会根据这些 token 生成新的回应。当模型回应完成时，它会通过一个特殊的 token 标识“结束”，然后控制权交还给用户。
+
+在这整个过程中，我们和模型在一起构建了一个 **上下文窗口**（即 token 流）。这个上下文窗口相当于模型的工作记忆，任何处于这个窗口中的内容都能被模型直接访问。
+
+接下来，我们讨论一下这个模型到底是什么。我们之前讲到过，模型的训练分为两个主要阶段：**预训练** 和 **后训练**。
+
+1. **预训练**：这个阶段类似于把整个互联网的数据“压缩”成一个巨大的文件（比如说 1TB 的压缩文件）。不过，文件不是完全精确的，它是 **有损的、概率性的**。模型在预训练过程中通过对大量互联网文档的学习，掌握了世界的很多知识。大致来说，预训练阶段需要消耗大量的计算资源，可能花费数千万美元。
+
+2. **后训练**：这是模型变得像一个助手的过程。在这个阶段，模型会用人类标注者准备的对话数据进行训练，使得它能够像一个助手一样，回答用户的问题。
+
+**ChatGPT** 的工作原理是：你在与一个自包含的实体互动。虽然模型拥有大量的知识（来自互联网的预训练），但它并没有外部的计算器、Python 解释器或网络浏览功能。这意味着，它只依赖于其预训练中学习到的知识，并且所有的推理都是基于这些预训练的参数。
+
+如果我们用一个比喻来总结这个过程，可以想象 **ChatGPT** 就像是一个 1TB 的压缩文件，里面包含着来自互联网的知识，这些知识在预训练阶段被压缩成了一种模糊的、概率性的存储。而模型的个性和回应方式则是通过后训练过程来塑造的。
+
+### 总结
+
+通过这种方式，你可以将 **ChatGPT** 看作是一个被压缩并且经过训练的“互联网文档生成器”，它能够根据你输入的内容预测接下来的 token，并且基于这些 token 给出合理的回应。但是它的知识有一个**截止时间**，即它的知识只到模型的训练时为止，之后发生的事情它并不知道。所以，它的回答是基于过去的知识，而不是最新的信息。
+
 
 # Basic LLM interactions examples
 
