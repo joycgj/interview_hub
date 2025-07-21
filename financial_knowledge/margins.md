@@ -9,7 +9,7 @@
 ### **计算公式**：
 
 $$
-\text{Gross Margin（毛利率）} = \frac{\text{Gross Profit（毛利润）}}{\text{Revenue（收入）}} \times 100\%
+\text{Gross Margin（毛利率）} = \frac{\text{Gross Profit（毛利润）}}{\text{Revenue（收入）}} \times 100%
 $$
 
 其中：
