@@ -52,8 +52,18 @@ LRU/LFU
 - 0 <= value <= 10<sup>5</sup>
 - 最多调用 2 * 10<sup>5</sup> 次 get 和 put
 
+## 最优解: 哈希表 + 自定义双向链表 
+
+- 时间复杂度:get和put均为O(1)
+- 空间复杂度O(n)
+
+核心思想:
+- 自定义双向链表:维护访问顺序(头节点为最新，尾节点为最旧)
+- 哈希表:存储键到节点的映射，实现 O(1) 访问
+ 
 ```
 class LRUCache {
+    // 自定义双向链表节点
     private static class Node {
         int key, value;
         Node next, prev;
@@ -63,18 +73,20 @@ class LRUCache {
         }
     }
 
+    // 自定义双向链表
     private static class DoublyLinkedList {
         Node head, tail;
         int size;
 
         DoublyLinkedList() {
-            head = new Node(-1, -1);
-            tail = new Node(-1, -1);
+            head = new Node(-1, -1); // 虚拟头结点
+            tail = new Node(-1, -1); // 虚拟尾节点
             head.next = tail;
             tail.prev = head;
             size = 0;    
         }
 
+        // 添加节点到链表头部（最新访问）
         void addToHead(Node node) {
             node.next = head.next;
             node.prev = head;
@@ -83,12 +95,14 @@ class LRUCache {
             size++;
         }   
 
+        // 移除指定节点
         void removeNode(Node node) {
-            node.next.prev = node.prev;
             node.prev.next = node.next;  
+            node.next.prev = node.prev;
             size--;  
         }
 
+        // 移除链表尾部节点（最久未使用）
         Node removeTail() {
             if (size == 0) {
                 return null;
@@ -101,8 +115,8 @@ class LRUCache {
     }
 
     private final int capacity;
-    private final Map<Integer, Node> keyMap;
-    private final DoublyLinkedList list;
+    private final Map<Integer, Node> keyMap;    // 键到节点的映射
+    private final DoublyLinkedList list;        // 维护访问顺序的双向链表
 
     public LRUCache(int capacity) {
         this.capacity = capacity; 
@@ -116,6 +130,7 @@ class LRUCache {
         }
 
         Node node = keyMap.get(key);
+        // 移动到链表头部表示最新访问
         list.removeNode(node);
         list.addToHead(node);
         return node.value;
@@ -123,15 +138,17 @@ class LRUCache {
     
     public void put(int key, int value) {
         if (keyMap.containsKey(key)) {
+            // 更新值并移动到链表头部
             Node node = keyMap.get(key);
             node.value = value;
             list.removeNode(node);
             list.addToHead(node);           
         } else {
-            if (list.size == capacity) {
-                Node node = list.removeTail();
-                keyMap.remove(node.key);
+            if (keyMap.size() == capacity) {
+                Node tailNode = list.removeTail();
+                keyMap.remove(tailNode.key);
             }
+            // 添加新节点
             Node newNode = new Node(key, value);
             keyMap.put(key, newNode);
             list.addToHead(newNode);
@@ -139,3 +156,11 @@ class LRUCache {
     }
 }
 ```
+
+关键点:
+
+- 1.双向链表: DoublyLinkedList类封装了节点的插入、删除和移除逻辑。
+- 2.哈希表: keyMap 实现 O(1)的键值查找。
+- 3.虚拟头尾节点:简化链表操作，避免空指针检查。
+
+优点:严格满足0(1)时间复杂度要求，代码结构清晰，
