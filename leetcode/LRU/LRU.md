@@ -49,8 +49,8 @@ LRU/LFU
 
 - 1 <= capacity <= 3000
 - 0 <= key <= 10000
-- 0 <= value <= 105
-- 最多调用 2 * 105 次 get 和 put
+- 0 <= value <= 10<sup>5</sup>
+- 最多调用 2 * 10<sup>5</sup> 次 get 和 put
 
 ```
 class LRUCache {
