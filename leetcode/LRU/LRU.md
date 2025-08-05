@@ -271,8 +271,8 @@ class LFUCache {
         }
 
         void removeNode(Node node) {
+            node.prev.next = node.next;            
             node.next.prev = node.prev;
-            node.prev.next = node.next;
             size--;
         }
 
@@ -287,9 +287,9 @@ class LFUCache {
         }
     }
 
-    int capacity, minFreq;
-    Map<Integer, Node> keyMap;
-    Map<Integer, DoublyLinkedList> freqMap;
+    private int capacity, minFreq;
+    private Map<Integer, Node> keyMap;
+    private Map<Integer, DoublyLinkedList> freqMap;
 
     public LFUCache(int capacity) {
         this.capacity = capacity;
@@ -302,6 +302,7 @@ class LFUCache {
         if (!keyMap.containsKey(key)) {
             return -1;
         } 
+        
         Node node = keyMap.get(key);
         updateFreq(node);
         return node.value;   
