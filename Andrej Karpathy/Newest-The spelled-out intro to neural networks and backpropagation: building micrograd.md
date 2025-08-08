@@ -3349,3 +3349,84 @@ my_package.func_b()
 ### 小结：
 
 `__init__.py` 文件的主要作用是标识目录为一个 Python 包，并可以包含初始化代码和组织模块。
+
+
+# python -m pytest
+
+命令 `python -m pytest` 是用来运行 Python 测试框架 `pytest` 的命令。让我们详细解释一下这个命令：
+
+### 1. **`python -m` 的含义**：
+
+`python -m` 是一个 Python 命令行选项，它允许你通过模块名来执行一个 Python 模块，而不是直接运行一个 Python 脚本文件。例如，`python -m pytest` 命令会调用 `pytest` 模块来运行测试，而不需要你指定 `pytest` 的完整路径。
+
+### 2. **`pytest`**：
+
+`pytest` 是一个功能强大的 Python 测试框架，用于自动化测试。它可以帮助你编写简单的单元测试、功能测试以及集成测试。`pytest` 会自动发现和执行测试函数，并生成测试报告。
+
+当你在项目中执行 `python -m pytest` 时，它会：
+
+* 自动寻找以 `test_` 开头的函数或文件，并运行它们。
+* 检查并报告测试结果（成功、失败、错误等）。
+* 提供详细的错误信息，帮助你调试。
+
+### 3. **常见的用法**：
+
+#### 运行所有测试：
+
+```bash
+python -m pytest
+```
+
+这个命令会自动扫描当前目录及子目录下的所有以 `test_` 开头的文件，并执行其中的测试函数。
+
+#### 运行特定的测试文件：
+
+```bash
+python -m pytest test_example.py
+```
+
+这将只运行 `test_example.py` 中的测试。
+
+#### 运行特定的测试函数：
+
+```bash
+python -m pytest test_example.py::test_function
+```
+
+如果你只想运行 `test_example.py` 文件中的特定测试函数 `test_function`，可以使用这种方式。
+
+#### 以详细模式运行：
+
+```bash
+python -m pytest -v
+```
+
+这个命令会提供更详细的输出，显示每个测试的执行情况和详细的错误信息。
+
+### 4. **总结**：
+
+* `python -m pytest` 是通过 Python 的模块机制运行 `pytest` 测试框架，通常用于运行项目中的自动化测试。
+* `pytest` 自动发现以 `test_` 开头的文件和函数，并执行测试，生成报告，帮助开发人员确保代码质量。
+
+```
+(py310_micrograd) adeMacBook-Pro-2:micrograd cgj$ python -m pytest
+========================================================================= test session starts =========================================================================
+platform darwin -- Python 3.10.18, pytest-8.4.1, pluggy-1.6.0
+rootdir: /Users/cgj/llm_work/micrograd
+collected 2 items                                                                                                                                                     
+
+test/test_engine.py ..                                                                                                                                          [100%]
+
+========================================================================= 2 passed in 17.90s ==========================================================================
+(py310_micrograd) adeMacBook-Pro-2:micrograd cgj$ python -m pytest -v 
+========================================================================= test session starts =========================================================================
+platform darwin -- Python 3.10.18, pytest-8.4.1, pluggy-1.6.0 -- /opt/anaconda3/envs/py310_micrograd/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/cgj/llm_work/micrograd
+collected 2 items                                                                                                                                                     
+
+test/test_engine.py::test_sanity_check PASSED                                                                                                                   [ 50%]
+test/test_engine.py::test_more_ops PASSED                                                                                                                       [100%]
+
+========================================================================== 2 passed in 2.47s ==========================================================================
+```
