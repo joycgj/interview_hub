@@ -4,8 +4,8 @@
 - [makemore](#makemore-1)
     - [使用方法](#使用方法)
     - [许可证](#许可证)
-- [makemore.py introduction](#makemorepy-introduction)
-- [The spelled-out intro to language modeling: building makemore 视频介绍](#the-spelled-out-intro-to-language-modeling-building-makemore-视频介绍)
+- [comments in makemore.py](#comments-in-makemorepy)
+- [The spelled-out intro to language modeling: building makemore](#the-spelled-out-intro-to-language-modeling-building-makemore)
 - [intro](#intro)
 - [介绍](#介绍)
 - [reading and exploring the dataset](#reading-and-exploring-the-dataset)
@@ -383,7 +383,7 @@ lucianno
 
 MIT
 
-# makemore.py introduction
+# comments in makemore.py
 
 you give this script some words (one per line) and it will generate more things like it.
 uses super state of the art Transformer AI tech
@@ -407,7 +407,7 @@ Changes from minGPT:
 * 我移除了 dropout 层，因为我们在这里训练的模型很小，在这个阶段和规模下不需要。
 * 我移除了权重衰减以及关于哪些参数需要衰减、哪些不需要的所有复杂性。我认为在我们操作的规模下，这不会产生巨大差异。
 
-# The spelled-out intro to language modeling: building makemore 视频介绍
+# The spelled-out intro to language modeling: building makemore
 
 We implement a bigram character-level language model, which we will further complexify in followup videos into a modern Transformer language model, like GPT. In this video, the focus is on (1) introducing torch.Tensor and its subtleties and use in efficiently evaluating neural networks and (2) the overall framework of language modeling that includes model training, sampling, and the evaluation of a loss (e.g. the negative log likelihood for classification).
 
