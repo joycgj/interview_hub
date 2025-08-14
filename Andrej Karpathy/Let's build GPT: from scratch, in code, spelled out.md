@@ -1327,6 +1327,56 @@ logits.shape == (B, T, C)
 
 如果你愿意，我可以画一张 3D 张量的结构图，把 batch、time、channel 三个维度的含义直观地标出来，这样你一眼就能看出 channel 在 NLP 里对应的是什么。你要我画吗？
 
+logits = logits[:, -1, :] # becomes (B, C) 
+
+详细解释一下
+
+这行代码是在**从三维张量中取出“最后一个时间步”的所有预测分数**，并把形状从 `(B, T, C)` 变成 `(B, C)`：
+
+```python
+logits = logits[:, -1, :]  # 由 (B, T, C) → (B, C)
+```
+
+详解要点：
+
+* 输入 `logits` 的形状是 `(B, T, C)`
+
+  * B：batch 大小（一次并行的序列条数）
+  * T：time 步数（序列长度）
+  * C：channel（每个位置的类别/词表大小，对应每个 token 的logits）
+
+* 索引语义
+
+  * `:` 取该维度**所有**元素
+  * `-1` 表示该维度**最后一个索引**
+  * 所以 `[:, -1, :]` 表示：对每个样本（B 维全取），在时间维只要**最后一个位置**，并取该位置上的**所有通道**（C 维全取）
+
+* 维度“降一维”
+
+  * 在 PyTorch 里，对某一维使用**单个整数索引**（这里是 `-1`）会**移除**这一维度
+  * 因此 `(B, T, C)` 经过 `[:, -1, :]` 后，时间维被去掉，得到 `(B, C)`
+  * 等价写法：`logits = logits.select(dim=1, index=-1)`
+
+* 为什么要取最后一个时间步
+
+  * 自回归生成时，我们只需要“当前上下文末尾之后的下一个 token”的分布
+  * 模型会给出每个时间位置的预测，但用于采样下一个 token 的，正是**序列最后一个位置的 logits**
+
+* 与保留维度的区别
+
+  * 如果想**保留**时间维（便于某些拼接操作），可写：`logits = logits[:, -1:, :]`，形状会是 `(B, 1, C)`
+  * 但通常为了后面做 `softmax` 和 `multinomial` 更方便，这里直接用 `(B, C)`
+
+* 小例子
+
+  * 假设 `B=2, T=4, C=3`，`logits.shape == (2,4,3)`
+  * `logits[:, -1, :].shape == (2,3)`，表示每个样本在第 4 个时间步处，对 3 个类别的打分
+
+* 计算/梯度注意
+
+  * 这一步并未做任何聚合，只是**选取切片**；梯度只会从**被选中的最后一步**回传
+  * 尽管只用到了最后一步的 logits，前向时仍计算了所有时间步（为代码通用性、便于替换成看长上下文的模型）。在更高效的实现里可以做缓存，避免重复计算早先步骤的激活值（如 Transformer 的 KV cache）。
+
 
 # training the bigram model
 
@@ -1481,6 +1531,93 @@ batch_size = 32
 ✅ 为什么 bigram 不足以生成“像莎士比亚”的文本？
 
 要不要我再补充？🌟
+
+```
+batch_size = 32
+for steps in range(10000): # increase number of steps for good results...
+
+    # sample a batch of data
+    xb, yb = get_batch('train')
+
+    # evaluate the loss
+    logits, loss = m(xb, yb)
+    optimizer.zero_grad(set_to_none=True)
+    loss.backward()
+    optimizer.step()
+```
+解释一下
+
+这段代码是在用 PyTorch 训练你的语言模型，我按步骤解释：
+
+---
+
+**1. batch\_size = 32**
+
+* 每次训练时取 32 条样本作为一个批次（batch）来计算梯度。
+* 好处是梯度估计更稳定，比一次只用一个样本（SGD）噪声小，又比一次用整个数据集（全量梯度下降）效率高。
+
+---
+
+**2. for steps in range(10000):**
+
+* 训练循环，执行 10,000 次迭代（step）。
+* 每一次循环就是一次梯度更新（parameter update）。
+
+---
+
+**3. xb, yb = get\_batch('train')**
+
+* 从训练集里随机取一个批次（batch）数据。
+* `xb`（inputs）：模型的输入，形状是 `[batch_size, time_steps]`。
+* `yb`（targets）：目标输出（ground truth），也是 `[batch_size, time_steps]`。
+* 这个函数通常会从一个很长的文本整数序列中，随机截取一些连续片段作为训练样本。
+
+---
+
+**4. logits, loss = m(xb, yb)**
+
+* `m(...)` 调用模型的 `forward` 方法，返回预测结果（logits）和当前批次的损失（loss）。
+* `logits`：预测的每个时间步、每个词的得分（\[B, T, C]）。
+* `loss`：交叉熵损失，衡量预测和目标的差距。
+
+---
+
+**5. optimizer.zero\_grad(set\_to\_none=True)**
+
+* 把上一次计算的梯度清零，防止梯度累积。
+* `set_to_none=True` 会把梯度设为 `None` 而不是 `0`，可以减少内存开销和加快计算。
+
+---
+
+**6. loss.backward()**
+
+* 反向传播（Backpropagation）。
+* PyTorch 会根据损失值，自动计算每个模型参数的梯度（梯度储存在 `param.grad` 中）。
+
+---
+
+**7. optimizer.step()**
+
+* 根据当前梯度更新模型参数。
+* 具体更新方式取决于优化器类型，比如 SGD 就是 `param -= lr * grad`，Adam 会用更复杂的自适应规则更新。
+
+---
+
+**总结流程**
+每一步训练做的事情就是：
+
+1. **取一批数据**（get\_batch）
+2. **正向传播**（forward → logits, loss）
+3. **梯度清零**（zero\_grad）
+4. **反向传播**（backward）
+5. **参数更新**（step）
+
+不断重复这 5 步，模型的参数会逐渐优化，loss 也会逐渐下降。
+
+---
+
+如果你需要，我可以帮你画一张 **PyTorch 训练循环的流程图**，把 `get_batch → forward → backward → step` 的数据流和梯度流直观表示出来，这样更容易记住。
+你要我画吗？
 
 
 # port our code to a script
@@ -1679,6 +1816,129 @@ step 3000: train loss 2.5, val loss 2.5
 ✅ 为什么 bigram loss 极限大概在 2.5？
 
 要不要我再补充？🌟
+
+```
+@torch.no_grad()
+def estimate_loss():
+    out = {}
+    model.eval()
+    for split in ['train', 'val']:
+        losses = torch.zeros(eval_iters)
+        for k in range(eval_iters):
+            X, Y = get_batch(split)
+            logits, loss = model(X, Y)
+            losses[k] = loss.item()
+        out[split] = losses.mean()
+    model.train()
+    return out
+```
+
+解释一下
+
+我给你分步骤解释一下这段 `estimate_loss()` 函数在做什么：
+
+---
+
+### 1. `@torch.no_grad()`
+
+* 这是 **PyTorch 的装饰器**，作用是告诉 PyTorch **在这个函数里不要计算梯度**。
+* 好处：
+
+  1. 节省显存（不存梯度计算中间结果）
+  2. 提高推理速度
+* 因为这里是在做评估（estimate loss），不需要更新模型参数，所以关闭梯度计算是合理的。
+
+---
+
+### 2. `out = {}`
+
+* 准备一个空字典，最后会存储训练集（train）和验证集（val）的平均损失值。
+
+---
+
+### 3. `model.eval()`
+
+* 将模型切换到 **评估模式（evaluation mode）**。
+* 这样会关闭 Dropout、BatchNorm 等训练时的随机行为，让评估结果稳定。
+* 这个模式会一直保持，直到你手动调用 `model.train()`。
+
+---
+
+### 4. `for split in ['train', 'val']:`
+
+* 循环两次，分别计算 **训练集** 和 **验证集** 的平均 loss。
+* `split` 代表当前处理的数据集类型。
+
+---
+
+### 5. `losses = torch.zeros(eval_iters)`
+
+* 创建一个长度为 `eval_iters` 的张量，用来保存多次评估得到的 loss 值。
+* 多次评估是为了减少随机性带来的波动，得到更稳定的平均值。
+
+---
+
+### 6. `for k in range(eval_iters):`
+
+* 循环 `eval_iters` 次（比如 100 次），每次取一个 batch 来计算 loss。
+
+---
+
+### 7. `X, Y = get_batch(split)`
+
+* 从当前 `split`（train 或 val）数据集中随机取一个批次（batch）。
+* `X`：输入序列（token ID），形状 `[B, T]`
+* `Y`：目标序列（预测目标），形状 `[B, T]`
+
+---
+
+### 8. `logits, loss = model(X, Y)`
+
+* 调用模型的 `forward` 方法，得到预测结果（logits）和该批次的损失（loss）。
+
+---
+
+### 9. `losses[k] = loss.item()`
+
+* `loss.item()`：从张量中取出 Python 标量（float）。
+* 把这个 loss 存到 `losses[k]` 中。
+
+---
+
+### 10. `out[split] = losses.mean()`
+
+* 计算所有 `eval_iters` 次 loss 的平均值。
+* 存入 `out` 字典，比如：
+
+  ```python
+  out['train'] = 1.89
+  out['val'] = 2.15
+  ```
+
+---
+
+### 11. `model.train()`
+
+* 切回训练模式（training mode），这样后续训练可以正常使用 Dropout、BatchNorm 等功能。
+
+---
+
+### 12. `return out`
+
+* 返回一个字典，包含训练集和验证集的平均损失值。
+
+---
+
+### **总结作用**
+
+`estimate_loss()` 的功能就是 **在不计算梯度的情况下，用多个 batch 估计当前模型在训练集和验证集上的平均损失**，并且保证评估过程不会影响后续训练。
+它常被用来 **周期性监控模型效果**，比如每隔 500 步打印一次 `{train_loss, val_loss}`。
+
+---
+
+如果你需要的话，我可以帮你画一张 **`estimate_loss()` 的流程图**，直观展示 `train/val → 多次 batch 评估 → 平均 → 切回训练模式` 的过程，这样你一眼就能记住它的逻辑。
+你要我画吗？
+
 
 
 # version 1: averaging past context with for loops, the weakest form of aggregation
