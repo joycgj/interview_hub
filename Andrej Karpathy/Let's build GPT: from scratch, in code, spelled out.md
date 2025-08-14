@@ -259,7 +259,7 @@ we're going to focus on the Transformer neural network itself okay so I created 
 * 例子主角：**ChatGPT** 是一种能按指令生成文本的 **语言模型**；它对同一提示可能给出不同答案，因为**带有随机性（概率式生成）**。
 * 底层原理：ChatGPT 的“发动机”是 **Transformer** 架构（出自 2017 年论文 *Attention Is All You Need*），而 **GPT** 指的是“**G**enerative **P**re-trained **T**ransformer”。
 * 这节课目标：手把手**训练一个基于 Transformer 的语言模型**——不是复刻工业级的 ChatGPT，而是一个**教学用的小模型**。
-* 数据集：用 **tiny Shakespeare**（约 1MB，把莎士比亚文本拼在一起），做\*\*字符级（character-level）\*\*建模：给定前面的若干字符，预测下一个字符。
+* 数据集：用 **tiny Shakespeare**（约 1MB，把莎士比亚文本拼在一起），做 **字符级（character-level）** 建模：给定前面的若干字符，预测下一个字符。
 * 生成演示：训练好后，模型可以“一直续写”莎士比亚风格的文本（当然只是“像”，不是原文）。
 * 代码仓库：作者有个极简实现 **nanoGPT**，结构很简单：
 
@@ -278,7 +278,7 @@ we're going to focus on the Transformer neural network itself okay so I created 
 # 这节课具体会做什么
 
 1. 从空白 notebook 开始，**逐块实现一个最小可用的 Transformer（GPT）**。
-2. 用 tiny Shakespeare \*\*训练为“下一个字符预测”\*\*模型。
+2. 用 tiny Shakespeare **训练为“下一个字符预测”** 模型。
 3. 训练完后，**从起始提示生成**“仿莎士比亚”文本。
 4. 强调：相同套路可换成任意文本数据集；nanoGPT 仓库给出的是一个**更完整且依然简洁**的参考实现。
 
