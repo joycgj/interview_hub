@@ -132,7 +132,7 @@ Corrections:
 
 ⚠️ 勘误：
 00:57:00 错说成“tokens from the future cannot communicate”，应是“tokens from the past cannot communicate”
-01:20:05 应该用 head\_size 归一化，不是 C
+01:20:05 应该用 head_size 归一化，不是 C
 ```
 
 ---
