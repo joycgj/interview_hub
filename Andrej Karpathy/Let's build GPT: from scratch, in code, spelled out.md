@@ -252,8 +252,6 @@ series where I um Define smaller and simpler neural network language models
 uh so multi perceptrons and so on it really introduces the language modeling framework and then uh here in this video
 we're going to focus on the Transformer neural network itself okay so I created a new Google collab uh jup notebook here
 
-当然可以，我来帮你把这一段视频的内容用中文解释一下，方便你理解：
-
 下面把这段开场白拆解成好懂的要点，并补上必要背景：
 
 # 核心在说什么
