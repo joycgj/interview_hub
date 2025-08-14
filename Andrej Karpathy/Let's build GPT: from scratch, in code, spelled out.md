@@ -418,105 +418,81 @@ Shakespeare like uh text and so it should be fairly likely for it to produce the
 true Shakespeare text um and so we're going to use this to uh get a sense of
 the overfitting okay so now we would like to start plugging these text sequences or integer sequences into the
 
-当然可以，下面是这一段的中文解释：
+下面把这段“**tokenization 与训练/验证划分**”讲清楚，并给一段最小可跑的示例代码。
+
+# 在做什么
+
+1. **Tokenization（标记化）**
+   把原始字符串→**整数序列**。在本课里用**字符级**：每个字符 ↔ 一个整数 id（通过 `stoi/itos` 映射）。
+
+   * 好处：实现最简单、没有 OOV（未知词）问题。
+   * 代价：**序列更长**（相比子词/词级），训练略慢。
+   * 现实里常用 **子词**（SentencePiece、BPE/tiktoken）：**词表大**（如 50k），**序列短**；而字符级相反：**词表小**（本数据集 65 个字符），**序列长**。
+
+2. **把整份 Shakespeare 文本编码成一个超长的整数向量**
+   这相当于对整本书做“逐字符编号”：`data = [46, 47, 0, 1, ...]`（数字具体对应哪个字符取决于你的 `chars` 排序）。
+
+3. **训练/验证划分（train/val split）**
+   取**前 90%** 作为训练，**后 10%** 作为验证。验证集**不参与训练**，只用来评估是否**过拟合**。
+
+   * 语言建模通常保留**顺序**（用**连续切割**而非打乱），以便验证与训练分布接近、又不泄露内容。
 
 ---
 
-### 【分词（tokenization）和训练/验证集划分】
+# 极简示例代码（字符级 tokenizer + PyTorch 张量 + 90/10 划分）
 
-首先，**“tokenization（分词）”** 的意思是：
-把原始的**字符串**（text）转换成一串**整数序列**（sequence of integers）。
-整数序列是根据某个“词表”来映射的，每个字符（或者词）对应一个整数。
+```python
+# 0) 读取文本
+with open("input.txt", "r", encoding="utf-8") as f:
+    text = f.read()
+print("Total chars:", len(text))
+print("Preview:", repr(text[:200]))
 
----
+# 1) 构建字符级词表与映射
+chars = sorted(list(set(text)))     # 有序字符表（如包含空格、换行、标点、大小写字母等）
+vocab_size = len(chars)
+print("Vocab size:", vocab_size)
+print("Vocab sample:", chars[:20])
 
-### 【字符级语言模型的 tokenization】
+stoi = {ch: i for i, ch in enumerate(chars)}
+itos = {i: ch for i, ch in enumerate(chars)}
 
-在这个项目里，我们是做**字符级语言模型**，所以我们的“词表”就是前面统计出来的 65 个字符：
-每个字符 → 一个整数（编号）
+def encode(s: str):
+    return [stoi[c] for c in s]          # str -> List[int]
 
-我们要做两个函数：
+def decode(ids):
+    return "".join(itos[i] for i in ids) # List[int] -> str
 
-* `encode(text)` ：把一段字符串转成一串整数序列
-* `decode(int_seq)` ：把一串整数序列转回原始字符串
+# 2) 整体编码为一个长向量，并转成 PyTorch 张量
+import torch
+data = torch.tensor(encode(text), dtype=torch.long)  # 语言模型需要 long (int64)
+print("Data shape:", data.shape)                     # 例如: torch.Size([~1_000_000])
 
-比如：
-字符串 `"Hi there"` → \[46, 47, ...] → 还能 decode 回 `"Hi there"`。
+# 3) 90/10 训练/验证划分（连续切片）
+n = int(0.9 * len(data))
+train_data = data[:n]
+val_data   = data[n:]
 
-具体做法是：
+print("Train size:", train_data.shape, "Val size:", val_data.shape)
 
-* 遍历 65 个字符，做一个查表（lookup table），字符 → 整数；反向表，整数 → 字符。
-* encode 的时候，就是查表编码；decode 的时候，是查表还原。
-
----
-
-### 【其他常用 tokenizer 的对比】
-
-其实 tokenizer 不止一种，现实中大模型通常不用字符级 tokenizer，而是用更复杂的：
-
-* Google 常用 **sentencepiece**：一种子词级（subword） tokenizer
-* OpenAI 用 **tiktoken** 库，里面用的是 BPE（Byte Pair Encoding） tokenizer，GPT 就是用的这个
-
-子词级 tokenizer 的特点是：
-
-* 编码粒度比字符大（不是一个字符一个 token）
-* 也不是整个词作为 token，而是词的一部分（subword）
-* 通常词表会有几万种 token，比如 GPT-2 用了 50,000 个 token
-
-比如同样一句话："Hi there"：
-
-* 用子词 tokenizer 编码后，可能只需要 3 个整数
-* 用字符 tokenizer 编码，可能要 8 个整数（每个字符一个）
-
-子词 tokenizer 的优点是序列更短，模型效率更高，实际工程里基本都是用这个。
-
-不过为了简单起见，这个视频里我们用的是最简单的**字符 tokenizer**，
-编码函数、解码函数都很简单，词表小，缺点是序列比较长。
+# 4) 小测试
+example = "Hi there"
+ids = encode(example)
+print("Encoded:", ids)
+print("Decoded:", decode(ids))
+```
 
 ---
 
-### 【tokenize 全部数据】
+# 实战要点/小坑
 
-有了 encoder 和 decoder 之后，我们就可以 tokenize 整个 tiny Shakespeare 数据集了。
-做法是：
+* **保留空格与换行**：都是合法字符，别丢；丢了模型会学不到行/段结构。
+* **dtype** 用 `torch.long`（交叉熵等损失函数要求类别索引是 long）。
+* **映射要固定**：`sorted(set(text))` 的顺序要保留（建议把 `chars` 存到 JSON），保证训练与推理一致。
+* **连续切分**更贴近语言建模的时序分布；如果你跨文档训练，也可做分文档切分以避免泄露。
+* 之后喂模型时，还需要从 `train_data`/`val_data` **切窗口（block\_size）** 取 batch（如长度 256 的上下文）；这一步就是下一个环节的数据加载器实现。
 
-1. 把整个文本 encode 成一个整数序列
-2. 用 pytorch 里的 `torch.tensor` 把这个整数序列包装成 tensor，供后面模型训练用
-
-打印出来可以看到，这个 tensor 其实就是一个**巨大的整数序列**，和原文是一一对应的：
-比如第 0 号整数对应换行符、第 1 号整数可能对应空格等等。
-
----
-
-### 【划分训练集 / 验证集】
-
-在正式训练前，还需要做一步：
-
-* 把数据集分成 90% 训练集，10% 验证集。
-
-为什么要分？
-
-* **训练集**用来让模型学习。
-* **验证集**是留出来不让模型看到的，用来测试模型的泛化能力（有没有过拟合）。
-
-因为我们不希望模型只是**死记硬背** tiny Shakespeare，
-而是希望它学会**生成“类似莎士比亚风格”的新文本**，
-所以需要用验证集来衡量模型是不是学到泛化能力了。
-
----
-
-### 【下一步】
-
-接下来，作者会开始把这些整数序列喂到 Transformer 里，正式开始训练语言模型了 🚀。
-
----
-
-如果你需要，我也可以顺便帮你总结一下：
-👉 为什么“字符 tokenizer” vs “子词 tokenizer”
-👉 为什么一定要 train/val split
-👉 pytorch 里 tensor 为什么要用 long 类型（因为做 embedding）
-
-要不要我再补充？ 🌟
+如果你需要，我可以接着给出一个**最小的数据加载器（get\_batch）**，直接产出 `(x, y)` 训练对，和一个最小的 **nn.Transformer/GPT** 骨架。
 
 
 # data loader: batches of chunks of data
@@ -834,8 +810,11 @@ ix = [2, 5]
 ---
 
 如果你想，我也可以补充一下：
+
 ✅ 为什么要用 offset 1 作为 y？
+
 ✅ batch\_size 和 block\_size 设置成多少合适？
+
 ✅ 训练过程中 get\_batch 怎么配合 optimizer 用？
 
 要不要我再详细讲讲？ 🌟
