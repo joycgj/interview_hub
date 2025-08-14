@@ -319,64 +319,52 @@ characters there's 65 of them in total there's a space character and then all ki
 capitals and lowercase letters so that's our vocabulary and that's the sort of like possible uh characters that the
 model can see or emit okay so next we will would like to develop some strategy
 
-当然可以，下面是这一段内容的中文解释：
+下面这段话是在讲「如何读取并理解 tiny Shakespeare 数据集，并为**字符级语言模型**做准备」——要点如下：
 
----
+* 先把 **tiny Shakespeare** 文本（约 **1MB**）下载到本地，用 Python 打开 `input.txt` 读成一个长字符串。长度大约 **一百万字符**；打印前 **1000 个字符**就是你看到的莎士比亚文本开头。
+* 接着用 `set(text)` 找出**所有出现过的字符**（去重），再转成 `list` 并 `sort()` 排序，得到一个**有序的字符表**（即**词表/vocabulary**）。
+* 这个字符表的大小就是 **vocab size**。这里是 **65 个**：包括空格、标点、大小写字母等。之后模型能**输入/输出**的就只能是这 65 种字符。
 
-### 【读取和探索数据】
+为什么要这样做？
 
-作者说，之所以在 Colab 里写代码，是方便把代码分享出来，大家可以一起跟着学习，视频发布后会把代码链接放在视频描述里。
+* 我们要训练**字符级**语言模型，模型的输入/输出必须是**离散的编号**。先列出“所有可能字符”，再建立 **char ⇄ id** 的双向映射，才能把文本变成整数序列供模型训练与生成。
 
-接下来，作者做了一些准备工作：
+你可以用下面这段极简代码复现上面步骤（含编码/解码函数），直接替换你的路径即可：
 
-1. **下载数据集**
-   下载了 **tiny Shakespeare** 数据集，网址会在视频描述里贴出。这个数据集文件大概 **1MB** 大小，名字叫 `input.txt`。
+```python
+# 1) 读取数据
+with open("input.txt", "r", encoding="utf-8") as f:
+    text = f.read()
+print("Total chars:", len(text))
+print("Preview:", repr(text[:1000]))
 
-2. **读取数据**
-   读入这个 `input.txt` 文件的全部内容，放到一个字符串里。
-   这个字符串总共有大约 **100 万个字符**（characters）。
+# 2) 构建字符表（vocabulary）
+chars = sorted(list(set(text)))
+vocab_size = len(chars)
+print("Vocab size:", vocab_size)
+print("Vocab:", chars)
 
-3. **打印前 1000 个字符**
-   打印了数据开头的前 1000 个字符，内容就是莎士比亚的原文，非常正常。
+# 3) 建立映射与编码/解码
+stoi = {ch: i for i, ch in enumerate(chars)}
+itos = {i: ch for i, ch in enumerate(chars)}
 
----
+def encode(s: str):
+    return [stoi[c] for c in s]       # 字符串 -> 整数序列
 
-### 【统计字符集】
+def decode(ids):
+    return ''.join(itos[i] for i in ids)  # 整数序列 -> 字符串
 
-接下来，作者用 Python 处理这段文本，思路是：
+# 小测试
+ids = encode("To be, or not to be.")
+print(ids)
+print(decode(ids))
+```
 
-* 文本在 Python 里本质上就是一个**字符序列**（sequence of characters）。
-* 用 Python 的 `set()` 函数，可以得到文本中**出现过的所有不同字符**（去重了）。
-* 然后用 `list()` 把 set 转成列表，这样可以保证有一个确定的顺序。
-* 再用 `sorted()` 排序，这样就得到了**有序的字符表**。
+小提示/坑位：
 
-最终，得到的数据是：**整个数据集中一共出现了 65 个不同的字符**，这 65 个字符就是我们的“词表（vocabulary）”。
-
-词表里包括：
-
-* 空格（space）
-* 标点符号
-* 大写字母 A-Z
-* 小写字母 a-z
-* 其他一些特殊字符
-
----
-
-### 【为什么要做这个？】
-
-这些 65 个字符就是**模型可以看到的、也可以输出的“基础元素”**。
-
-* 模型看到的是一串字符序列
-* 模型的任务就是学会“给定前面的字符，预测下一个字符”
-* 这 65 个字符就是模型能预测的“选项空间”
-
----
-
-接下来，作者会继续讲如何把这些字符编码成模型能理解的数字，然后做成训练数据。
-
----
-
-如果你需要的话，我还可以帮你画一个**整个数据处理流程图**，更方便你理解！要不要我整理一下？ 🌟
+* **空格与换行**都是合法字符，别丢；否则模型会学不到分词/分行的结构感。
+* 用 `sorted(set(...))` 得到的是**按字符编码排序**的固定顺序（不是频率顺序），训练没问题，但请**保存映射**（如写入 JSON），以便之后解码一致。
+* 之后一步通常会把整段文本 `encode` 成 `torch.LongTensor`，再按时间步切块、做 train/val 切分，供 Transformer 训练。需要的话我可以给出最小可跑的数据管道示例。
 
 
 # tokenization, train/val split
