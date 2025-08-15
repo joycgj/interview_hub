@@ -48,3 +48,10 @@ $$
 下图展示了对残差块的多种不同解读方式。
 
 ![](pictures/different_interpretations_of_residual_block.webp "")
+
+让我们简单回顾一下**跳跃连接（skip connections）**的历史。
+在层与层之间引入跳跃连接的想法，最早出现在 **Highway Networks** 中。Highway 网络在跳跃连接中引入了**门控机制（gates）**，用来控制信息通过的多少，并且这些门是可训练的，可以选择性地打开。
+
+这一思想同样可以在 **LSTM 网络** 中看到，它们通过门控机制来控制来自过去数据点的信息流动。这些门的作用与控制从先前看到的数据点中流出的“记忆”流非常相似。下图展示了这一相同的思想。
+
+![](pictures/Similar_to_LSTM_Block.webp "")
