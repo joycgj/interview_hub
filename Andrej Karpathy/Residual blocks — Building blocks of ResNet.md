@@ -47,4 +47,4 @@ $$
 
 下图展示了对残差块的多种不同解读方式。
 
-![](pictures/Different interpretations of Residual Block.webp "")
+![](pictures/different_interpretations_of_residual_block.webp "")
