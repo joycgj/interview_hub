@@ -10,7 +10,9 @@ Links:
 
 Supplementary links:
 - Attention is All You Need paper: https://arxiv.org/abs/1706.03762
-- OpenAI GPT-3 paper: https://arxiv.org/abs/2005.14165 - OpenAI GPT-2 paper: https://d4mucfpksywv.cloudfront.net/b... - The GPU I'm training the model on is from Lambda GPU Cloud, I think the best and easiest way to spin up an on-demand - GPU instance in the cloud that you can ssh to: https://lambdalabs.com 
+- OpenAI GPT-3 paper: https://arxiv.org/abs/2005.14165 
+- OpenAI GPT-2 paper: https://d4mucfpksywv.cloudfront.net/b... 
+- The GPU I'm training the model on is from Lambda GPU Cloud, I think the best and easiest way to spin up an on-demand - GPU instance in the cloud that you can ssh to: https://lambdalabs.com 
 
 ```
 Chapters:
